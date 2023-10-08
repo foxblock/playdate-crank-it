@@ -1,0 +1,55 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "type": "shell",
+            "label": "Playdate: Build project",
+            "command": "&",
+            "args": [
+                "${workspaceFolder}\\build_lua.ps1",
+                ".",
+                "-o",
+                "crank-it.pdx",
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": "build",
+        },
+        {
+            "type": "shell",
+            "label": "Playdate: Build & Run",
+            "command": "&",
+            "args": [
+                "${workspaceFolder}\\build_lua.ps1",
+                ".",
+                "-o",
+                "crank-it.pdx",
+                "-run",
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+        },
+        {
+            "type": "shell",
+            "label": "Playdate: Build for shipping",
+            "command": "&",
+            "args": [
+                "${workspaceFolder}\\build_lua.ps1",
+                ".",
+                "-o",
+                "crank-it.pdx",
+                "-zip",
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": "build",
+        },
+    ]
+}
