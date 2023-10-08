@@ -2,38 +2,32 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "type": "shell",
-            "label": "Playdate: Build project",
-            "command": "&",
-            "args": [
-                "${workspaceFolder}\\build_lua.ps1",
-                ".",
-                "-o",
-                "crank-it.pdx",
+            "type": "pdc",
+            "problemMatcher": [
+                "$pdc-lua",
+                "$pdc-external"
             ],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            },
-            "group": "build",
+            "label": "Playdate: Build"
         },
         {
-            "type": "shell",
-            "label": "Playdate: Build & Run",
-            "command": "&",
-            "args": [
-                "${workspaceFolder}\\build_lua.ps1",
-                ".",
-                "-o",
-                "crank-it.pdx",
-                "-run",
+            "type": "playdate-simulator",
+            "problemMatcher": [
+                "$pdc-external"
             ],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            },
+            "label": "Playdate: Run"
+        },
+        {
+            "label": "Playdate: Build and Run",
+            "dependsOn": [
+                "Playdate: Build",
+                "Playdate: Run"
+            ],
+            "dependsOrder": "sequence",
+            "problemMatcher": [],
             "group": {
                 "kind": "build",
                 "isDefault": true
-            },
+            }
         },
         {
             "type": "shell",
