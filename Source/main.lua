@@ -58,7 +58,8 @@ local actions <const> = {
 }
 
 local CRANK_TARGET <const> = 3*360
-local CRANK_DEADZONE <const> = 45
+local CRANK_DEADZONE_NORMAL <const> = 45
+local CRANK_DEADZONE_AFTER_CRANKED <const> = 360
 local TILT_TARGET <const> = math.cos(50 * DEG_TO_RAD)
 local TILT_TARGET_BACK <const> = math.cos(5 * DEG_TO_RAD)
 
@@ -68,8 +69,142 @@ local score = 0
 local highscore = 0
 
 local crankValue = 0
+local crankDeadzone = CRANK_DEADZONE_NORMAL
 local startVec = nil
 local tiltBack = false
+
+-- UTILITY
+
+local function vec3D_len(x, y, z)
+    return math.sqrt(x*x + y*y + z*z)
+end
+
+local function vec3D_norm(x, y, z)
+    local len = vec3D_len(x, y, z)
+    return x/len, y/len, z/len
+end
+
+-- assumes v1 is a normalized 3D-vector stored as a table with 3 entries: {x,y,z}
+local function vec3D_dot(v1, x2, y2, z2)
+    return (v1[1] * x2 + v1[2] * y2 + v1[3] * z2) / vec3D_len(x2, y2, z2)
+end
+
+-- MAIN GAME
+
+local function actionSuccess()
+    actionDone = true
+    score += 1
+end
+
+local function actionFail()
+    if (score > highscore) then
+        highscore = score
+    end
+    score = 0
+end
+
+local function setup()
+    -- Set up the player sprite.
+    -- The :setCenter() call specifies that the sprite will be anchored at its center.
+    -- The :moveTo() call moves our sprite to the center of the display.
+
+    -- local playerImage = gfx.image.new("images/player")
+    -- assert( playerImage ) -- make sure the image was where we thought
+
+    -- playerSprite = gfx.sprite.new( playerImage )
+    -- playerSprite:moveTo( 200, 120 ) -- this is where the center of the sprite is placed; (200,120) is the center of the Playdate screen
+    -- playerSprite:add() -- This is critical!
+
+    -- We want an environment displayed behind our sprite.
+    -- There are generally two ways to do this:
+    -- 1) Use setBackgroundDrawingCallback() to draw a background image. (This is what we're doing below.)
+    -- 2) Use a tilemap, assign it to a sprite with sprite:setTilemap(tilemap),
+    --       and call :setZIndex() with some low number so the background stays behind
+    --       your other sprites.
+
+    local backgroundImage = gfx.image.new( "images/background" )
+    assert( backgroundImage )
+
+    gfx.sprite.setBackgroundDrawingCallback(
+        function( x, y, width, height )
+            -- x,y,width,height is the updated area in sprite-local coordinates
+            -- The clip rect is already set to this area, so we don't need to set it ourselves
+            backgroundImage:draw( 0, 0 )
+        end
+    )
+
+    math.randomseed(playdate.getSecondsSinceEpoch())
+
+    playdate.startAccelerometer()
+end
+
+function playdate.update()
+    if (currAction == actionCodes.MICROPHONE and mic.getLevel() > 0.5) then
+        actionSuccess()
+    end
+
+    if (currAction == actionCodes.TILT) then
+        local cos_ang = vec3D_dot(startVec, playdate.readAccelerometer())
+        if (tiltBack and cos_ang >= TILT_TARGET_BACK) then 
+            tiltBack = false
+            actionSuccess()
+        elseif (not tiltBack and cos_ang <= TILT_TARGET) then
+            tiltBack = true
+        end
+    end
+
+    if (actionDone) then
+        local lastAction = currAction
+        repeat
+            if (playdate.isCrankDocked()) then
+                currAction = math.random(1, actionCodes.CRANK_UNDOCK)
+            else
+                repeat
+                    currAction = math.random(1, actionCodes.EOL - 1)
+                until (currAction ~= actionCodes.CRANK_UNDOCK)
+            end
+        until (currAction ~= lastAction)
+
+        -- increase deadzone after CRANKED action, so turning the crank
+        -- a bit too far does not immediately fail the player
+        if (lastAction == actionCodes.CRANKED) then
+            crankDeadzone = CRANK_DEADZONE_AFTER_CRANKED
+        end
+
+        if (currAction == actionCodes.MICROPHONE) then
+            mic.startListening()
+        else
+            mic.stopListening()
+        end
+
+        if (currAction == actionCodes.TILT) then
+            startVec = { vec3D_norm(playdate.readAccelerometer()) }
+        end
+
+        -- always reset crank value, because it is checked for succeed and fail
+        crankValue = 0
+        actionDone = false
+    end
+
+    gfx.sprite.update()
+    playdate.timer.updateTimers()
+
+	gfx.setFont(font)
+    local yPos = 2
+	gfx.drawText('score: '..score, 2, yPos)
+    gfx.drawText("HIGH: "..highscore, 2, yPos + 15)
+    yPos += 40
+    if (currAction == actionCodes.MICROPHONE) then
+        gfx.drawText(string.format("level: %.0f", mic.getLevel() * 100), 2, yPos)
+        yPos += 15
+    elseif (currAction == actionCodes.TILT) then
+        gfx.drawText(string.format("a3d: %.2f", math.acos(vec3D_dot(startVec, playdate.readAccelerometer())) * RAD_TO_DEG), 2, yPos)
+        gfx.drawText(string.format("cos: %.4f", vec3D_dot(startVec, playdate.readAccelerometer())), 2, yPos + 15)
+        gfx.drawText(string.format("target: %.4f", tiltBack and TILT_TARGET_BACK or TILT_TARGET), 2, yPos + 30)
+        yPos += 45
+    end
+	gfx.drawText(actions[currAction], 200, 120)
+end
 
 -- CALLBACKS
 
@@ -141,136 +276,11 @@ function playdate.cranked(change, acceleratedChange)
     crankValue += math.abs(change)
     if (currAction == actionCodes.CRANKED and crankValue >= CRANK_TARGET) then
         actionSuccess()
-    elseif (currAction ~= actionCodes.CRANKED and crankValue >= CRANK_DEADZONE) then
+    elseif (currAction ~= actionCodes.CRANKED and crankValue >= crankDeadzone) then
         actionFail()
     end
 end
 
--- UTILITY
-
-local function vec3D_len(x, y, z)
-    return math.sqrt(x*x + y*y + z*z)
-end
-
-local function vec3D_norm(x, y, z)
-    local len = vec3D_len(x, y, z)
-    return x/len, y/len, z/len
-end
-
--- assumes v1 is a normalized 3D-vector stored as a table with 3 entries: {x,y,z}
-local function vec3D_dot(v1, x2, y2, z2)
-    return (v1[1] * x2 + v1[2] * y2 + v1[3] * z2) / vec3D_len(x2, y2, z2)
-end
-
--- MAIN GAME
-
-function actionSuccess()
-    actionDone = true
-    score += 1
-end
-
-function actionFail()
-    if (score > highscore) then
-        highscore = score
-    end
-    score = 0
-end
-
-function setup()
-    -- Set up the player sprite.
-    -- The :setCenter() call specifies that the sprite will be anchored at its center.
-    -- The :moveTo() call moves our sprite to the center of the display.
-
-    -- local playerImage = gfx.image.new("images/player")
-    -- assert( playerImage ) -- make sure the image was where we thought
-
-    -- playerSprite = gfx.sprite.new( playerImage )
-    -- playerSprite:moveTo( 200, 120 ) -- this is where the center of the sprite is placed; (200,120) is the center of the Playdate screen
-    -- playerSprite:add() -- This is critical!
-
-    -- We want an environment displayed behind our sprite.
-    -- There are generally two ways to do this:
-    -- 1) Use setBackgroundDrawingCallback() to draw a background image. (This is what we're doing below.)
-    -- 2) Use a tilemap, assign it to a sprite with sprite:setTilemap(tilemap),
-    --       and call :setZIndex() with some low number so the background stays behind
-    --       your other sprites.
-
-    local backgroundImage = gfx.image.new( "images/background" )
-    assert( backgroundImage )
-
-    gfx.sprite.setBackgroundDrawingCallback(
-        function( x, y, width, height )
-            -- x,y,width,height is the updated area in sprite-local coordinates
-            -- The clip rect is already set to this area, so we don't need to set it ourselves
-            backgroundImage:draw( 0, 0 )
-        end
-    )
-
-    math.randomseed(playdate.getSecondsSinceEpoch())
-
-    playdate.startAccelerometer()
-end
-
-function playdate.update()
-    if (currAction == actionCodes.MICROPHONE and mic.getLevel() > 0.5) then
-        actionSuccess()
-    end
-
-    if (currAction == actionCodes.TILT) then
-        local cos_ang = vec3D_dot(startVec, playdate.readAccelerometer())
-        if (tiltBack and cos_ang >= TILT_TARGET_BACK) then 
-            tiltBack = false
-            actionSuccess()
-        elseif (not tiltBack and cos_ang <= TILT_TARGET) then
-            tiltBack = true
-        end
-    end
-
-    if (actionDone) then
-        local lastAction = currAction
-        repeat
-            if (playdate.isCrankDocked()) then
-                currAction = math.random(1, actionCodes.CRANK_UNDOCK)
-            else
-                repeat
-                    currAction = math.random(1, actionCodes.EOL - 1)
-                until (currAction ~= actionCodes.CRANK_UNDOCK)
-            end
-        until (currAction ~= lastAction)
-
-        if (currAction == actionCodes.MICROPHONE) then
-            mic.startListening()
-        else
-            mic.stopListening()
-        end
-
-        if (currAction == actionCodes.TILT) then
-            startVec = { vec3D_norm(playdate.readAccelerometer()) }
-        end
-
-        crankValue = 0
-        actionDone = false
-    end
-
-    gfx.sprite.update()
-    playdate.timer.updateTimers()
-
-	gfx.setFont(font)
-    local yPos = 2
-	gfx.drawText('score: '..score, 2, yPos)
-    gfx.drawText("HIGH: "..highscore, 2, yPos + 15)
-    yPos += 40
-    if (currAction == actionCodes.MICROPHONE) then
-        gfx.drawText(string.format("level: %.0f", mic.getLevel() * 100), 2, yPos)
-        yPos += 15
-    elseif (currAction == actionCodes.TILT) then
-        gfx.drawText(string.format("a3d: %.2f", math.acos(vec3D_dot(startVec, playdate.readAccelerometer())) * RAD_TO_DEG), 2, yPos)
-        gfx.drawText(string.format("cos: %.4f", vec3D_dot(startVec, playdate.readAccelerometer())), 2, yPos + 15)
-        gfx.drawText(string.format("target: %.4f", tiltBack and TILT_TARGET_BACK or TILT_TARGET), 2, yPos + 30)
-        yPos += 45
-    end
-	gfx.drawText(actions[currAction], 200, 120)
-end
-
+-- MAIN
 
 setup()
