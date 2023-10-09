@@ -1,44 +1,46 @@
--- Name this file `main.lua`. Your game can use multiple source files if you wish
--- (use the `import "myFilename"` command), but the simplest games can be written
--- with just `main.lua`.
+-- https://www.youtube.com/watch?v=ayBmsWKqdnc
 
--- You'll want to import these in just about every project you'll work on.
+-- Accelerometer
+-- Values of readAccelerometer() = normal vector pointing from screen with device upright
+--                                 in the following coordinate space
+--      ^ z = 1
+--      |
+--      |
+--      .-----> x = 1 (device needs to be tilted by 90° around x-axis)
+--     /
+--    /
+--   v  y = 1
+
 
 import "CoreLibs/object"
 import "CoreLibs/graphics"
 import "CoreLibs/sprites"
 import "CoreLibs/timer"
 
--- Declaring this "gfx" shorthand will make your life easier. Instead of having
--- to preface all graphics calls with "playdate.graphics", just use "gfx."
--- Performance will be slightly enhanced, too.
--- NOTE: Because it's local, you'll have to do it in every .lua source file.
-
 local gfx <const> = playdate.graphics
 local mic <const> = playdate.sound.micinput
+local v2d <const> = playdate.geometry.vector2D
 
--- Here's our player sprite declaration. We'll scope it to this file because
--- several functions need to access it.
+local RAD_TO_DEG <const> = 180 / math.pi
+local DEG_TO_RAD <const> = math.pi / 180
 
 local playerSprite = nil
 local font = gfx.font.new('images/font/whiteglove-stroked')
 assert(font)
 
--- A function to set up our game environment.
-
 local actionCodes <const> = {
-    UP = 0,
-    RIGHT = 1,
-    DOWN = 2,
-    LEFT = 3,
-    A = 4,
-    B = 5,
-    MICROPHONE = 6,
-    TILT = 7,
-    CRANK_UNDOCK = 8,
-    CRANK_DOCK = 9,
-    CRANKED = 10,
-    EOL = 11,
+    UP = 1,
+    RIGHT = 2,
+    DOWN = 3,
+    LEFT = 4,
+    A = 5,
+    B = 6,
+    MICROPHONE = 7,
+    TILT = 8,
+    CRANK_UNDOCK = 9,
+    CRANK_DOCK = 10,
+    CRANKED = 11,
+    EOL = 12,
 }
 
 local actions <const> = {
@@ -56,11 +58,18 @@ local actions <const> = {
 }
 
 local CRANK_TARGET <const> = 3*360
+local TILT_TARGET <const> = math.cos(50 * DEG_TO_RAD)
+local TILT_TARGET_BACK <const> = math.cos(5 * DEG_TO_RAD)
 
-local currAction = nil
-local actionDone = true
+local currAction = actionCodes.A
+local actionDone = (currAction == nil)
 local score = 0
+
 local crankValue = 0
+local startVec = nil
+local tiltBack = false
+
+-- CALLBACKS
 
 function playdate.upButtonDown()
     if (currAction == actionCodes.UP) then
@@ -114,10 +123,29 @@ function playdate.cranked(change, acceleratedChange)
     if (currAction == actionCodes.CRANKED) then
         crankValue += change
         if (crankValue >= CRANK_TARGET) then
+            crankValue = 0
             actionSuccess()
         end
     end
 end
+
+-- UTILITY
+
+local function vec3D_len(x, y, z)
+    return math.sqrt(x*x + y*y + z*z)
+end
+
+local function vec3D_norm(x, y, z)
+    local len = vec3D_len(x, y, z)
+    return x/len, y/len, z/len
+end
+
+-- assumes v1 is a normalized 3D-vector stored as a table with 3 entries: {x,y,z}
+local function vec3D_dot(v1, x2, y2, z2)
+    return (v1[1] * x2 + v1[2] * y2 + v1[3] * z2) / vec3D_len(x2, y2, z2)
+end
+
+-- MAIN GAME
 
 function actionSuccess()
     actionDone = true
@@ -125,7 +153,7 @@ function actionSuccess()
 end
 
 function actionFail()
-
+    --
 end
 
 function myGameSetUp()
@@ -159,29 +187,33 @@ function myGameSetUp()
     )
 
     math.randomseed(playdate.getSecondsSinceEpoch())
+
+    playdate.startAccelerometer()
 end
 
-
-
-myGameSetUp()
-
 function playdate.update()
-    if (currAction == actionCodes.MICROPHONE and mic.getLevel() > 0.8) then
+    if (currAction == actionCodes.MICROPHONE and mic.getLevel() > 0.5) then
         actionSuccess()
     end
 
     if (currAction == actionCodes.TILT) then
-        actionSuccess()
+        local cos_ang = vec3D_dot(startVec, playdate.readAccelerometer())
+        if (tiltBack and cos_ang >= TILT_TARGET_BACK) then 
+            tiltBack = false
+            actionSuccess()
+        elseif (not tiltBack and cos_ang <= TILT_TARGET) then
+            tiltBack = true
+        end
     end
 
     if (actionDone) then
         local lastAction = currAction
         repeat
             if (playdate.isCrankDocked()) then
-                currAction = math.random(0, actionCodes.CRANK_UNDOCK)
+                currAction = math.random(1, actionCodes.CRANK_UNDOCK)
             else
                 repeat
-                    currAction = math.random(0, actionCodes.EOL - 1)
+                    currAction = math.random(1, actionCodes.EOL - 1)
                 until (currAction ~= actionCodes.CRANK_UNDOCK)
             end
         until (currAction ~= lastAction)
@@ -192,6 +224,10 @@ function playdate.update()
             mic.stopListening()
         end
 
+        if (currAction == actionCodes.TILT) then
+            startVec = { vec3D_norm(playdate.readAccelerometer()) }
+        end
+
         actionDone = false
     end
 
@@ -200,6 +236,15 @@ function playdate.update()
 
 	gfx.setFont(font)
 	gfx.drawText('score: '..score, 2, 2)
+    if (currAction == actionCodes.MICROPHONE) then
+        gfx.drawText(string.format("level: %.0f", mic.getLevel() * 100), 2, 17)
+    elseif (currAction == actionCodes.TILT) then
+        gfx.drawText(string.format("a3d: %.2f", math.acos(vec3D_dot(startVec, playdate.readAccelerometer())) * RAD_TO_DEG), 2, 17)
+        gfx.drawText(string.format("cos: %.4f", vec3D_dot(startVec, playdate.readAccelerometer())), 2, 32)
+        gfx.drawText(string.format("target: %.4f", tiltBack and TILT_TARGET_BACK or TILT_TARGET), 2, 47)
+    end
 	gfx.drawText(actions[currAction], 200, 120)
 end
 
+
+myGameSetUp()
