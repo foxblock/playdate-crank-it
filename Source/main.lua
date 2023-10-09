@@ -58,12 +58,14 @@ local actions <const> = {
 }
 
 local CRANK_TARGET <const> = 3*360
+local CRANK_DEADZONE <const> = 45
 local TILT_TARGET <const> = math.cos(50 * DEG_TO_RAD)
 local TILT_TARGET_BACK <const> = math.cos(5 * DEG_TO_RAD)
 
 local currAction = actionCodes.A
 local actionDone = (currAction == nil)
 local score = 0
+local highscore = 0
 
 local crankValue = 0
 local startVec = nil
@@ -74,58 +76,73 @@ local tiltBack = false
 function playdate.upButtonDown()
     if (currAction == actionCodes.UP) then
         actionSuccess()
+    else
+        actionFail()
     end
 end
 
 function playdate.rightButtonDown()
     if (currAction == actionCodes.RIGHT) then
         actionSuccess()
+    else
+        actionFail()
     end
 end
 
 function playdate.downButtonDown()
     if (currAction == actionCodes.DOWN) then
         actionSuccess()
+    else
+        actionFail()
     end
 end
 
 function playdate.leftButtonDown()
     if (currAction == actionCodes.LEFT) then
         actionSuccess()
+    else
+        actionFail()
     end
 end
 
 function playdate.AButtonDown()
     if (currAction == actionCodes.A) then
         actionSuccess()
+    else
+        actionFail()
     end
 end
 
 function playdate.BButtonDown()
     if (currAction == actionCodes.B) then
         actionSuccess()
+    else
+        actionFail()
     end
 end
 
 function playdate.crankDocked()
     if (currAction == actionCodes.CRANK_DOCK) then
         actionSuccess()
+    else
+        actionFail()
     end
 end
 
 function playdate.crankUndocked()
     if (currAction == actionCodes.CRANK_UNDOCK) then
         actionSuccess()
+    else
+        actionFail()
     end
 end
 
 function playdate.cranked(change, acceleratedChange)
-    if (currAction == actionCodes.CRANKED) then
-        crankValue += change
-        if (crankValue >= CRANK_TARGET) then
-            crankValue = 0
-            actionSuccess()
-        end
+    crankValue += math.abs(change)
+    if (currAction == actionCodes.CRANKED and crankValue >= CRANK_TARGET) then
+        actionSuccess()
+    elseif (currAction ~= actionCodes.CRANKED and crankValue >= CRANK_DEADZONE) then
+        actionFail()
     end
 end
 
@@ -153,10 +170,13 @@ function actionSuccess()
 end
 
 function actionFail()
-    --
+    if (score > highscore) then
+        highscore = score
+    end
+    score = 0
 end
 
-function myGameSetUp()
+function setup()
     -- Set up the player sprite.
     -- The :setCenter() call specifies that the sprite will be anchored at its center.
     -- The :moveTo() call moves our sprite to the center of the display.
@@ -228,6 +248,7 @@ function playdate.update()
             startVec = { vec3D_norm(playdate.readAccelerometer()) }
         end
 
+        crankValue = 0
         actionDone = false
     end
 
@@ -235,16 +256,21 @@ function playdate.update()
     playdate.timer.updateTimers()
 
 	gfx.setFont(font)
-	gfx.drawText('score: '..score, 2, 2)
+    local yPos = 2
+	gfx.drawText('score: '..score, 2, yPos)
+    gfx.drawText("HIGH: "..highscore, 2, yPos + 15)
+    yPos += 40
     if (currAction == actionCodes.MICROPHONE) then
-        gfx.drawText(string.format("level: %.0f", mic.getLevel() * 100), 2, 17)
+        gfx.drawText(string.format("level: %.0f", mic.getLevel() * 100), 2, yPos)
+        yPos += 15
     elseif (currAction == actionCodes.TILT) then
-        gfx.drawText(string.format("a3d: %.2f", math.acos(vec3D_dot(startVec, playdate.readAccelerometer())) * RAD_TO_DEG), 2, 17)
-        gfx.drawText(string.format("cos: %.4f", vec3D_dot(startVec, playdate.readAccelerometer())), 2, 32)
-        gfx.drawText(string.format("target: %.4f", tiltBack and TILT_TARGET_BACK or TILT_TARGET), 2, 47)
+        gfx.drawText(string.format("a3d: %.2f", math.acos(vec3D_dot(startVec, playdate.readAccelerometer())) * RAD_TO_DEG), 2, yPos)
+        gfx.drawText(string.format("cos: %.4f", vec3D_dot(startVec, playdate.readAccelerometer())), 2, yPos + 15)
+        gfx.drawText(string.format("target: %.4f", tiltBack and TILT_TARGET_BACK or TILT_TARGET), 2, yPos + 30)
+        yPos += 45
     end
 	gfx.drawText(actions[currAction], 200, 120)
 end
 
 
-myGameSetUp()
+setup()
