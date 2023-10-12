@@ -20,6 +20,7 @@ import "CoreLibs/timer"
 local gfx <const> = playdate.graphics
 local mic <const> = playdate.sound.micinput
 local v2d <const> = playdate.geometry.vector2D
+local time <const> = playdate.timer
 
 local RAD_TO_DEG <const> = 180 / math.pi
 local DEG_TO_RAD <const> = math.pi / 180
@@ -62,9 +63,11 @@ local CRANK_DEADZONE_NORMAL <const> = 45
 local CRANK_DEADZONE_AFTER_CRANKED <const> = 360
 local TILT_TARGET <const> = math.cos(50 * DEG_TO_RAD)
 local TILT_TARGET_BACK <const> = math.cos(5 * DEG_TO_RAD)
+local ACTION_TIME_START <const> = 3000
 
 local currAction = actionCodes.A
 local actionDone = (currAction == nil)
+local actionTimer = nil;
 local score = 0
 local highscore = 0
 
@@ -100,6 +103,7 @@ local function actionFail()
     if (score > highscore) then
         highscore = score
     end
+    actionDone = true
     score = 0
 end
 
@@ -136,6 +140,9 @@ local function setup()
     math.randomseed(playdate.getSecondsSinceEpoch())
 
     playdate.startAccelerometer()
+
+    actionTimer = playdate.timer.new(ACTION_TIME_START, actionFail)
+    actionTimer.discardOnCompletion = false
 end
 
 function playdate.update()
@@ -184,6 +191,8 @@ function playdate.update()
         -- always reset crank value, because it is checked for succeed and fail
         crankValue = 0
         actionDone = false
+        actionTimer:reset()
+        -- actionTimer:start()
     end
 
     gfx.sprite.update()
@@ -196,13 +205,14 @@ function playdate.update()
     yPos += 40
     if (currAction == actionCodes.MICROPHONE) then
         gfx.drawText(string.format("level: %.0f", mic.getLevel() * 100), 2, yPos)
-        yPos += 15
+        yPos += 25
     elseif (currAction == actionCodes.TILT) then
         gfx.drawText(string.format("a3d: %.2f", math.acos(vec3D_dot(startVec, playdate.readAccelerometer())) * RAD_TO_DEG), 2, yPos)
         gfx.drawText(string.format("cos: %.4f", vec3D_dot(startVec, playdate.readAccelerometer())), 2, yPos + 15)
         gfx.drawText(string.format("target: %.4f", tiltBack and TILT_TARGET_BACK or TILT_TARGET), 2, yPos + 30)
-        yPos += 45
+        yPos += 55
     end
+    gfx.drawText(string.format("timer: %d", actionTimer.timeLeft), 2, yPos);
 	gfx.drawText(actions[currAction], 200, 120)
 end
 
