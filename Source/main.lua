@@ -11,6 +11,20 @@
 --    /
 --   v  y = 1
 
+-- TODO
+-- action: pass to other player
+-- action: speed up
+-- default time value for individual actions (i.e. more time for dock/undock)
+-- multiply by speed factor
+-- lose on lock
+-- game mode: last one cranking
+-- game mode: simon cranks
+-- title card
+-- background animations for actions
+-- sound for actions
+-- background music
+-- save highscore values
+
 
 import "CoreLibs/object"
 import "CoreLibs/graphics"
@@ -44,11 +58,7 @@ local actionCodes <const> = {
     CRANKED = 11,
     EOL = 12,
 }
--- pass to other player
--- speed up
 
--- default time value for individual actions (i.e. more time for dock/undock)
--- multiply by speed factor
 local actions <const> = {
     [actionCodes.LOSE] = "You lose! (Press A to restart)",
     [actionCodes.UP] = "Press UP",
