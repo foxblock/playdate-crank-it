@@ -103,7 +103,6 @@ local function actionFail()
     if (score > highscore) then
         highscore = score
     end
-    actionDone = true
     score = 0
 end
 
@@ -169,6 +168,10 @@ function playdate.update()
                 repeat
                     currAction = math.random(1, actionCodes.EOL - 1)
                 until (currAction ~= actionCodes.CRANK_UNDOCK)
+            end
+            -- Disable MICROPHONE action on simulator without microphone access
+            if (playdate.isSimulator and currAction == actionCodes.MICROPHONE) then
+                currAction = lastAction 
             end
         until (currAction ~= lastAction)
 
