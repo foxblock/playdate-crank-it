@@ -30,6 +30,7 @@ local font = gfx.font.new('images/font/whiteglove-stroked')
 assert(font)
 
 local actionCodes <const> = {
+    LOSE = 0,
     UP = 1,
     RIGHT = 2,
     DOWN = 3,
@@ -43,8 +44,13 @@ local actionCodes <const> = {
     CRANKED = 11,
     EOL = 12,
 }
+-- pass to other player
+-- speed up
 
+-- default time value for individual actions (i.e. more time for dock/undock)
+-- multiply by speed factor
 local actions <const> = {
+    [actionCodes.LOSE] = "You lose! (Press A to restart)",
     [actionCodes.UP] = "Press UP",
     [actionCodes.RIGHT] = "Press RIGHT",
     [actionCodes.DOWN] = "Press DOWN",
@@ -58,12 +64,12 @@ local actions <const> = {
     [actionCodes.CRANKED] = "Crank it!",
 }
 
-local CRANK_TARGET <const> = 3*360
+local CRANK_TARGET <const> = 2*360
 local CRANK_DEADZONE_NORMAL <const> = 45
 local CRANK_DEADZONE_AFTER_CRANKED <const> = 360
 local TILT_TARGET <const> = math.cos(50 * DEG_TO_RAD)
 local TILT_TARGET_BACK <const> = math.cos(5 * DEG_TO_RAD)
-local ACTION_TIME_START <const> = 3000
+local ACTION_TIME_START <const> = 4000
 
 local currAction = actionCodes.A
 local actionDone = (currAction == nil)
@@ -104,6 +110,8 @@ local function actionFail()
         highscore = score
     end
     score = 0
+    currAction = actionCodes.LOSE
+    actionTimer:pause()
 end
 
 local function setup()
@@ -144,6 +152,32 @@ local function setup()
     actionTimer.discardOnCompletion = false
 end
 
+local function render()
+    gfx.sprite.update()
+    playdate.timer.updateTimers()
+
+    gfx.fillRect(0, 240 - 20, 400 * actionTimer.timeLeft / actionTimer.duration, 20)
+
+	gfx.setFont(font)
+
+    local yPos = 2
+	gfx.drawText('score: '..score, 2, yPos)
+    gfx.drawText("HIGH: "..highscore, 2, yPos + 15)
+    yPos += 40
+    if (currAction == actionCodes.MICROPHONE) then
+        gfx.drawText(string.format("level: %.0f", mic.getLevel() * 100), 2, yPos)
+        yPos += 25
+    elseif (currAction == actionCodes.TILT) then
+        gfx.drawText(string.format("a3d: %.2f", math.acos(vec3D_dot(startVec, playdate.readAccelerometer())) * RAD_TO_DEG), 2, yPos)
+        gfx.drawText(string.format("cos: %.4f", vec3D_dot(startVec, playdate.readAccelerometer())), 2, yPos + 15)
+        gfx.drawText(string.format("target: %.4f", tiltBack and TILT_TARGET_BACK or TILT_TARGET), 2, yPos + 30)
+        yPos += 55
+    end
+
+    gfx.drawText(string.format("timer: %d", actionTimer.timeLeft), 2, yPos);
+	gfx.drawTextAligned(actions[currAction], 200, 120, kTextAlignment.center)
+end
+
 function playdate.update()
     if (currAction == actionCodes.MICROPHONE and mic.getLevel() > 0.5) then
         actionSuccess()
@@ -171,7 +205,7 @@ function playdate.update()
             end
             -- Disable MICROPHONE action on simulator without microphone access
             if (playdate.isSimulator and currAction == actionCodes.MICROPHONE) then
-                currAction = lastAction 
+                currAction = lastAction
             end
         until (currAction ~= lastAction)
 
@@ -195,28 +229,10 @@ function playdate.update()
         crankValue = 0
         actionDone = false
         actionTimer:reset()
-        -- actionTimer:start()
+        actionTimer:start()
     end
 
-    gfx.sprite.update()
-    playdate.timer.updateTimers()
-
-	gfx.setFont(font)
-    local yPos = 2
-	gfx.drawText('score: '..score, 2, yPos)
-    gfx.drawText("HIGH: "..highscore, 2, yPos + 15)
-    yPos += 40
-    if (currAction == actionCodes.MICROPHONE) then
-        gfx.drawText(string.format("level: %.0f", mic.getLevel() * 100), 2, yPos)
-        yPos += 25
-    elseif (currAction == actionCodes.TILT) then
-        gfx.drawText(string.format("a3d: %.2f", math.acos(vec3D_dot(startVec, playdate.readAccelerometer())) * RAD_TO_DEG), 2, yPos)
-        gfx.drawText(string.format("cos: %.4f", vec3D_dot(startVec, playdate.readAccelerometer())), 2, yPos + 15)
-        gfx.drawText(string.format("target: %.4f", tiltBack and TILT_TARGET_BACK or TILT_TARGET), 2, yPos + 30)
-        yPos += 55
-    end
-    gfx.drawText(string.format("timer: %d", actionTimer.timeLeft), 2, yPos);
-	gfx.drawText(actions[currAction], 200, 120)
+    render()
 end
 
 -- CALLBACKS
@@ -254,7 +270,7 @@ function playdate.leftButtonDown()
 end
 
 function playdate.AButtonDown()
-    if (currAction == actionCodes.A) then
+    if (currAction == actionCodes.A or currAction == actionCodes.LOSE) then
         actionSuccess()
     else
         actionFail()
