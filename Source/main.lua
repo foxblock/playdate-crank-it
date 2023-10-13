@@ -11,19 +11,19 @@
 --    /
 --   v  y = 1
 
--- TODO
--- action: pass to other player
--- action: speed up
--- default time value for individual actions (i.e. more time for dock/undock)
--- multiply by speed factor
--- lose on lock
--- game mode: last one cranking
--- game mode: simon cranks
--- title card
--- background animations for actions
--- sound for actions
--- background music
--- save highscore values
+------ TODO
+-- [X] action: pass to other player
+-- [X] action: speed up
+-- [X] default time value for individual actions (i.e. more time for dock/undock)
+-- [X] multiply by speed factor
+-- [X] lose on lock
+-- [ ] game mode: last one cranking
+-- [ ] game mode: simon cranks
+-- [ ] title card
+-- [ ] background animations for actions
+-- [ ] sound for actions
+-- [ ] background music
+-- [ ] save highscore values
 
 
 import "CoreLibs/object"
@@ -34,7 +34,7 @@ import "CoreLibs/timer"
 local gfx <const> = playdate.graphics
 local mic <const> = playdate.sound.micinput
 local v2d <const> = playdate.geometry.vector2D
-local time <const> = playdate.timer
+local screen <const> = playdate.display
 
 local RAD_TO_DEG <const> = 180 / math.pi
 local DEG_TO_RAD <const> = math.pi / 180
@@ -53,25 +53,33 @@ local actionCodes <const> = {
     B = 6,
     MICROPHONE = 7,
     TILT = 8,
-    CRANK_UNDOCK = 9,
-    CRANK_DOCK = 10,
-    CRANKED = 11,
-    EOL = 12,
+    PASS_PLAYER = 9,
+    CRANK_UNDOCK = 10,
+    CRANK_DOCK = 11,
+    CRANKED = 12,
+    EOL = 13, ----
+    SPEED_UP = 14,
 }
 
+local timeFast <const> = { 4000, 3000, 2000, 1300, 700 }
+local timeNormal <const> = { 4000, 3000, 2200, 1500, 1000 }
+local timeSlow <const> = { 4000, 3200, 2500, 2000, 1500 }
+
 local actions <const> = {
-    [actionCodes.LOSE] = "You lose! (Press A to restart)",
-    [actionCodes.UP] = "Press UP",
-    [actionCodes.RIGHT] = "Press RIGHT",
-    [actionCodes.DOWN] = "Press DOWN",
-    [actionCodes.LEFT] = "Press LEFT",
-    [actionCodes.A] = "Press A",
-    [actionCodes.B] = "Press B",
-    [actionCodes.MICROPHONE] = "Blow in the microphone",
-    [actionCodes.TILT] = "Tilt it",
-    [actionCodes.CRANK_UNDOCK] = "Undock the Crank",
-    [actionCodes.CRANK_DOCK] = "Dock the Crank",
-    [actionCodes.CRANKED] = "Crank it!",
+    [actionCodes.LOSE] = { msg = "You lose! (Press A to restart)", time = {} },
+    [actionCodes.UP] = { msg = "Press UP", time = timeFast },
+    [actionCodes.RIGHT] = { msg = "Press RIGHT", time = timeFast },
+    [actionCodes.DOWN] = { msg = "Press DOWN", time = timeFast },
+    [actionCodes.LEFT] = { msg = "Press LEFT", time = timeFast },
+    [actionCodes.A] = { msg = "Press A", time = timeFast },
+    [actionCodes.B] = { msg = "Press B", time = timeFast },
+    [actionCodes.MICROPHONE] = { msg = "Blow in the microphone", time = timeFast },
+    [actionCodes.TILT] = { msg = "Tilt it", time = timeNormal },
+    [actionCodes.PASS_PLAYER] = { msg = "Pass it", time = { 3000, 2500, 2000, 1500, 1500 } },
+    [actionCodes.CRANK_UNDOCK] = { msg = "Undock the Crank", time = timeNormal },
+    [actionCodes.CRANK_DOCK] = { msg = "Dock the Crank", time = timeSlow },
+    [actionCodes.CRANKED] = { msg = "Crank it!", time = timeSlow },
+    [actionCodes.SPEED_UP] = { msg = "SPEED UP", time = { 2000, 2000, 2000, 2000, 2000 } }
 }
 
 local CRANK_TARGET <const> = 2*360
@@ -79,11 +87,13 @@ local CRANK_DEADZONE_NORMAL <const> = 45
 local CRANK_DEADZONE_AFTER_CRANKED <const> = 360
 local TILT_TARGET <const> = math.cos(50 * DEG_TO_RAD)
 local TILT_TARGET_BACK <const> = math.cos(5 * DEG_TO_RAD)
-local ACTION_TIME_START <const> = 4000
+local SPEED_UP_INTERVAL <const> = 10
+local MAX_SPEED_LEVEL <const> = 5
 
 local currAction = actionCodes.A
 local actionDone = (currAction == nil)
 local actionTimer = nil;
+local speedLevel = 1
 local score = 0
 local highscore = 0
 
@@ -124,6 +134,18 @@ local function actionFail()
     actionTimer:pause()
 end
 
+local function actionTimerEnd()
+    if (currAction == actionCodes.PASS_PLAYER) then
+        actionSuccess()
+        return
+    elseif (currAction == actionCodes.SPEED_UP) then
+        actionDone = true
+        return
+    end
+
+    actionFail()
+end
+
 local function setup()
     -- Set up the player sprite.
     -- The :setCenter() call specifies that the sprite will be anchored at its center.
@@ -158,7 +180,9 @@ local function setup()
 
     playdate.startAccelerometer()
 
-    actionTimer = playdate.timer.new(ACTION_TIME_START, actionFail)
+    playdate.setCrankSoundsDisabled(true)
+
+    actionTimer = playdate.timer.new(actions[currAction].time[speedLevel], actionTimerEnd)
     actionTimer.discardOnCompletion = false
 end
 
@@ -166,12 +190,12 @@ local function render()
     gfx.sprite.update()
     playdate.timer.updateTimers()
 
-    gfx.fillRect(0, 240 - 20, 400 * actionTimer.timeLeft / actionTimer.duration, 20)
+    gfx.fillRect(0, screen.getHeight() - 20, screen.getWidth() * actionTimer.timeLeft / actionTimer.duration, 20)
 
-	gfx.setFont(font)
+    gfx.setFont(font)
 
     local yPos = 2
-	gfx.drawText('score: '..score, 2, yPos)
+    gfx.drawText('score: '..score, 2, yPos)
     gfx.drawText("HIGH: "..highscore, 2, yPos + 15)
     yPos += 40
     if (currAction == actionCodes.MICROPHONE) then
@@ -185,7 +209,7 @@ local function render()
     end
 
     gfx.drawText(string.format("timer: %d", actionTimer.timeLeft), 2, yPos);
-	gfx.drawTextAligned(actions[currAction], 200, 120, kTextAlignment.center)
+    gfx.drawTextAligned(actions[currAction].msg, 200, 120, kTextAlignment.center)
 end
 
 function playdate.update()
@@ -203,9 +227,17 @@ function playdate.update()
         end
     end
 
+    -- other actions are handled in callbacks
+
     if (actionDone) then
         local lastAction = currAction
-        repeat
+
+        if (speedLevel < MAX_SPEED_LEVEL and score == SPEED_UP_INTERVAL * speedLevel) then
+            currAction = actionCodes.SPEED_UP
+            speedLevel += 1
+        end
+
+        while (currAction == lastAction) do
             if (playdate.isCrankDocked()) then
                 currAction = math.random(1, actionCodes.CRANK_UNDOCK)
             else
@@ -217,12 +249,14 @@ function playdate.update()
             if (playdate.isSimulator and currAction == actionCodes.MICROPHONE) then
                 currAction = lastAction
             end
-        until (currAction ~= lastAction)
+        end
 
         -- increase deadzone after CRANKED action, so turning the crank
         -- a bit too far does not immediately fail the player
         if (lastAction == actionCodes.CRANKED) then
             crankDeadzone = CRANK_DEADZONE_AFTER_CRANKED
+        else
+            crankDeadzone = CRANK_DEADZONE_NORMAL
         end
 
         if (currAction == actionCodes.MICROPHONE) then
@@ -238,6 +272,7 @@ function playdate.update()
         -- always reset crank value, because it is checked for succeed and fail
         crankValue = 0
         actionDone = false
+        actionTimer.duration = actions[currAction].time[speedLevel]
         actionTimer:reset()
         actionTimer:start()
     end
@@ -318,6 +353,10 @@ function playdate.cranked(change, acceleratedChange)
     elseif (currAction ~= actionCodes.CRANKED and crankValue >= crankDeadzone) then
         actionFail()
     end
+end
+
+function playdate.deviceWillLock()
+    actionFail()
 end
 
 -- MAIN
