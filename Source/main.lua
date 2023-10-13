@@ -23,7 +23,8 @@
 -- [ ] background animations for actions
 -- [ ] sound for actions
 -- [ ] background music
--- [ ] save highscore values
+-- [X] save highscore values
+-- [ ] options to disable accelerometer and mic based actions
 
 
 import "CoreLibs/object"
@@ -38,10 +39,6 @@ local screen <const> = playdate.display
 
 local RAD_TO_DEG <const> = 180 / math.pi
 local DEG_TO_RAD <const> = math.pi / 180
-
-local playerSprite = nil
-local font = gfx.font.new('images/font/whiteglove-stroked')
-assert(font)
 
 local actionCodes <const> = {
     LOSE = 0,
@@ -90,12 +87,18 @@ local TILT_TARGET_BACK <const> = math.cos(5 * DEG_TO_RAD)
 local SPEED_UP_INTERVAL <const> = 10
 local MAX_SPEED_LEVEL <const> = 5
 
+local saveData = {
+    highscore = 0
+}
+
+local font = gfx.font.new('images/font/whiteglove-stroked')
+assert(font)
+
 local currAction = actionCodes.A
 local actionDone = (currAction == nil)
 local actionTimer = nil;
 local speedLevel = 1
 local score = 0
-local highscore = 0
 
 local crankValue = 0
 local crankDeadzone = CRANK_DEADZONE_NORMAL
@@ -126,12 +129,14 @@ local function actionSuccess()
 end
 
 local function actionFail()
-    if (score > highscore) then
-        highscore = score
+    if (score > saveData.highscore) then
+        saveData.highscore = score
     end
     score = 0
     currAction = actionCodes.LOSE
     actionTimer:pause()
+
+    playdate.datastore.write(saveData)
 end
 
 local function actionTimerEnd()
@@ -165,8 +170,8 @@ local function setup()
     --       and call :setZIndex() with some low number so the background stays behind
     --       your other sprites.
 
-    local backgroundImage = gfx.image.new( "images/background" )
-    assert( backgroundImage )
+    local backgroundImage = gfx.image.new("images/background")
+    assert(backgroundImage)
 
     gfx.sprite.setBackgroundDrawingCallback(
         function( x, y, width, height )
@@ -184,6 +189,11 @@ local function setup()
 
     actionTimer = playdate.timer.new(actions[currAction].time[speedLevel], actionTimerEnd)
     actionTimer.discardOnCompletion = false
+
+    local loadData = playdate.datastore.read()
+    if (loadData ~= nil) then
+        saveData = loadData
+    end
 end
 
 local function render()
@@ -196,7 +206,7 @@ local function render()
 
     local yPos = 2
     gfx.drawText('score: '..score, 2, yPos)
-    gfx.drawText("HIGH: "..highscore, 2, yPos + 15)
+    gfx.drawText("HIGH: "..saveData.highscore, 2, yPos + 15)
     yPos += 40
     if (currAction == actionCodes.MICROPHONE) then
         gfx.drawText(string.format("level: %.0f", mic.getLevel() * 100), 2, yPos)
