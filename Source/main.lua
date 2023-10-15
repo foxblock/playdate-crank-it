@@ -42,20 +42,16 @@ local DEG_TO_RAD <const> = math.pi / 180
 
 local actionCodes <const> = {
     LOSE = 0,
-    UP = 1,
-    RIGHT = 2,
-    DOWN = 3,
-    LEFT = 4,
-    A = 5,
-    B = 6,
-    MICROPHONE = 7,
-    TILT = 8,
-    PASS_PLAYER = 9,
-    CRANK_UNDOCK = 10,
-    CRANK_DOCK = 11,
-    CRANKED = 12,
-    EOL = 13, ----
-    SPEED_UP = 14,
+    DIRECTION = 1,
+    BUTTON = 2,
+    MICROPHONE = 3,
+    TILT = 4,
+    PASS_PLAYER = 5,
+    CRANK_UNDOCK = 6,
+    CRANK_DOCK = 7,
+    CRANKED = 8,
+    EOL = 9, ----
+    SPEED_UP = 10,
 }
 
 local timeFast <const> = { 4000, 3000, 2000, 1300, 700 }
@@ -64,21 +60,18 @@ local timeSlow <const> = { 4000, 3200, 2500, 2000, 1500 }
 
 local actions <const> = {
     [actionCodes.LOSE] = { msg = "You lose! (Press A to restart)", time = {} },
-    [actionCodes.UP] = { msg = "Press UP", time = timeFast },
-    [actionCodes.RIGHT] = { msg = "Press RIGHT", time = timeFast },
-    [actionCodes.DOWN] = { msg = "Press DOWN", time = timeFast },
-    [actionCodes.LEFT] = { msg = "Press LEFT", time = timeFast },
-    [actionCodes.A] = { msg = "Press A", time = timeFast },
-    [actionCodes.B] = { msg = "Press B", time = timeFast },
-    [actionCodes.MICROPHONE] = { msg = "Blow in the microphone", time = timeFast },
-    [actionCodes.TILT] = { msg = "Tilt it", time = timeNormal },
-    [actionCodes.PASS_PLAYER] = { msg = "Pass it", time = { 3000, 2500, 2000, 1500, 1500 } },
-    [actionCodes.CRANK_UNDOCK] = { msg = "Undock the Crank", time = timeNormal },
-    [actionCodes.CRANK_DOCK] = { msg = "Dock the Crank", time = timeSlow },
+    [actionCodes.DIRECTION] = { msg = "Move it!", time = timeFast },
+    [actionCodes.BUTTON] = { msg = "Press it!", time = timeFast },
+    [actionCodes.MICROPHONE] = { msg = "Shout it!", time = timeFast },
+    [actionCodes.TILT] = { msg = "Tilt it!", time = timeNormal },
+    [actionCodes.PASS_PLAYER] = { msg = "Pass it!", time = { 3000, 2500, 2000, 1500, 1500 } },
+    [actionCodes.CRANK_UNDOCK] = { msg = "Undock it!", time = timeNormal },
+    [actionCodes.CRANK_DOCK] = { msg = "Dock it!", time = timeSlow },
     [actionCodes.CRANKED] = { msg = "Crank it!", time = timeSlow },
-    [actionCodes.SPEED_UP] = { msg = "SPEED UP", time = { 2000, 2000, 2000, 2000, 2000 } }
+    [actionCodes.SPEED_UP] = { msg = "SPEED UP", time = { 4000, 3000, 3000, 2000, 2000 } }
 }
 
+local MIC_LEVEL_TARGET <const> = 0.25 -- 0..1
 local CRANK_TARGET <const> = 2*360
 local CRANK_DEADZONE_NORMAL <const> = 45
 local CRANK_DEADZONE_AFTER_CRANKED <const> = 360
@@ -94,7 +87,7 @@ local saveData = {
 local font = gfx.font.new('images/font/whiteglove-stroked')
 assert(font)
 
-local currAction = actionCodes.A
+local currAction = actionCodes.BUTTON
 local actionDone = (currAction == nil)
 local actionTimer = nil;
 local speedLevel = 1
@@ -223,7 +216,7 @@ local function render()
 end
 
 function playdate.update()
-    if (currAction == actionCodes.MICROPHONE and mic.getLevel() > 0.5) then
+    if (currAction == actionCodes.MICROPHONE and mic.getLevel() >= MIC_LEVEL_TARGET) then
         actionSuccess()
     end
 
@@ -293,7 +286,7 @@ end
 -- CALLBACKS
 
 function playdate.upButtonDown()
-    if (currAction == actionCodes.UP) then
+    if (currAction == actionCodes.DIRECTION) then
         actionSuccess()
     else
         actionFail()
@@ -301,7 +294,7 @@ function playdate.upButtonDown()
 end
 
 function playdate.rightButtonDown()
-    if (currAction == actionCodes.RIGHT) then
+    if (currAction == actionCodes.DIRECTION) then
         actionSuccess()
     else
         actionFail()
@@ -309,7 +302,7 @@ function playdate.rightButtonDown()
 end
 
 function playdate.downButtonDown()
-    if (currAction == actionCodes.DOWN) then
+    if (currAction == actionCodes.DIRECTION) then
         actionSuccess()
     else
         actionFail()
@@ -317,7 +310,7 @@ function playdate.downButtonDown()
 end
 
 function playdate.leftButtonDown()
-    if (currAction == actionCodes.LEFT) then
+    if (currAction == actionCodes.DIRECTION) then
         actionSuccess()
     else
         actionFail()
@@ -325,7 +318,7 @@ function playdate.leftButtonDown()
 end
 
 function playdate.AButtonDown()
-    if (currAction == actionCodes.A or currAction == actionCodes.LOSE) then
+    if (currAction == actionCodes.BUTTON or currAction == actionCodes.LOSE) then
         actionSuccess()
     else
         actionFail()
@@ -333,7 +326,7 @@ function playdate.AButtonDown()
 end
 
 function playdate.BButtonDown()
-    if (currAction == actionCodes.B) then
+    if (currAction == actionCodes.BUTTON) then
         actionSuccess()
     else
         actionFail()
