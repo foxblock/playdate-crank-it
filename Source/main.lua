@@ -36,6 +36,7 @@ local gfx <const> = playdate.graphics
 local mic <const> = playdate.sound.micinput
 local v2d <const> = playdate.geometry.vector2D
 local screen <const> = playdate.display
+local snd <const> = playdate.sound.sampleplayer
 
 local RAD_TO_DEG <const> = 180 / math.pi
 local DEG_TO_RAD <const> = math.pi / 180
@@ -59,16 +60,56 @@ local timeNormal <const> = { 4000, 3000, 2200, 1500, 1000 }
 local timeSlow <const> = { 4000, 3200, 2500, 2000, 1500 }
 
 local actions <const> = {
-    [actionCodes.LOSE] = { msg = "You lose! (Press A to restart)", time = {} },
-    [actionCodes.DIRECTION] = { msg = "Move it!", time = timeFast },
-    [actionCodes.BUTTON] = { msg = "Press it!", time = timeFast },
-    [actionCodes.MICROPHONE] = { msg = "Shout it!", time = timeFast },
-    [actionCodes.TILT] = { msg = "Tilt it!", time = timeNormal },
-    [actionCodes.PASS_PLAYER] = { msg = "Pass it!", time = { 3000, 2500, 2000, 1500, 1500 } },
-    [actionCodes.CRANK_UNDOCK] = { msg = "Undock it!", time = timeNormal },
-    [actionCodes.CRANK_DOCK] = { msg = "Dock it!", time = timeSlow },
-    [actionCodes.CRANKED] = { msg = "Crank it!", time = timeSlow },
-    [actionCodes.SPEED_UP] = { msg = "SPEED UP", time = { 4000, 3000, 3000, 2000, 2000 } }
+    [actionCodes.LOSE] = {
+        msg = "You lose! (Press A to restart)",
+        time = {},
+        snd = snd.new("sounds/lose")
+    },
+    [actionCodes.DIRECTION] = {
+        msg = "Move it!",
+        time = timeFast,
+        snd = snd.new("sounds/move")
+    },
+    [actionCodes.BUTTON] = {
+        msg = "Press it!",
+        time = timeFast,
+        snd = snd.new("sounds/press")
+    },
+    [actionCodes.MICROPHONE] = {
+        msg = "Shout it!",
+        time = timeFast,
+        snd = snd.new("sounds/shout")
+    },
+    [actionCodes.TILT] = {
+        msg = "Tilt it!",
+        time = timeNormal,
+        snd = snd.new("sounds/tilt")
+    },
+    [actionCodes.PASS_PLAYER] = {
+        msg = "Pass it!",
+        time = { 3000, 2500, 2000, 1500, 1500 },
+        snd = snd.new("sounds/pass")
+    },
+    [actionCodes.CRANK_UNDOCK] = {
+        msg = "Undock it!",
+        time = timeNormal,
+        snd = snd.new("sounds/undock")
+    },
+    [actionCodes.CRANK_DOCK] = {
+        msg = "Dock it!",
+        time = timeSlow,
+        snd = snd.new("sounds/dock")
+    },
+    [actionCodes.CRANKED] = {
+        msg = "Crank it!",
+        time = timeSlow,
+        snd = snd.new("sounds/crank")
+    },
+    [actionCodes.SPEED_UP] = {
+        msg = "SPEED UP",
+        time = { 4000, 3000, 3000, 2000, 2000 },
+        snd = snd.new("sounds/speed")
+    }
 }
 
 local MIC_LEVEL_TARGET <const> = 0.25 -- 0..1
@@ -84,7 +125,7 @@ local saveData = {
     highscore = 0
 }
 
-local font = gfx.font.new('images/font/whiteglove-stroked')
+local font = gfx.font.new("images/font/whiteglove-stroked")
 assert(font)
 
 local currAction = actionCodes.BUTTON
@@ -222,7 +263,7 @@ function playdate.update()
 
     if (currAction == actionCodes.TILT) then
         local cos_ang = vec3D_dot(startVec, playdate.readAccelerometer())
-        if (tiltBack and cos_ang >= TILT_TARGET_BACK) then 
+        if (tiltBack and cos_ang >= TILT_TARGET_BACK) then
             tiltBack = false
             actionSuccess()
         elseif (not tiltBack and cos_ang <= TILT_TARGET) then
@@ -271,6 +312,8 @@ function playdate.update()
         if (currAction == actionCodes.TILT) then
             startVec = { vec3D_norm(playdate.readAccelerometer()) }
         end
+
+        actions[currAction].snd:play(1)
 
         -- always reset crank value, because it is checked for succeed and fail
         crankValue = 0
