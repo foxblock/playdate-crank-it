@@ -418,6 +418,11 @@ function playdate.crankUndocked()
 end
 
 function playdate.cranked(change, acceleratedChange)
+    -- Ignore when docking, since crank may need to be moved to do so
+    if (currAction == actionCodes.CRANK_DOCK) then
+        return
+    end
+
     crankValue += math.abs(change)
     if (currAction == actionCodes.CRANKED and crankValue >= CRANK_TARGET) then
         actionSuccess()
