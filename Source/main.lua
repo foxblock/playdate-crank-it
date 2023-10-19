@@ -21,7 +21,7 @@
 -- [ ] game mode: simon cranks
 -- [ ] title card
 -- [ ] background animations for actions
--- [ ] sound for actions
+-- [X] sound for actions
 -- [ ] background music
 -- [X] save highscore values
 -- [ ] options to disable accelerometer and mic based actions
@@ -120,6 +120,7 @@ local TILT_TARGET <const> = math.cos(50 * DEG_TO_RAD)
 local TILT_TARGET_BACK <const> = math.cos(5 * DEG_TO_RAD)
 local SPEED_UP_INTERVAL <const> = 10
 local MAX_SPEED_LEVEL <const> = 5
+local TRANSITION_TIME <const> = 500
 
 local saveData = {
     highscore = 0
@@ -179,6 +180,7 @@ local function actionFail()
         saveData.highscore = score
     end
     score = 0
+    speedLevel = 1
     currAction = actionCodes.LOSE
     actionTimer:pause()
     soundLose:play(1)
@@ -187,7 +189,7 @@ end
 
 local function actionTimerEnd()
     if (currAction == actionCodes.PASS_PLAYER) then
-        actionSuccess()
+        actionDone = true
         return
     elseif (currAction == actionCodes.SPEED_UP) then
         actionDone = true
@@ -239,7 +241,7 @@ local function setup()
 
     actionTimer = playdate.timer.new(actions[currAction].time[speedLevel], actionTimerEnd)
     actionTimer.discardOnCompletion = false
-    actionTransitionTimer = playdate.timer.new(500, actionTransitionEnd)
+    actionTransitionTimer = playdate.timer.new(TRANSITION_TIME, actionTransitionEnd)
     actionTransitionTimer.discardOnCompletion = false
     actionTransitionTimer:pause()
 
