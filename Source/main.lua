@@ -87,7 +87,7 @@ local actions <const> = {
     },
     [actionCodes.PASS_PLAYER] = {
         msg = "Pass it!",
-        time = { 3000, 2500, 2000, 1500, 1500 },
+        time = { 3000, 3000, 2500, 2500, 2000 },
         snd = snd.new("sounds/pass")
     },
     [actionCodes.CRANK_UNDOCK] = {
@@ -107,7 +107,7 @@ local actions <const> = {
     },
     [actionCodes.SPEED_UP] = {
         msg = "SPEED UP",
-        time = { 4000, 3000, 3000, 2000, 2000 },
+        time = { 2000, 2000, 2000, 2000, 2000 },
         snd = snd.new("sounds/speed")
     }
 }
@@ -126,11 +126,14 @@ local saveData = {
 }
 
 local font = gfx.font.new("images/font/whiteglove-stroked")
-assert(font)
+local soundSuccess = snd.new("sounds/success")
+local soundLose = snd.new("sounds/lose")
 
 local currAction = actionCodes.BUTTON
 local actionDone = (currAction == nil)
-local actionTimer = nil;
+local actionTransitionState = -1 -- -1 not started, 0 running, 1 done
+local actionTimer = nil
+local actionTransitionTimer = nil
 local speedLevel = 1
 local score = 0
 
@@ -158,18 +161,27 @@ end
 -- MAIN GAME
 
 local function actionSuccess()
+    if (actionDone) then
+        return
+    end
+
     actionDone = true
     score += 1
+    soundSuccess:play(1)
 end
 
 local function actionFail()
+    if (actionDone or currAction == actionCodes.LOSE) then
+        return
+    end
+
     if (score > saveData.highscore) then
         saveData.highscore = score
     end
     score = 0
     currAction = actionCodes.LOSE
     actionTimer:pause()
-
+    soundLose:play(1)
     playdate.datastore.write(saveData)
 end
 
@@ -183,6 +195,10 @@ local function actionTimerEnd()
     end
 
     actionFail()
+end
+
+local function actionTransitionEnd()
+    actionTransitionState = 1
 end
 
 local function setup()
@@ -223,6 +239,9 @@ local function setup()
 
     actionTimer = playdate.timer.new(actions[currAction].time[speedLevel], actionTimerEnd)
     actionTimer.discardOnCompletion = false
+    actionTransitionTimer = playdate.timer.new(500, actionTransitionEnd)
+    actionTransitionTimer.discardOnCompletion = false
+    actionTransitionTimer:pause()
 
     local loadData = playdate.datastore.read()
     if (loadData ~= nil) then
@@ -270,10 +289,15 @@ function playdate.update()
             tiltBack = true
         end
     end
-
     -- other actions are handled in callbacks
 
-    if (actionDone) then
+    if (actionDone and actionTransitionState == -1) then
+        actionTransitionTimer:reset()
+        actionTransitionTimer:start()
+        actionTimer:pause()
+        actionTransitionState = 0
+    end
+    if (actionDone and actionTransitionState == 1) then
         local lastAction = currAction
 
         if (speedLevel < MAX_SPEED_LEVEL and score == SPEED_UP_INTERVAL * speedLevel) then
@@ -318,6 +342,7 @@ function playdate.update()
         -- always reset crank value, because it is checked for succeed and fail
         crankValue = 0
         actionDone = false
+        actionTransitionState = -1
         actionTimer.duration = actions[currAction].time[speedLevel]
         actionTimer:reset()
         actionTimer:start()
