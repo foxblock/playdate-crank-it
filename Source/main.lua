@@ -179,8 +179,6 @@ local function actionFail()
     if (score > saveData.highscore) then
         saveData.highscore = score
     end
-    score = 0
-    speedLevel = 1
     currAction = actionCodes.LOSE
     actionTimer:pause()
     soundLose:play(1)
@@ -388,7 +386,12 @@ function playdate.leftButtonDown()
 end
 
 function playdate.AButtonDown()
-    if (currAction == actionCodes.BUTTON or currAction == actionCodes.LOSE) then
+    if (currAction == actionCodes.LOSE) then
+        score = 0
+        speedLevel = 1
+        actionDone = true
+        actionTransitionState = 1
+    elseif (currAction == actionCodes.BUTTON) then
         actionSuccess()
     else
         actionFail()
