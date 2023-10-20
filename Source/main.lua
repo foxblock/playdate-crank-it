@@ -31,6 +31,7 @@ import "CoreLibs/object"
 import "CoreLibs/graphics"
 import "CoreLibs/sprites"
 import "CoreLibs/timer"
+import "CoreLibs/animation"
 
 local gfx <const> = playdate.graphics
 local mic <const> = playdate.sound.micinput
@@ -63,52 +64,72 @@ local actions <const> = {
     [actionCodes.LOSE] = {
         msg = "You lose! (Press A to restart)",
         time = {},
-        snd = snd.new("sounds/lose")
+        snd = snd.new("sounds/lose"),
+        img = gfx.image.new("images/actions/lose"),
+        ani = nil
     },
     [actionCodes.DIRECTION] = {
         msg = "Move it!",
         time = timeFast,
-        snd = snd.new("sounds/move")
+        snd = snd.new("sounds/move"),
+        img = nil,
+        ani = gfx.imagetable.new("images/actions/move")
     },
     [actionCodes.BUTTON] = {
         msg = "Press it!",
         time = timeFast,
-        snd = snd.new("sounds/press")
+        snd = snd.new("sounds/press"),
+        img = nil,
+        ani = gfx.imagetable.new("images/actions/press")
     },
     [actionCodes.MICROPHONE] = {
         msg = "Shout it!",
         time = timeFast,
-        snd = snd.new("sounds/shout")
+        snd = snd.new("sounds/shout"),
+        img = gfx.image.new("images/actions/shout"),
+        ani = nil
     },
     [actionCodes.TILT] = {
         msg = "Tilt it!",
         time = timeNormal,
-        snd = snd.new("sounds/tilt")
+        snd = snd.new("sounds/tilt"),
+        img = nil,
+        ani = gfx.imagetable.new("images/actions/tilt")
     },
     [actionCodes.PASS_PLAYER] = {
         msg = "Pass it!",
         time = { 3000, 3000, 2500, 2500, 2000 },
-        snd = snd.new("sounds/pass")
+        snd = snd.new("sounds/pass"),
+        img = nil,
+        ani = nil
     },
     [actionCodes.CRANK_UNDOCK] = {
         msg = "Undock it!",
         time = timeNormal,
-        snd = snd.new("sounds/undock")
+        snd = snd.new("sounds/undock"),
+        img = nil,
+        ani = nil
     },
     [actionCodes.CRANK_DOCK] = {
         msg = "Dock it!",
         time = timeSlow,
-        snd = snd.new("sounds/dock")
+        snd = snd.new("sounds/dock"),
+        img = nil,
+        ani = nil
     },
     [actionCodes.CRANKED] = {
         msg = "Crank it!",
         time = timeSlow,
-        snd = snd.new("sounds/crank")
+        snd = snd.new("sounds/crank"),
+        img = nil,
+        ani = nil
     },
     [actionCodes.SPEED_UP] = {
         msg = "SPEED UP",
         time = { 2000, 2000, 2000, 2000, 2000 },
-        snd = snd.new("sounds/speed")
+        snd = snd.new("sounds/speed"),
+        img = nil,
+        ani = nil
     }
 }
 
@@ -120,7 +141,8 @@ local TILT_TARGET <const> = math.cos(50 * DEG_TO_RAD)
 local TILT_TARGET_BACK <const> = math.cos(5 * DEG_TO_RAD)
 local SPEED_UP_INTERVAL <const> = 10
 local MAX_SPEED_LEVEL <const> = 5
-local TRANSITION_TIME <const> = 500
+local TRANSITION_TIME_MS <const> = 500
+local ACTION_ANIMATION_FRAME_TIME_MS <const> = 500
 
 local saveData = {
     highscore = 0
@@ -142,6 +164,8 @@ local crankValue = 0
 local crankDeadzone = CRANK_DEADZONE_NORMAL
 local startVec = nil
 local tiltBack = false
+
+local lastAnimationFrame = 1
 
 -- UTILITY
 
@@ -181,6 +205,7 @@ local function actionFail()
     end
     currAction = actionCodes.LOSE
     actionTimer:pause()
+    playdate.graphics.sprite.redrawBackground()
     soundLose:play(1)
     playdate.datastore.write(saveData)
 end
@@ -223,11 +248,23 @@ local function setup()
     local backgroundImage = gfx.image.new("images/background")
     assert(backgroundImage)
 
+    -- set up animations
+    for k,v in pairs(actions) do
+        if (v.img ~= nil) then goto continue end
+
+        if (v.ani == nil) then
+            v.img = backgroundImage
+        else
+            v.img = gfx.animation.loop.new(ACTION_ANIMATION_FRAME_TIME_MS, v.ani, true)
+        end
+        ::continue::
+    end
+
     gfx.sprite.setBackgroundDrawingCallback(
         function( x, y, width, height )
             -- x,y,width,height is the updated area in sprite-local coordinates
             -- The clip rect is already set to this area, so we don't need to set it ourselves
-            backgroundImage:draw( 0, 0 )
+            actions[currAction].img:draw(0,0)
         end
     )
 
@@ -239,7 +276,7 @@ local function setup()
 
     actionTimer = playdate.timer.new(actions[currAction].time[speedLevel], actionTimerEnd)
     actionTimer.discardOnCompletion = false
-    actionTransitionTimer = playdate.timer.new(TRANSITION_TIME, actionTransitionEnd)
+    actionTransitionTimer = playdate.timer.new(TRANSITION_TIME_MS, actionTransitionEnd)
     actionTransitionTimer.discardOnCompletion = false
     actionTransitionTimer:pause()
 
@@ -250,8 +287,12 @@ local function setup()
 end
 
 local function render()
+    if (actions[currAction].ani ~= nil and lastAnimationFrame ~= actions[currAction].img.frame) then
+        lastAnimationFrame = actions[currAction].img.frame
+        playdate.graphics.sprite.redrawBackground()
+    end
+
     gfx.sprite.update()
-    playdate.timer.updateTimers()
 
     if (not actionDone) then
         gfx.fillRect(0, screen.getHeight() - 20, screen.getWidth() * actionTimer.timeLeft / actionTimer.duration, 20)
@@ -282,6 +323,8 @@ local function render()
 end
 
 function playdate.update()
+    playdate.timer.updateTimers()
+
     if (currAction == actionCodes.MICROPHONE and mic.getLevel() >= MIC_LEVEL_TARGET) then
         actionSuccess()
     end
@@ -343,6 +386,11 @@ function playdate.update()
             startVec = { vec3D_norm(playdate.readAccelerometer()) }
         end
 
+        lastAnimationFrame = 1
+        if (actions[currAction].ani ~= nil) then
+            actions[currAction].img.frame = 1
+        end
+        playdate.graphics.sprite.redrawBackground()
         actions[currAction].snd:play(1)
 
         -- always reset crank value, because it is checked for succeed and fail
