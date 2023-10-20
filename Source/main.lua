@@ -253,7 +253,13 @@ local function render()
     gfx.sprite.update()
     playdate.timer.updateTimers()
 
-    gfx.fillRect(0, screen.getHeight() - 20, screen.getWidth() * actionTimer.timeLeft / actionTimer.duration, 20)
+    if (not actionDone) then
+        gfx.fillRect(0, screen.getHeight() - 20, screen.getWidth() * actionTimer.timeLeft / actionTimer.duration, 20)
+    elseif (actionTransitionState >= 0) then
+        local w = screen.getWidth() * actionTimer.timeLeft / actionTimer.duration
+        w = w + (screen.getWidth() - w) * (1 - actionTransitionTimer.timeLeft / actionTransitionTimer.duration)
+        gfx.fillRect(0, screen.getHeight() - 20, w, 20)
+    end
 
     gfx.setFont(font)
 
