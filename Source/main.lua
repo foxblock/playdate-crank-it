@@ -20,7 +20,7 @@
 -- [ ] game mode: last one cranking
 -- [ ] game mode: simon cranks
 -- [ ] title card
--- [ ] background animations for actions
+-- [X] background animations for actions
 -- [X] sound for actions
 -- [ ] background music
 -- [X] save highscore values
@@ -101,20 +101,20 @@ local actions <const> = {
         time = { 3000, 3000, 2500, 2500, 2000 },
         snd = snd.new("sounds/pass"),
         img = nil,
-        ani = nil
+        ani = gfx.imagetable.new("images/actions/pass")
     },
     [actionCodes.CRANK_UNDOCK] = {
         msg = "Undock it!",
         time = timeNormal,
         snd = snd.new("sounds/undock"),
-        img = nil,
+        img = gfx.image.new("images/actions/undock"),
         ani = nil
     },
     [actionCodes.CRANK_DOCK] = {
         msg = "Dock it!",
         time = timeSlow,
         snd = snd.new("sounds/dock"),
-        img = nil,
+        img = gfx.image.new("images/actions/dock"),
         ani = nil
     },
     [actionCodes.CRANKED] = {
@@ -122,13 +122,13 @@ local actions <const> = {
         time = timeSlow,
         snd = snd.new("sounds/crank"),
         img = nil,
-        ani = nil
+        ani = gfx.imagetable.new("images/actions/crank")
     },
     [actionCodes.SPEED_UP] = {
         msg = "SPEED UP",
         time = { 2000, 2000, 2000, 2000, 2000 },
         snd = snd.new("sounds/speed"),
-        img = nil,
+        img = gfx.image.new("images/actions/speed"),
         ani = nil
     }
 }
@@ -178,7 +178,7 @@ local function vec3D_norm(x, y, z)
     return x/len, y/len, z/len
 end
 
--- assumes v1 is a normalized 3D-vector stored as a table with 3 entries: {x,y,z}
+-- assumes v1 is a normalized 3D-vector stored as a table with 3 entries: {[1] = x, [2] = y, [3] = z}
 local function vec3D_dot(v1, x2, y2, z2)
     return (v1[1] * x2 + v1[2] * y2 + v1[3] * z2) / vec3D_len(x2, y2, z2)
 end
@@ -227,28 +227,13 @@ local function actionTransitionEnd()
 end
 
 local function setup()
-    -- Set up the player sprite.
-    -- The :setCenter() call specifies that the sprite will be anchored at its center.
-    -- The :moveTo() call moves our sprite to the center of the display.
-
-    -- local playerImage = gfx.image.new("images/player")
-    -- assert( playerImage ) -- make sure the image was where we thought
-
-    -- playerSprite = gfx.sprite.new( playerImage )
-    -- playerSprite:moveTo( 200, 120 ) -- this is where the center of the sprite is placed; (200,120) is the center of the Playdate screen
-    -- playerSprite:add() -- This is critical!
-
-    -- We want an environment displayed behind our sprite.
-    -- There are generally two ways to do this:
-    -- 1) Use setBackgroundDrawingCallback() to draw a background image. (This is what we're doing below.)
-    -- 2) Use a tilemap, assign it to a sprite with sprite:setTilemap(tilemap),
-    --       and call :setZIndex() with some low number so the background stays behind
-    --       your other sprites.
-
     local backgroundImage = gfx.image.new("images/background")
     assert(backgroundImage)
 
     -- set up animations
+    -- actions with img set, keep that as a static background
+    -- actions with ani set (we assume it is a tilemap), will load it into img as an animation
+    -- actions with neither set will get the fallback backgroundImage
     for k,v in pairs(actions) do
         if (v.img ~= nil) then goto continue end
 
@@ -317,9 +302,11 @@ local function render()
         gfx.drawText(string.format("target: %.4f", tiltBack and TILT_TARGET_BACK or TILT_TARGET), 2, yPos + 30)
         yPos += 55
     end
-
     gfx.drawText(string.format("timer: %d", actionTimer.timeLeft), 2, yPos);
-    gfx.drawTextAligned(actions[currAction].msg, 200, 120, kTextAlignment.center)
+
+    if (actions[currAction].img == backgroundImage) then
+        gfx.drawTextAligned(actions[currAction].msg, 200, 120, kTextAlignment.center)
+    end
 end
 
 function playdate.update()
