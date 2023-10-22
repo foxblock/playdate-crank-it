@@ -22,9 +22,10 @@
 -- [ ] title card
 -- [X] background animations for actions
 -- [X] sound for actions
--- [ ] background music
+-- [X] background music
 -- [X] save highscore values
 -- [ ] options to disable accelerometer and mic based actions
+-- [ ] Better score and highscore display (font)
 
 
 import "CoreLibs/object"
@@ -57,8 +58,8 @@ local actionCodes <const> = {
 }
 
 local timeFast <const> = { 4000, 3000, 2000, 1300, 700 }
-local timeNormal <const> = { 4000, 3000, 2200, 1500, 1000 }
-local timeSlow <const> = { 4000, 3200, 2500, 2000, 1500 }
+local timeNormal <const> = { 4000, 3000, 2200, 1600, 1200 }
+local timeSlow <const> = { 4000, 3200, 2500, 2000, 1750 }
 
 local actions <const> = {
     [actionCodes.LOSE] = {
@@ -132,6 +133,15 @@ local actions <const> = {
         ani = nil
     }
 }
+
+local bgMusic <const> = {
+    playdate.sound.sample.new("music/bg1"),
+    playdate.sound.sample.new("music/bg2"),
+    playdate.sound.sample.new("music/bg3"),
+    playdate.sound.sample.new("music/bg4"),
+    playdate.sound.sample.new("music/bg5")
+}
+local currMusic = snd.new(bgMusic[1])
 
 local MIC_LEVEL_TARGET <const> = 0.25 -- 0..1
 local CRANK_TARGET <const> = 2*360
@@ -210,6 +220,16 @@ local function actionFail()
     playdate.datastore.write(saveData)
 end
 
+local function startGame()
+    score = 0
+    speedLevel = 1
+    actionDone = (currAction == actionCodes.LOSE)
+    actionTransitionState = 1
+    currMusic:stop()
+    currMusic:setSample(bgMusic[1])
+    currMusic:play(0)
+end
+
 local function actionTimerEnd()
     if (currAction == actionCodes.PASS_PLAYER) then
         actionDone = true
@@ -269,6 +289,8 @@ local function setup()
     if (loadData ~= nil) then
         saveData = loadData
     end
+
+    startGame()
 end
 
 local function render()
@@ -339,6 +361,10 @@ function playdate.update()
         if (speedLevel < MAX_SPEED_LEVEL and score == SPEED_UP_INTERVAL * speedLevel) then
             currAction = actionCodes.SPEED_UP
             speedLevel += 1
+            
+            currMusic:stop()
+            currMusic:setSample(bgMusic[speedLevel])
+            currMusic:play(0)
         end
 
         while (currAction == lastAction) do
@@ -428,10 +454,7 @@ end
 
 function playdate.AButtonDown()
     if (currAction == actionCodes.LOSE) then
-        score = 0
-        speedLevel = 1
-        actionDone = true
-        actionTransitionState = 1
+        startGame()
     elseif (currAction == actionCodes.BUTTON) then
         actionSuccess()
     else
