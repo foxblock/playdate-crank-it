@@ -141,6 +141,7 @@ local bgMusic <const> = {
     playdate.sound.sample.new("music/bg4"),
     playdate.sound.sample.new("music/bg5")
 }
+local loseMusic <const> = playdate.sound.sample.new("music/lose")
 local currMusic = snd.new(bgMusic[1])
 
 local MIC_LEVEL_TARGET <const> = 0.25 -- 0..1
@@ -217,6 +218,9 @@ local function actionFail()
     actionTimer:pause()
     playdate.graphics.sprite.redrawBackground()
     soundLose:play(1)
+    currMusic:stop()
+    currMusic:setSample(loseMusic)
+    currMusic:play(0)
     playdate.datastore.write(saveData)
 end
 
