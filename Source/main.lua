@@ -305,12 +305,14 @@ local function render()
 
     gfx.sprite.update()
 
-    if (not actionDone) then
-        gfx.fillRect(0, screen.getHeight() - 20, screen.getWidth() * actionTimer.timeLeft / actionTimer.duration, 20)
-    elseif (actionTransitionState >= 0) then
-        local w = screen.getWidth() * actionTimer.timeLeft / actionTimer.duration
-        w = w + (screen.getWidth() - w) * (1 - actionTransitionTimer.timeLeft / actionTransitionTimer.duration)
-        gfx.fillRect(0, screen.getHeight() - 20, w, 20)
+    if (currAction ~= actionCodes.LOSE) then
+        if (not actionDone) then
+            gfx.fillRect(0, screen.getHeight() - 20, screen.getWidth() * actionTimer.timeLeft / actionTimer.duration, 20)
+        elseif (actionTransitionState >= 0) then
+            local w = screen.getWidth() * actionTimer.timeLeft / actionTimer.duration
+            w = w + (screen.getWidth() - w) * (1 - actionTransitionTimer.timeLeft / actionTransitionTimer.duration)
+            gfx.fillRect(0, screen.getHeight() - 20, w, 20)
+        end
     end
 
     gfx.setFont(font)
