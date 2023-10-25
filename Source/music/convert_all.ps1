@@ -3,6 +3,7 @@ param (
     [string]$targetFolder
 )
 
+# https://github.com/dbry/adpcm-xq
 $convertExe = "D:\Programme\adpcm-xq-win\64bit\adpcm-xq.exe"
 
 if (-not $PSBoundParameters.ContainsKey('targetFolder')) {

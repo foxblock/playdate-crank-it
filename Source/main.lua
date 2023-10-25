@@ -148,8 +148,8 @@ local MIC_LEVEL_TARGET <const> = 0.25 -- 0..1
 local CRANK_TARGET <const> = 2*360
 local CRANK_DEADZONE_NORMAL <const> = 45
 local CRANK_DEADZONE_AFTER_CRANKED <const> = 360
-local TILT_TARGET <const> = math.cos(50 * DEG_TO_RAD)
-local TILT_TARGET_BACK <const> = math.cos(5 * DEG_TO_RAD)
+local TILT_TARGET <const> = math.cos(55 * DEG_TO_RAD)
+local TILT_TARGET_BACK <const> = math.cos(10 * DEG_TO_RAD)
 local SPEED_UP_INTERVAL <const> = 10
 local MAX_SPEED_LEVEL <const> = 5
 local TRANSITION_TIME_MS <const> = 500
@@ -191,7 +191,7 @@ end
 
 -- assumes v1 is a normalized 3D-vector stored as a table with 3 entries: {[1] = x, [2] = y, [3] = z}
 local function vec3D_dot(v1, x2, y2, z2)
-    return (v1[1] * x2 + v1[2] * y2 + v1[3] * z2) / vec3D_len(x2, y2, z2)
+    return ((v1[1] * x2 + v1[2] * y2 + v1[3] * z2) / vec3D_len(x2, y2, z2))
 end
 
 -- MAIN GAME
@@ -323,10 +323,11 @@ local function render()
         gfx.drawText(string.format("level: %.0f", mic.getLevel() * 100), 2, yPos)
         yPos += 25
     elseif (currAction == actionCodes.TILT) then
-        gfx.drawText(string.format("a3d: %.2f", math.acos(vec3D_dot(startVec, playdate.readAccelerometer())) * RAD_TO_DEG), 2, yPos)
-        gfx.drawText(string.format("cos: %.4f", vec3D_dot(startVec, playdate.readAccelerometer())), 2, yPos + 15)
-        gfx.drawText(string.format("target: %.4f", tiltBack and TILT_TARGET_BACK or TILT_TARGET), 2, yPos + 30)
-        yPos += 55
+        gfx.drawText(string.format("val: %.2f %.2f %.2f", playdate.readAccelerometer()), 2, yPos);
+        gfx.drawText(string.format("a3d: %.2f", math.acos(vec3D_dot(startVec, playdate.readAccelerometer())) * RAD_TO_DEG), 2, yPos + 15)
+        gfx.drawText(string.format("cos: %.4f", vec3D_dot(startVec, playdate.readAccelerometer())), 2, yPos + 30)
+        gfx.drawText(string.format("target: %.4f", tiltBack and TILT_TARGET_BACK or TILT_TARGET), 2, yPos + 45)
+        yPos += 70
     end
     gfx.drawText(string.format("timer: %d", actionTimer.timeLeft), 2, yPos);
 
@@ -345,9 +346,15 @@ function playdate.update()
     if (currAction == actionCodes.TILT) then
         local cos_ang = vec3D_dot(startVec, playdate.readAccelerometer())
         if (tiltBack and cos_ang >= TILT_TARGET_BACK) then
+            -- print("TILT 2/2 DONE")
+            -- print(string.format("Angles: %.2f %.2f %.2f", playdate.readAccelerometer()))
+            -- print(string.format("Cos: %f, target: %f", cos_ang, TILT_TARGET_BACK))
             tiltBack = false
             actionSuccess()
         elseif (not tiltBack and cos_ang <= TILT_TARGET) then
+            -- print("TILT 1/2 DONE")
+            -- print(string.format("Angles: %.2f %.2f %.2f", playdate.readAccelerometer()))
+            -- print(string.format("Cos: %f, target: %f", cos_ang, TILT_TARGET))
             tiltBack = true
         end
     end
@@ -401,6 +408,9 @@ function playdate.update()
 
         if (currAction == actionCodes.TILT) then
             startVec = { vec3D_norm(playdate.readAccelerometer()) }
+            -- print("TILT START")
+            -- print(string.format("Angles: %.2f %.2f %.2f", playdate.readAccelerometer()))
+            -- print(string.format("Norm: %.2f %.2f %.2f", startVec[1], startVec[2], startVec[3]))
         end
 
         lastAnimationFrame = 1
