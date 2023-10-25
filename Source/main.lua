@@ -26,6 +26,7 @@
 -- [X] save highscore values
 -- [ ] options to disable accelerometer and mic based actions
 -- [ ] Better score and highscore display (font)
+-- [ ] Pause = lose??
 
 
 import "CoreLibs/object"
@@ -156,7 +157,9 @@ local TRANSITION_TIME_MS <const> = 500
 local ACTION_ANIMATION_FRAME_TIME_MS <const> = 500
 
 local saveData = {
-    highscore = 0
+    highscore = 0,
+    musicOn = true,
+    debugOn = false
 }
 
 local font = gfx.font.new("images/font/whiteglove-stroked")
@@ -292,7 +295,34 @@ local function setup()
     local loadData = playdate.datastore.read()
     if (loadData ~= nil) then
         saveData = loadData
+        if (saveData.musicOn) then
+            currMusic:setVolume(1.0)
+        else
+            currMusic:setVolume(0)
+        end
     end
+
+    local menu = playdate.getSystemMenu()
+
+    local musicMenuItem, error = menu:addCheckmarkMenuItem("Music", saveData.musicOn, function(value)
+        saveData.musicOn = value
+        playdate.datastore.write(saveData)
+        if (saveData.musicOn) then
+            currMusic:setVolume(1.0)
+        else
+            currMusic:setVolume(0)
+        end
+    end)
+    
+    local resetScoreMenuItem, error = menu:addMenuItem("Reset Score", function()
+        saveData.highscore = 0
+        playdate.datastore.write(saveData)
+    end)
+
+    local debugMenuItem, error = menu:addCheckmarkMenuItem("Debug Text", saveData.debugOn, function(value)
+        saveData.debugOn = value
+        playdate.datastore.write(saveData)
+    end)
 
     startGame()
 end
@@ -317,24 +347,28 @@ local function render()
 
     gfx.setFont(font)
 
+    -- fallback text description for actions without image
+    if (actions[currAction].img == backgroundImage) then
+        gfx.drawTextAligned(actions[currAction].msg, 200, 120, kTextAlignment.center)
+    end
+
     local yPos = 2
     gfx.drawText('score: '..score, 2, yPos)
     gfx.drawText("HIGH: "..saveData.highscore, 2, yPos + 15)
     yPos += 40
-    if (currAction == actionCodes.MICROPHONE) then
-        gfx.drawText(string.format("level: %.0f", mic.getLevel() * 100), 2, yPos)
-        yPos += 25
-    elseif (currAction == actionCodes.TILT) then
-        gfx.drawText(string.format("val: %.2f %.2f %.2f", playdate.readAccelerometer()), 2, yPos);
-        gfx.drawText(string.format("a3d: %.2f", math.acos(vec3D_dot(startVec, playdate.readAccelerometer())) * RAD_TO_DEG), 2, yPos + 15)
-        gfx.drawText(string.format("cos: %.4f", vec3D_dot(startVec, playdate.readAccelerometer())), 2, yPos + 30)
-        gfx.drawText(string.format("target: %.4f", tiltBack and TILT_TARGET_BACK or TILT_TARGET), 2, yPos + 45)
-        yPos += 70
-    end
-    gfx.drawText(string.format("timer: %d", actionTimer.timeLeft), 2, yPos);
 
-    if (actions[currAction].img == backgroundImage) then
-        gfx.drawTextAligned(actions[currAction].msg, 200, 120, kTextAlignment.center)
+    if (saveData.debugOn) then
+        if (currAction == actionCodes.MICROPHONE) then
+            gfx.drawText(string.format("level: %.0f", mic.getLevel() * 100), 2, yPos)
+            yPos += 25
+        elseif (currAction == actionCodes.TILT) then
+            gfx.drawText(string.format("val: %.2f %.2f %.2f", playdate.readAccelerometer()), 2, yPos);
+            gfx.drawText(string.format("a3d: %.2f", math.acos(vec3D_dot(startVec, playdate.readAccelerometer())) * RAD_TO_DEG), 2, yPos + 15)
+            gfx.drawText(string.format("cos: %.4f", vec3D_dot(startVec, playdate.readAccelerometer())), 2, yPos + 30)
+            gfx.drawText(string.format("target: %.4f", tiltBack and TILT_TARGET_BACK or TILT_TARGET), 2, yPos + 45)
+            yPos += 70
+        end
+        gfx.drawText(string.format("timer: %d", actionTimer.timeLeft), 2, yPos);
     end
 end
 
