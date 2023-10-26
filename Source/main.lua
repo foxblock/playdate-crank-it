@@ -20,14 +20,13 @@
 -- [ ] game mode: last one cranking (versus, each player gets a few actions in sequence)
 -- [ ] game mode: simon cranks (solo, you get a sequence and have to do it afterwards)
 -- [ ] game mode: crank the bomb (party, you do an action as fast as possible then pass, bomb explodes after random time)
--- [ ] title card
 -- [X] background animations for actions
 -- [X] sound for actions
 -- [X] background music
 -- [X] save highscore values
 -- [ ] options to disable accelerometer and mic based actions
 -- [ ] Better score and highscore display
--- [ ] main menu - do not start the game immediately
+-- [X] main menu - do not start the game immediately
 -- [X] add title card recommending to play without the cover (https://devforum.play.date/t/crank-docking-not-registered/10439)
 
 
@@ -376,38 +375,6 @@ local function setup_main()
     actionTransitionTimer.discardOnCompletion = false
     actionTransitionTimer:pause()
 
-    local loadData = playdate.datastore.read()
-    if (loadData ~= nil) then
-        saveData = loadData
-        if (saveData.musicOn) then
-            currMusic:setVolume(1.0)
-        else
-            currMusic:setVolume(0)
-        end
-    end
-
-    local menu = playdate.getSystemMenu()
-
-    local musicMenuItem, error = menu:addCheckmarkMenuItem("Music", saveData.musicOn, function(value)
-        saveData.musicOn = value
-        playdate.datastore.write(saveData)
-        if (saveData.musicOn) then
-            currMusic:setVolume(1.0)
-        else
-            currMusic:setVolume(0)
-        end
-    end)
-    
-    local resetScoreMenuItem, error = menu:addMenuItem("Reset Score", function()
-        saveData.highscore = 0
-        playdate.datastore.write(saveData)
-    end)
-
-    local debugMenuItem, error = menu:addCheckmarkMenuItem("Debug Text", saveData.debugOn, function(value)
-        saveData.debugOn = value
-        playdate.datastore.write(saveData)
-    end)
-
     playdate.inputHandlers.push(buttonHandlers_main)
 
     startGame()
@@ -565,21 +532,72 @@ end
 
 ------ TITLE SCREEN
 
+local currTitleCard = 1
+
+local function drawTitleCard(index)
+    local backgroundImage = nil
+    if index == 1 then
+        backgroundImage = gfx.image.new("images/remove_cover")
+    else
+        backgroundImage = gfx.image.new("images/title")
+    end
+    assert(backgroundImage)
+
+    backgroundImage:draw(0,0)
+end
+
 local buttonHandlers_title = {
     AButtonDown = function()
-        playdate.inputHandlers.pop()
-        UpdateFnc = update_main
-        setup_main()
+        if currTitleCard == 1 then
+            currTitleCard += 1
+            drawTitleCard(currTitleCard)
+
+            gfx.setFont(font)
+            gfx.drawText("HIGHSCORE: "..saveData.highscore, 78, 200)
+        else
+            playdate.inputHandlers.pop()
+            UpdateFnc = update_main
+            setup_main()
+        end
     end
 }
 
 local function setup_title()
-    local backgroundImage = gfx.image.new("images/remove_cover")
-    assert(backgroundImage)
+    local loadData = playdate.datastore.read()
+    if (loadData ~= nil) then
+        saveData = loadData
+        if (saveData.musicOn) then
+            currMusic:setVolume(1.0)
+        else
+            currMusic:setVolume(0)
+        end
+    end
 
-    backgroundImage:draw(0,0)
+    local menu = playdate.getSystemMenu()
+
+    local musicMenuItem, _ = menu:addCheckmarkMenuItem("Music", saveData.musicOn, function(value)
+        saveData.musicOn = value
+        playdate.datastore.write(saveData)
+        if (saveData.musicOn) then
+            currMusic:setVolume(1.0)
+        else
+            currMusic:setVolume(0)
+        end
+    end)
+
+    local resetScoreMenuItem, _ = menu:addMenuItem("Reset Score", function()
+        saveData.highscore = 0
+        playdate.datastore.write(saveData)
+    end)
+
+    local debugMenuItem, _ = menu:addCheckmarkMenuItem("Debug Text", saveData.debugOn, function(value)
+        saveData.debugOn = value
+        playdate.datastore.write(saveData)
+    end)
 
     playdate.inputHandlers.push(buttonHandlers_title)
+    
+    drawTitleCard(currTitleCard)
 end
 
 local function update_title()
