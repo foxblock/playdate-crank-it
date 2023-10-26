@@ -198,6 +198,19 @@ local function vec3D_dot(v1, x2, y2, z2)
     return ((v1[1] * x2 + v1[2] * y2 + v1[3] * z2) / vec3D_len(x2, y2, z2))
 end
 
+local function loadSettings()
+    local loadData = playdate.datastore.read()
+
+    if (loadData == nil) then return end
+
+    saveData = loadData
+    if (saveData.musicOn) then
+        currMusic:setVolume(1.0)
+    else
+        currMusic:setVolume(0)
+    end
+end
+
 ------ GAME (MAIN)
 
 local function actionSuccess()
@@ -211,9 +224,7 @@ local function actionSuccess()
 end
 
 local function actionFail()
-    if (actionDone or currAction == actionCodes.LOSE) then
-        return
-    end
+    if (actionDone or currAction == actionCodes.LOSE) then return end
 
     if (score > saveData.highscore) then
         saveData.highscore = score
@@ -323,9 +334,7 @@ local buttonHandlers_main = {
 
     cranked = function(change, acceleratedChange)
         -- Ignore when docking, since crank may need to be moved to do so
-        if (currAction == actionCodes.CRANK_DOCK) then
-            return
-        end
+        if (currAction == actionCodes.CRANK_DOCK) then return end
 
         crankValue += math.abs(change)
         if (currAction == actionCodes.CRANKED and crankValue >= CRANK_TARGET) then
@@ -335,50 +344,6 @@ local buttonHandlers_main = {
         end
     end
 }
-
-local function setup_main()
-    local backgroundImage = gfx.image.new("images/background")
-    assert(backgroundImage)
-
-    -- set up animations
-    -- actions with img set, keep that as a static background
-    -- actions with ani set (we assume it is a tilemap), will load it into img as an animation
-    -- actions with neither set will get the fallback backgroundImage
-    for k,v in pairs(actions) do
-        if (v.img ~= nil) then goto continue end
-
-        if (v.ani == nil) then
-            v.img = backgroundImage
-        else
-            v.img = gfx.animation.loop.new(ACTION_ANIMATION_FRAME_TIME_MS, v.ani, true)
-        end
-        ::continue::
-    end
-
-    gfx.sprite.setBackgroundDrawingCallback(
-        function( x, y, width, height )
-            -- x,y,width,height is the updated area in sprite-local coordinates
-            -- The clip rect is already set to this area, so we don't need to set it ourselves
-            actions[currAction].img:draw(0,0)
-        end
-    )
-
-    math.randomseed(playdate.getSecondsSinceEpoch())
-
-    playdate.startAccelerometer()
-
-    playdate.setCrankSoundsDisabled(true)
-
-    actionTimer = playdate.timer.new(actions[currAction].time[speedLevel], actionTimerEnd)
-    actionTimer.discardOnCompletion = false
-    actionTransitionTimer = playdate.timer.new(TRANSITION_TIME_MS, actionTransitionEnd)
-    actionTransitionTimer.discardOnCompletion = false
-    actionTransitionTimer:pause()
-
-    playdate.inputHandlers.push(buttonHandlers_main)
-
-    startGame()
-end
 
 local function render_main()
     if (actions[currAction].ani ~= nil and lastAnimationFrame ~= actions[currAction].img.frame) then
@@ -530,6 +495,52 @@ local function update_main()
     render_main()
 end
 
+local function setup_main()
+    local backgroundImage = gfx.image.new("images/background")
+    assert(backgroundImage)
+
+    -- set up animations
+    -- actions with img set, keep that as a static background
+    -- actions with ani set (we assume it is a tilemap), will load it into img as an animation
+    -- actions with neither set will get the fallback backgroundImage
+    for k,v in pairs(actions) do
+        if (v.img ~= nil) then goto continue end
+
+        if (v.ani == nil) then
+            v.img = backgroundImage
+        else
+            v.img = gfx.animation.loop.new(ACTION_ANIMATION_FRAME_TIME_MS, v.ani, true)
+        end
+        ::continue::
+    end
+
+    gfx.sprite.setBackgroundDrawingCallback(
+        function( x, y, width, height )
+            -- x,y,width,height is the updated area in sprite-local coordinates
+            -- The clip rect is already set to this area, so we don't need to set it ourselves
+            actions[currAction].img:draw(0,0)
+        end
+    )
+
+    math.randomseed(playdate.getSecondsSinceEpoch())
+
+    playdate.startAccelerometer()
+
+    playdate.setCrankSoundsDisabled(true)
+
+    actionTimer = playdate.timer.new(actions[currAction].time[speedLevel], actionTimerEnd)
+    actionTimer.discardOnCompletion = false
+    actionTransitionTimer = playdate.timer.new(TRANSITION_TIME_MS, actionTransitionEnd)
+    actionTransitionTimer.discardOnCompletion = false
+    actionTransitionTimer:pause()
+
+    playdate.inputHandlers.push(buttonHandlers_main)
+    
+    UpdateFnc = update_main
+
+    startGame()
+end
+
 ------ TITLE SCREEN
 
 local currTitleCard = 1
@@ -546,33 +557,7 @@ local function drawTitleCard(index)
     backgroundImage:draw(0,0)
 end
 
-local buttonHandlers_title = {
-    AButtonDown = function()
-        if currTitleCard == 1 then
-            currTitleCard += 1
-            drawTitleCard(currTitleCard)
-
-            gfx.setFont(font)
-            gfx.drawText("HIGHSCORE: "..saveData.highscore, 78, 200)
-        else
-            playdate.inputHandlers.pop()
-            UpdateFnc = update_main
-            setup_main()
-        end
-    end
-}
-
-local function setup_title()
-    local loadData = playdate.datastore.read()
-    if (loadData ~= nil) then
-        saveData = loadData
-        if (saveData.musicOn) then
-            currMusic:setVolume(1.0)
-        else
-            currMusic:setVolume(0)
-        end
-    end
-
+local function setupMenuItems()
     local menu = playdate.getSystemMenu()
 
     local musicMenuItem, _ = menu:addCheckmarkMenuItem("Music", saveData.musicOn, function(value)
@@ -594,6 +579,27 @@ local function setup_title()
         saveData.debugOn = value
         playdate.datastore.write(saveData)
     end)
+end
+
+local buttonHandlers_title = {
+    AButtonDown = function()
+        if currTitleCard == 1 then
+            currTitleCard += 1
+            drawTitleCard(currTitleCard)
+
+            gfx.setFont(font)
+            gfx.drawText("HIGHSCORE: "..saveData.highscore, 78, 200)
+        else
+            playdate.inputHandlers.pop()
+            setup_main()
+        end
+    end
+}
+
+local function setup_title()
+    loadSettings()
+
+    setupMenuItems()
 
     playdate.inputHandlers.push(buttonHandlers_title)
     
