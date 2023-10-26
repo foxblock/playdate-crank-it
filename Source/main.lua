@@ -24,6 +24,8 @@
 -- [X] sound for actions
 -- [X] background music
 -- [X] save highscore values
+-- [ ] title card (350 x 155), card animation and icon (32 x 32)
+-- [ ] Other neccessary pdxinfo data: https://sdk.play.date/2.0.3/Inside%20Playdate.html#pdxinfo
 -- [ ] options to disable accelerometer and mic based actions
 -- [ ] Better score and highscore display
 -- [X] main menu - do not start the game immediately
@@ -181,6 +183,9 @@ local startVec = nil
 local tiltBack = false
 
 local lastAnimationFrame = 1
+
+local updateFnc = nil
+local mainGameLoop = false
 
 ------ UTILITY
 
@@ -535,8 +540,9 @@ local function setup_main()
     actionTransitionTimer:pause()
 
     playdate.inputHandlers.push(buttonHandlers_main)
-    
-    UpdateFnc = update_main
+
+    updateFnc = update_main
+    mainGameLoop = true
 
     startGame()
 end
@@ -613,18 +619,22 @@ end
 ------ CALLBACKS
 
 function playdate.update()
-    UpdateFnc()
+    updateFnc()
 end
 
 function playdate.deviceWillLock()
+    if (not mainGameLoop) then return end
+
     actionFail()
 end
 
 function playdate.gameWillResume()
+    if (not mainGameLoop) then return end
+    
     actionFail()
 end
 
 ------ MAIN
 
 setup_title()
-UpdateFnc = update_title
+updateFnc = update_title
