@@ -28,7 +28,7 @@
 -- [ ] options to disable accelerometer and mic based actions
 -- [ ] Better score and highscore display
 -- [ ] main menu - do not start the game immediately
--- [ ] add title card recommending to play without the cover (https://devforum.play.date/t/crank-docking-not-registered/10439)
+-- [X] add title card recommending to play without the cover (https://devforum.play.date/t/crank-docking-not-registered/10439)
 
 
 import "CoreLibs/object"
@@ -183,7 +183,7 @@ local tiltBack = false
 
 local lastAnimationFrame = 1
 
--- UTILITY
+------ UTILITY
 
 local function vec3D_len(x, y, z)
     return math.sqrt(x*x + y*y + z*z)
@@ -199,7 +199,7 @@ local function vec3D_dot(v1, x2, y2, z2)
     return ((v1[1] * x2 + v1[2] * y2 + v1[3] * z2) / vec3D_len(x2, y2, z2))
 end
 
--- MAIN GAME
+------ GAME (MAIN)
 
 local function actionSuccess()
     if (actionDone) then
@@ -255,7 +255,89 @@ local function actionTransitionEnd()
     actionTransitionState = 1
 end
 
-local function setup()
+local buttonHandlers_main = {
+    upButtonDown = function()
+        if (currAction == actionCodes.DIRECTION) then
+            actionSuccess()
+        else
+            actionFail()
+        end
+    end,
+
+    rightButtonDown = function()
+        if (currAction == actionCodes.DIRECTION) then
+            actionSuccess()
+        else
+            actionFail()
+        end
+    end,
+
+    downButtonDown = function()
+        if (currAction == actionCodes.DIRECTION) then
+            actionSuccess()
+        else
+            actionFail()
+        end
+    end,
+
+    leftButtonDown = function()
+        if (currAction == actionCodes.DIRECTION) then
+            actionSuccess()
+        else
+            actionFail()
+        end
+    end,
+
+    AButtonDown = function()
+        if (currAction == actionCodes.LOSE) then
+            startGame()
+        elseif (currAction == actionCodes.BUTTON) then
+            actionSuccess()
+        else
+            actionFail()
+        end
+    end,
+
+    BButtonDown = function()
+        if (currAction == actionCodes.BUTTON) then
+            actionSuccess()
+        else
+            actionFail()
+        end
+    end,
+
+    crankDocked = function()
+        if (currAction == actionCodes.CRANK_DOCK) then
+            actionSuccess()
+        else
+            actionFail()
+        end
+    end,
+
+    crankUndocked = function()
+        if (currAction == actionCodes.CRANK_UNDOCK) then
+            actionSuccess()
+        else
+            actionFail()
+        end
+    end,
+
+    cranked = function(change, acceleratedChange)
+        -- Ignore when docking, since crank may need to be moved to do so
+        if (currAction == actionCodes.CRANK_DOCK) then
+            return
+        end
+
+        crankValue += math.abs(change)
+        if (currAction == actionCodes.CRANKED and crankValue >= CRANK_TARGET) then
+            actionSuccess()
+        elseif (currAction ~= actionCodes.CRANKED and crankValue >= crankDeadzone) then
+            actionFail()
+        end
+    end
+}
+
+local function setup_main()
     local backgroundImage = gfx.image.new("images/background")
     assert(backgroundImage)
 
@@ -326,10 +408,12 @@ local function setup()
         playdate.datastore.write(saveData)
     end)
 
+    playdate.inputHandlers.push(buttonHandlers_main)
+
     startGame()
 end
 
-local function render()
+local function render_main()
     if (actions[currAction].ani ~= nil and lastAnimationFrame ~= actions[currAction].img.frame) then
         lastAnimationFrame = actions[currAction].img.frame
         playdate.graphics.sprite.redrawBackground()
@@ -374,7 +458,7 @@ local function render()
     end
 end
 
-function playdate.update()
+local function update_main()
     playdate.timer.updateTimers()
 
     if (currAction == actionCodes.MICROPHONE and mic.getLevel() >= MIC_LEVEL_TARGET) then
@@ -476,89 +560,36 @@ function playdate.update()
         actionTimer:start()
     end
 
-    render()
+    render_main()
 end
 
--- CALLBACKS
+------ TITLE SCREEN
 
-function playdate.upButtonDown()
-    if (currAction == actionCodes.DIRECTION) then
-        actionSuccess()
-    else
-        actionFail()
+local buttonHandlers_title = {
+    AButtonDown = function()
+        playdate.inputHandlers.pop()
+        UpdateFnc = update_main
+        setup_main()
     end
+}
+
+local function setup_title()
+    local backgroundImage = gfx.image.new("images/remove_cover")
+    assert(backgroundImage)
+
+    backgroundImage:draw(0,0)
+
+    playdate.inputHandlers.push(buttonHandlers_title)
 end
 
-function playdate.rightButtonDown()
-    if (currAction == actionCodes.DIRECTION) then
-        actionSuccess()
-    else
-        actionFail()
-    end
+local function update_title()
+    --
 end
 
-function playdate.downButtonDown()
-    if (currAction == actionCodes.DIRECTION) then
-        actionSuccess()
-    else
-        actionFail()
-    end
-end
+------ CALLBACKS
 
-function playdate.leftButtonDown()
-    if (currAction == actionCodes.DIRECTION) then
-        actionSuccess()
-    else
-        actionFail()
-    end
-end
-
-function playdate.AButtonDown()
-    if (currAction == actionCodes.LOSE) then
-        startGame()
-    elseif (currAction == actionCodes.BUTTON) then
-        actionSuccess()
-    else
-        actionFail()
-    end
-end
-
-function playdate.BButtonDown()
-    if (currAction == actionCodes.BUTTON) then
-        actionSuccess()
-    else
-        actionFail()
-    end
-end
-
-function playdate.crankDocked()
-    if (currAction == actionCodes.CRANK_DOCK) then
-        actionSuccess()
-    else
-        actionFail()
-    end
-end
-
-function playdate.crankUndocked()
-    if (currAction == actionCodes.CRANK_UNDOCK) then
-        actionSuccess()
-    else
-        actionFail()
-    end
-end
-
-function playdate.cranked(change, acceleratedChange)
-    -- Ignore when docking, since crank may need to be moved to do so
-    if (currAction == actionCodes.CRANK_DOCK) then
-        return
-    end
-
-    crankValue += math.abs(change)
-    if (currAction == actionCodes.CRANKED and crankValue >= CRANK_TARGET) then
-        actionSuccess()
-    elseif (currAction ~= actionCodes.CRANKED and crankValue >= crankDeadzone) then
-        actionFail()
-    end
+function playdate.update()
+    UpdateFnc()
 end
 
 function playdate.deviceWillLock()
@@ -569,6 +600,7 @@ function playdate.gameWillResume()
     actionFail()
 end
 
--- MAIN
+------ MAIN
 
-setup()
+setup_title()
+UpdateFnc = update_title
