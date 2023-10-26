@@ -17,16 +17,18 @@
 -- [X] default time value for individual actions (i.e. more time for dock/undock)
 -- [X] multiply by speed factor
 -- [X] lose on lock
--- [ ] game mode: last one cranking
--- [ ] game mode: simon cranks
+-- [ ] game mode: last one cranking (versus, each player gets a few actions in sequence)
+-- [ ] game mode: simon cranks (solo, you get a sequence and have to do it afterwards)
+-- [ ] game mode: crank the bomb (party, you do an action as fast as possible then pass, bomb explodes after random time)
 -- [ ] title card
 -- [X] background animations for actions
 -- [X] sound for actions
 -- [X] background music
 -- [X] save highscore values
 -- [ ] options to disable accelerometer and mic based actions
--- [ ] Better score and highscore display (font)
--- [ ] Pause = lose??
+-- [ ] Better score and highscore display
+-- [ ] main menu - do not start the game immediately
+-- [ ] add title card recommending to play without the cover (https://devforum.play.date/t/crank-docking-not-registered/10439)
 
 
 import "CoreLibs/object"
@@ -149,7 +151,7 @@ local MIC_LEVEL_TARGET <const> = 0.25 -- 0..1
 local CRANK_TARGET <const> = 2*360
 local CRANK_DEADZONE_NORMAL <const> = 45
 local CRANK_DEADZONE_AFTER_CRANKED <const> = 360
-local TILT_TARGET <const> = math.cos(55 * DEG_TO_RAD)
+local TILT_TARGET <const> = math.cos(75 * DEG_TO_RAD)
 local TILT_TARGET_BACK <const> = math.cos(10 * DEG_TO_RAD)
 local SPEED_UP_INTERVAL <const> = 10
 local MAX_SPEED_LEVEL <const> = 5
@@ -385,13 +387,22 @@ function playdate.update()
             -- print("TILT 2/2 DONE")
             -- print(string.format("Angles: %.2f %.2f %.2f", playdate.readAccelerometer()))
             -- print(string.format("Cos: %f, target: %f", cos_ang, TILT_TARGET_BACK))
+
+            -- Will never happen currently (see TEST below)
             tiltBack = false
             actionSuccess()
         elseif (not tiltBack and cos_ang <= TILT_TARGET) then
             -- print("TILT 1/2 DONE")
             -- print(string.format("Angles: %.2f %.2f %.2f", playdate.readAccelerometer()))
             -- print(string.format("Cos: %f, target: %f", cos_ang, TILT_TARGET))
-            tiltBack = true
+
+            -- tiltBack = true
+            -- TEST (26.10.23): Disable the need to tilt back, since it is very finicky and
+            -- often does not regsiter properly, because you need to hit to original angle,
+            -- which is not obvious in 3D.
+            -- The action success sound and transition time should help to upright the playdate
+            -- before the next action begins
+            actionSuccess()
         end
     end
     -- other actions are handled in callbacks
@@ -551,6 +562,10 @@ function playdate.cranked(change, acceleratedChange)
 end
 
 function playdate.deviceWillLock()
+    actionFail()
+end
+
+function playdate.gameWillResume()
     actionFail()
 end
 
