@@ -375,12 +375,11 @@ local function render_main()
         gfx.drawTextAligned(actions[currAction].msg, 200, 120, kTextAlignment.center)
     end
 
-    local yPos = 2
-    gfx.drawText('score: '..score, 2, yPos)
-    gfx.drawText("HIGH: "..saveData.highscore, 2, yPos + 15)
-    yPos += 40
+    gfx.drawText('score: '..score, 80, 224)
+    gfx.drawText("HIGH: "..saveData.highscore, 240, 224)
 
     if (saveData.debugOn) then
+        local yPos = 2
         if (currAction == actionCodes.MICROPHONE) then
             gfx.drawText(string.format("level: %.0f", mic.getLevel() * 100), 2, yPos)
             yPos += 25
