@@ -68,7 +68,7 @@ local timeSlow <const> = { 4000, 3200, 2500, 2000, 1750 }
 local actions <const> = {
     [actionCodes.LOSE] = {
         msg = "You lose! (Press A to restart)",
-        time = {},
+        time = timeNormal,
         snd = snd.new("sounds/lose"),
         img = gfx.image.new("images/actions/lose"),
         ani = nil
@@ -169,7 +169,7 @@ local font = gfx.font.new("images/font/whiteglove-stroked")
 local soundSuccess = snd.new("sounds/success")
 local soundLose = snd.new("sounds/lose")
 
-local currAction = actionCodes.BUTTON
+local currAction = actionCodes.LOSE
 local actionDone = (currAction == nil)
 local actionTransitionState = -1 -- -1 not started, 0 running, 1 done
 local actionTimer = nil
@@ -248,7 +248,7 @@ local function startGame()
     score = 0
     speedLevel = 1
     actionDone = (currAction == actionCodes.LOSE)
-    actionTransitionState = 1
+    actionTransitionState = (currAction == actionCodes.LOSE) and 1 or -1
     currMusic:stop()
     currMusic:setSample(bgMusic[1])
     currMusic:play(0)
