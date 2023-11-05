@@ -440,7 +440,7 @@ local function update_main()
         if (speedLevel < MAX_SPEED_LEVEL and score == SPEED_UP_INTERVAL * speedLevel) then
             currAction = actionCodes.SPEED_UP
             speedLevel += 1
-            
+
             currMusic:stop()
             currMusic:setSample(bgMusic[speedLevel])
             currMusic:play(0)
@@ -547,6 +547,14 @@ local function setup_main()
     startGame()
 end
 
+local function cleanup_main()
+    playdate.stopAccelerometer()
+    playdate.stopListening()
+    actionTimer:remove()
+    currMusic:stop()
+    playdate.inputHandlers.pop()
+end
+
 ------ TITLE SCREEN
 
 local currTitleCard = 1
@@ -587,6 +595,10 @@ local function setupMenuItems()
     end)
 end
 
+local function cleanup_title()
+    playdate.inputHandlers.pop()
+end
+
 local buttonHandlers_title = {
     AButtonDown = function()
         if currTitleCard == 1 then
@@ -596,7 +608,7 @@ local buttonHandlers_title = {
             gfx.setFont(font)
             gfx.drawText("HIGHSCORE: "..saveData.highscore, 78, 200)
         else
-            playdate.inputHandlers.pop()
+            cleanup_title()
             setup_main()
         end
     end
@@ -608,9 +620,10 @@ local function setup_title()
     setupMenuItems()
 
     playdate.inputHandlers.push(buttonHandlers_title)
-    
+
     drawTitleCard(currTitleCard)
 end
+
 
 local function update_title()
     --
@@ -630,7 +643,7 @@ end
 
 function playdate.gameWillResume()
     if (not mainGameLoop) then return end
-    
+
     actionFail()
 end
 
