@@ -185,8 +185,12 @@ local font = gfx.font.new("images/font/whiteglove-stroked")
 local soundSuccess = snd.new("sounds/success")
 local soundLose = snd.new("sounds/lose")
 
-local updateFnc = nil
+local lastAnimationFrame = 1
+local crankValue = 0
+local crankDeadzone = CRANK_DEADZONE_NORMAL
+local startVec = nil
 local reactToGlobalEvents = false
+local updateFnc = nil
 
 ------ UTILITY
 
@@ -233,33 +237,67 @@ local function getValidActionCode()
     return result
 end
 
+local function setupAction(last, curr)
+    -- increase deadzone after CRANKED action, so turning the crank
+    -- a bit too far does not immediately fail the player
+    if (last == actionCodes.CRANKED) then
+        crankDeadzone = CRANK_DEADZONE_AFTER_CRANKED
+    else
+        crankDeadzone = CRANK_DEADZONE_NORMAL
+    end
+    -- always reset crank value, because it is checked for succeed and fail
+    crankValue = 0
+
+    if (curr == actionCodes.MICROPHONE) then
+        mic.startListening()
+    else
+        mic.stopListening()
+    end
+
+    if (curr == actionCodes.TILT) then
+        startVec = { vec3D_norm(playdate.readAccelerometer()) }
+        -- print("TILT START")
+        -- print(string.format("Angles: %.2f %.2f %.2f", playdate.readAccelerometer()))
+        -- print(string.format("Norm: %.2f %.2f %.2f", startVec[1], startVec[2], startVec[3]))
+    end
+
+    if (actions[curr].ani ~= nil) then
+        actions[curr].img.frame = 1
+        lastAnimationFrame = 1
+    end
+    playdate.graphics.sprite.redrawBackground()
+    actions[curr].snd:play(1)
+end
+
 local function update_none()
     --
 end
 
 ------ GAME (MAIN)
 
-local currAction = actionCodes.LOSE
-local actionDone = (currAction == nil)
-local actionTransitionState = -1 -- -1 not started, 0 running, 1 done
-local actionTimer = nil
-local actionTransitionTimer = nil
-local speedLevel = 1
-local score = 0
-
-local crankValue = 0
-local crankDeadzone = CRANK_DEADZONE_NORMAL
-local startVec = nil
-
-local lastAnimationFrame = 1
+local currAction
+local actionDone
+local actionTransitionState -- -1 not started, 0 running, 1 done
+local actionTimer
+local actionTransitionTimer
+local speedLevel
+local score
 
 local update_main
 
 local function startGame()
     score = 0
     speedLevel = 1
-    actionDone = (currAction == actionCodes.LOSE)
-    actionTransitionState = (currAction == actionCodes.LOSE) and 1 or -1
+
+    currAction = getValidActionCode()
+    setupAction(0, currAction)
+    actionDone = false
+    actionTransitionState = -1
+    actionTransitionTimer:pause()
+    actionTimer.duration = actions[currAction].time[speedLevel]
+    actionTimer:reset()
+    actionTimer:start()
+
     currMusic:stop()
     currMusic:setSample(bgMusic[1])
     currMusic:play(0)
@@ -292,6 +330,7 @@ local function actionFail_main()
     actionTimer:pause()
     playdate.graphics.sprite.redrawBackground()
     gfx.sprite.update()
+    gfx.drawText('score: '..score, 170, 224)
     soundLose:play(1)
     currMusic:stop()
     currMusic:setSample(loseMusic)
@@ -412,8 +451,6 @@ local function render_main()
         gfx.fillRect(0, screen.getHeight() - 20, w, 20)
     end
 
-    gfx.setFont(font)
-
     gfx.drawText('score: '..score, 80, 224)
     gfx.drawText("HIGH: "..saveData.highscore, 240, 224)
 
@@ -453,8 +490,7 @@ update_main = function ()
         actionTransitionTimer:start()
         actionTimer:pause()
         actionTransitionState = 0
-    end
-    if (actionDone and actionTransitionState == 1) then
+    elseif (actionDone and actionTransitionState == 1) then
         local lastAction = currAction
         if (speedLevel < MAX_SPEED_LEVEL and score == SPEED_UP_INTERVAL * speedLevel) then
             currAction = actionCodes.SPEED_UP
@@ -469,36 +505,7 @@ update_main = function ()
             end
         end
 
-        -- increase deadzone after CRANKED action, so turning the crank
-        -- a bit too far does not immediately fail the player
-        if (lastAction == actionCodes.CRANKED) then
-            crankDeadzone = CRANK_DEADZONE_AFTER_CRANKED
-        else
-            crankDeadzone = CRANK_DEADZONE_NORMAL
-        end
-
-        if (currAction == actionCodes.MICROPHONE) then
-            mic.startListening()
-        else
-            mic.stopListening()
-        end
-
-        if (currAction == actionCodes.TILT) then
-            startVec = { vec3D_norm(playdate.readAccelerometer()) }
-            -- print("TILT START")
-            -- print(string.format("Angles: %.2f %.2f %.2f", playdate.readAccelerometer()))
-            -- print(string.format("Norm: %.2f %.2f %.2f", startVec[1], startVec[2], startVec[3]))
-        end
-
-        lastAnimationFrame = 1
-        if (actions[currAction].ani ~= nil) then
-            actions[currAction].img.frame = 1
-        end
-        playdate.graphics.sprite.redrawBackground()
-        actions[currAction].snd:play(1)
-
-        -- always reset crank value, because it is checked for succeed and fail
-        crankValue = 0
+        setupAction(lastAction, currAction)
 
         actionDone = false
         actionTransitionState = -1
@@ -518,16 +525,16 @@ local function setup_main()
             actions[currAction].img:draw(0,0)
         end
     )
+    gfx.setFont(font)
 
     playdate.startAccelerometer()
+    playdate.inputHandlers.push(buttonHandlers_main)
 
-    actionTimer = playdate.timer.new(actions[currAction].time[speedLevel], actionTimerEnd)
+    actionTimer = playdate.timer.new(100, actionTimerEnd) -- dummy duration, proper value set in startGame
     actionTimer.discardOnCompletion = false
     actionTransitionTimer = playdate.timer.new(TRANSITION_TIME_MS, actionTransitionEnd)
     actionTransitionTimer.discardOnCompletion = false
     actionTransitionTimer:pause()
-
-    playdate.inputHandlers.push(buttonHandlers_main)
 
     updateFnc = update_main
     actionSuccesFnc = actionSuccess_main
@@ -542,6 +549,7 @@ local function cleanup_main()
     playdate.stopAccelerometer()
     playdate.stopListening()
     actionTimer:remove()
+    actionTransitionTimer:remove()
     currMusic:stop()
     playdate.inputHandlers.pop()
 end
