@@ -175,7 +175,6 @@ local CRANK_TARGET <const> = 2*360
 local CRANK_DEADZONE_NORMAL <const> = 45
 local CRANK_DEADZONE_AFTER_CRANKED <const> = 360
 local TILT_TARGET <const> = math.cos(75 * DEG_TO_RAD)
-local TILT_TARGET_BACK <const> = math.cos(10 * DEG_TO_RAD)
 local SPEED_UP_INTERVAL <const> = 10
 local MAX_SPEED_LEVEL <const> = 5
 local TRANSITION_TIME_MS <const> = 500
@@ -251,8 +250,6 @@ local actionTimer = nil
 local actionTransitionTimer = nil
 local speedLevel = 1
 local score = 0
-
-local tiltBack = false
 
 local lastAnimationFrame = 1
 
@@ -434,7 +431,7 @@ local function render_main()
             gfx.drawText(string.format("val: %.2f %.2f %.2f", playdate.readAccelerometer()), 2, yPos);
             gfx.drawText(string.format("a3d: %.2f", math.acos(vec3D_dot(startVec, playdate.readAccelerometer())) * RAD_TO_DEG), 2, yPos + 15)
             gfx.drawText(string.format("cos: %.4f", vec3D_dot(startVec, playdate.readAccelerometer())), 2, yPos + 30)
-            gfx.drawText(string.format("target: %.4f", tiltBack and TILT_TARGET_BACK or TILT_TARGET), 2, yPos + 45)
+            gfx.drawText(string.format("target: %.4f", TILT_TARGET), 2, yPos + 45)
             yPos += 70
         end
         gfx.drawText(string.format("timer: %d", actionTimer.timeLeft), 2, yPos);
@@ -450,25 +447,7 @@ update_main = function ()
 
     if (currAction == actionCodes.TILT) then
         local cos_ang = vec3D_dot(startVec, playdate.readAccelerometer())
-        if (tiltBack and cos_ang >= TILT_TARGET_BACK) then
-            -- print("TILT 2/2 DONE")
-            -- print(string.format("Angles: %.2f %.2f %.2f", playdate.readAccelerometer()))
-            -- print(string.format("Cos: %f, target: %f", cos_ang, TILT_TARGET_BACK))
-
-            -- Will never happen currently (see TEST below)
-            tiltBack = false
-            actionSuccess_main()
-        elseif (not tiltBack and cos_ang <= TILT_TARGET) then
-            -- print("TILT 1/2 DONE")
-            -- print(string.format("Angles: %.2f %.2f %.2f", playdate.readAccelerometer()))
-            -- print(string.format("Cos: %f, target: %f", cos_ang, TILT_TARGET))
-
-            -- tiltBack = true
-            -- TEST (26.10.23): Disable the need to tilt back, since it is very finicky and
-            -- often does not regsiter properly, because you need to hit to original angle,
-            -- which is not obvious in 3D.
-            -- The action success sound and transition time should help to upright the playdate
-            -- before the next action begins
+        if (cos_ang <= TILT_TARGET) then
             actionSuccess_main()
         end
     end
