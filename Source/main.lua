@@ -558,6 +558,152 @@ local function cleanup_main()
     playdate.inputHandlers.pop()
 end
 
+------ GAME (Simon says)
+
+local SIMON_START_COUNT <const> = 3
+
+local actionChain = {}
+local score_simon = 0
+local currIndex = 1
+local simonsTurn = true
+local simonDoBG = gfx.image.new("images/simon")
+
+local update_simon
+
+local function startGame_simon()
+    score_simon = 0
+    currIndex = 1
+    simonsTurn = true
+
+    actionChain = {}
+    for i=1, SIMON_START_COUNT do
+        table.insert(actionChain, getValidActionCode())
+    end
+    currAction = actionChain[1]
+    setupActionGfxAndSound(currAction)
+
+    currMusic:stop()
+end
+
+local buttonHandlers_simonLose = {
+    AButtonDown = function()
+        playdate.inputHandlers.pop()
+        updateFnc = update_simon
+        startGame_simon()
+    end
+}
+
+local function actionSuccess_simon()
+    if (simonsTurn) then return end
+
+    soundSuccess:play(1)
+
+    if (currIndex < #actionChain) then
+        currIndex += 1
+        currAction = actionChain[currIndex]
+        setupActionGameplay(actionChain[currIndex-1], currAction)
+    else
+        score_simon += 1
+        table.insert(actionChain, getValidActionCode())
+        simonsTurn = true
+        currIndex = 1
+        currAction = actionChain[1]
+        setupActionGfxAndSound(currAction)
+    end
+end
+
+local function actionFail_simon()
+    if (simonsTurn or currAction == actionCodes.LOSE) then return end
+
+    -- if (score > saveData.highscore) then
+    --     saveData.highscore = score
+    --     playdate.datastore.write(saveData)
+    -- end
+    currAction = actionCodes.LOSE
+    playdate.graphics.sprite.redrawBackground()
+    gfx.sprite.update()
+    gfx.drawText('score: '..score_simon, 170, 224)
+    soundLose:play(1)
+    currMusic:stop()
+    currMusic:setSample(loseMusic)
+    currMusic:play(0)
+    playdate.inputHandlers.push(buttonHandlers_simonLose)
+    updateFnc = update_none
+end
+
+local function render_simon()
+    if (not simonsTurn) then
+        gfx.sprite.update()
+        return
+    end
+
+    if (actions[currAction].ani ~= nil and lastAnimationFrame ~= actions[currAction].img.frame) then
+        lastAnimationFrame = actions[currAction].img.frame
+        playdate.graphics.sprite.redrawBackground()
+    end
+
+    gfx.sprite.update()
+
+    gfx.drawText('score: '..score_simon, 170, 224)
+
+    if (saveData.debugOn and not simonsTurn) then
+        local yPos = 2
+        if (currAction == actionCodes.MICROPHONE) then
+            gfx.drawText(string.format("level: %.0f", mic.getLevel() * 100), 2, yPos)
+            yPos += 25
+        elseif (currAction == actionCodes.TILT) then
+            gfx.drawText(string.format("val: %.2f %.2f %.2f", playdate.readAccelerometer()), 2, yPos);
+            gfx.drawText(string.format("a3d: %.2f", math.acos(vec3D_dot(startVec, playdate.readAccelerometer())) * RAD_TO_DEG), 2, yPos + 15)
+            gfx.drawText(string.format("cos: %.4f", vec3D_dot(startVec, playdate.readAccelerometer())), 2, yPos + 30)
+            gfx.drawText(string.format("target: %.4f", TILT_TARGET), 2, yPos + 45)
+            yPos += 70
+        end
+    end
+end
+
+update_simon = function ()
+    if (not simonsTurn) then goto render end
+
+    if (actions[currAction].snd:isPlaying()) then goto render end
+
+    if (currIndex < #actionChain) then
+        currIndex += 1
+        currAction = actionChain[currIndex]
+        setupActionGfxAndSound(currAction)
+    else
+        simonsTurn = false
+        currIndex = 1
+        currAction = actionChain[1]
+        setupActionGameplay(0, currAction)
+        playdate.graphics.sprite.redrawBackground()
+    end
+
+    ::render::
+    render_simon()
+end
+
+local function setup_simon()
+    gfx.sprite.setBackgroundDrawingCallback(
+        function( x, y, width, height )
+            if (simonsTurn or currAction == actionCodes.LOSE) then
+                actions[currAction].img:draw(0,0)
+            else
+                simonDoBG:draw(0,0)
+            end
+        end
+    )
+    gfx.setFont(font)
+
+    playdate.startAccelerometer()
+    playdate.inputHandlers.push(buttonHandlers_main)
+    updateFnc = update_simon
+    actionSuccesFnc = actionSuccess_simon
+    actionFailFnc = actionFail_simon
+    reactToGlobalEvents = true
+
+    startGame_simon()
+end
+
 ------ TITLE SCREEN
 
 local currTitleCard = 1
@@ -612,7 +758,8 @@ local buttonHandlers_title = {
             gfx.drawText("HIGHSCORE: "..saveData.highscore, 78, 200)
         else
             cleanup_title()
-            setup_main()
+            -- setup_main()
+            setup_simon()
         end
     end
 }
