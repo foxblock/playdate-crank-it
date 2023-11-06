@@ -247,6 +247,10 @@ local actionTransitionTimer = nil
 local speedLevel = 1
 local score = 0
 
+local crankValue = 0
+local crankDeadzone = CRANK_DEADZONE_NORMAL
+local startVec = nil
+
 local lastAnimationFrame = 1
 
 local update_main
@@ -451,6 +455,7 @@ update_main = function ()
         actionTransitionState = 0
     end
     if (actionDone and actionTransitionState == 1) then
+        local lastAction = currAction
         if (speedLevel < MAX_SPEED_LEVEL and score == SPEED_UP_INTERVAL * speedLevel) then
             currAction = actionCodes.SPEED_UP
             speedLevel += 1
@@ -459,7 +464,6 @@ update_main = function ()
             currMusic:setSample(bgMusic[speedLevel])
             currMusic:play(0)
         else
-            local lastAction = currAction
             while (currAction == lastAction) do
                 currAction = getValidActionCode()
             end
