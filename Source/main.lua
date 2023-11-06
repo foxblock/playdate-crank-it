@@ -222,18 +222,21 @@ local function loadSettings()
     end
 end
 
-local function getValidActionCode()
+local function getValidActionCode(allowPassAction, excludeOption, crankDocked)
     local result = 0
+    crankDocked = crankDocked or playdate.isCrankDocked()
     repeat
-        if (playdate.isCrankDocked()) then
+        if (crankDocked) then
             result = math.random(1, actionCodes.CRANK_UNDOCK)
         else
             result = math.random(1, actionCodes.EOL - 1)
         end
     -- exclude UNDOCK action when crank is undocked
-    -- exclude MICROPHONE action on simulator
-    until ((playdate.isCrankDocked() or result ~= actionCodes.CRANK_UNDOCK) 
-            and (not playdate.isSimulator or result ~= actionCodes.MICROPHONE))
+    -- exclude MICROPHONE action on simulator with microphone input
+    until ((crankDocked or result ~= actionCodes.CRANK_UNDOCK)
+            and (not playdate.isSimulator or result ~= actionCodes.MICROPHONE)
+            and (excludeOption == nil or result ~= excludeOption)
+            and (allowPassAction or result ~= actionCodes.PASS_PLAYER))
 
     return result
 end
@@ -291,7 +294,7 @@ local function startGame()
     score = 0
     speedLevel = 1
 
-    currAction = getValidActionCode()
+    currAction = getValidActionCode(true)
     setupActionGameplay(0, currAction)
     setupActionGfxAndSound(currAction)
     actionDone = false
@@ -503,9 +506,7 @@ update_main = function ()
             currMusic:setSample(bgMusic[speedLevel])
             currMusic:play(0)
         else
-            while (currAction == lastAction) do
-                currAction = getValidActionCode()
-            end
+            currAction = getValidActionCode(true, lastAction)
         end
 
         setupActionGameplay(lastAction, currAction)
@@ -566,9 +567,20 @@ local actionChain = {}
 local score_simon = 0
 local currIndex = 1
 local simonsTurn = true
-local simonDoBG = gfx.image.new("images/simon")
+local simonWaitForDock = false
+local simonYourTurnImg = gfx.image.new("images/simon")
+local simonDockImg = gfx.image.new("images/simon_dock")
 
-local update_simon
+local update_simon_show
+local update_simon_action
+
+local buttonHandlers_simonDockContinue = {
+    crankDocked = function()
+        playdate.inputHandlers.pop()
+        simonWaitForDock = false
+        setupActionGfxAndSound(currAction)
+    end
+}
 
 local function startGame_simon()
     score_simon = 0
@@ -576,11 +588,18 @@ local function startGame_simon()
     simonsTurn = true
 
     actionChain = {}
+    -- do not allow undock action in this set, so we don't have to track dock state
     for i=1, SIMON_START_COUNT do
-        table.insert(actionChain, getValidActionCode())
+        table.insert(actionChain, getValidActionCode(false, actionCodes.CRANK_UNDOCK, true))
     end
     currAction = actionChain[1]
-    setupActionGfxAndSound(currAction)
+    if (playdate.isCrankDocked()) then
+        setupActionGfxAndSound(currAction)
+    else
+        simonWaitForDock = true
+        playdate.inputHandlers.push(buttonHandlers_simonDockContinue)
+        playdate.graphics.sprite.redrawBackground()
+    end
 
     currMusic:stop()
 end
@@ -588,7 +607,7 @@ end
 local buttonHandlers_simonLose = {
     AButtonDown = function()
         playdate.inputHandlers.pop()
-        updateFnc = update_simon
+        updateFnc = update_simon_show
         startGame_simon()
     end
 }
@@ -604,11 +623,18 @@ local function actionSuccess_simon()
         setupActionGameplay(actionChain[currIndex-1], currAction)
     else
         score_simon += 1
-        table.insert(actionChain, getValidActionCode())
+        table.insert(actionChain, getValidActionCode(false))
         simonsTurn = true
+        updateFnc = update_simon_show
         currIndex = 1
         currAction = actionChain[1]
-        setupActionGfxAndSound(currAction)
+        if (playdate.isCrankDocked()) then
+            setupActionGfxAndSound(currAction)
+        else
+            simonWaitForDock = true
+            playdate.inputHandlers.push(buttonHandlers_simonDockContinue)
+            playdate.graphics.sprite.redrawBackground()
+        end
     end
 end
 
@@ -632,11 +658,6 @@ local function actionFail_simon()
 end
 
 local function render_simon()
-    if (not simonsTurn) then
-        gfx.sprite.update()
-        return
-    end
-
     if (actions[currAction].ani ~= nil and lastAnimationFrame ~= actions[currAction].img.frame) then
         lastAnimationFrame = actions[currAction].img.frame
         playdate.graphics.sprite.redrawBackground()
@@ -661,8 +682,8 @@ local function render_simon()
     end
 end
 
-update_simon = function ()
-    if (not simonsTurn) then goto render end
+update_simon_show = function ()
+    if (simonWaitForDock) then goto render end
 
     if (actions[currAction].snd:isPlaying()) then goto render end
 
@@ -672,6 +693,7 @@ update_simon = function ()
         setupActionGfxAndSound(currAction)
     else
         simonsTurn = false
+        updateFnc = update_simon_action
         currIndex = 1
         currAction = actionChain[1]
         setupActionGameplay(0, currAction)
@@ -682,13 +704,30 @@ update_simon = function ()
     render_simon()
 end
 
+update_simon_action = function ()
+    if (currAction == actionCodes.MICROPHONE and mic.getLevel() >= MIC_LEVEL_TARGET) then
+        actionSuccess_simon()
+    end
+
+    if (currAction == actionCodes.TILT) then
+        local cos_ang = vec3D_dot(startVec, playdate.readAccelerometer())
+        if (cos_ang <= TILT_TARGET) then
+            actionSuccess_simon()
+        end
+    end
+
+    render_simon()
+end
+
 local function setup_simon()
     gfx.sprite.setBackgroundDrawingCallback(
         function( x, y, width, height )
-            if (simonsTurn or currAction == actionCodes.LOSE) then
+            if (simonWaitForDock) then
+                simonDockImg:draw(0,0)
+            elseif (simonsTurn or currAction == actionCodes.LOSE) then
                 actions[currAction].img:draw(0,0)
             else
-                simonDoBG:draw(0,0)
+                simonYourTurnImg:draw(0,0)
             end
         end
     )
@@ -696,7 +735,7 @@ local function setup_simon()
 
     playdate.startAccelerometer()
     playdate.inputHandlers.push(buttonHandlers_main)
-    updateFnc = update_simon
+    updateFnc = update_simon_show
     actionSuccesFnc = actionSuccess_simon
     actionFailFnc = actionFail_simon
     reactToGlobalEvents = true
