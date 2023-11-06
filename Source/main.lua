@@ -80,14 +80,16 @@ local actions <const> = {
         time = timeFast,
         snd = snd.new("sounds/move"),
         img = nil,
-        ani = gfx.imagetable.new("images/actions/move")
+        ani = gfx.imagetable.new("images/actions/move"),
+        staticFrame = 2
     },
     [actionCodes.BUTTON] = {
         msg = "Press it!",
         time = timeFast,
         snd = snd.new("sounds/press"),
         img = nil,
-        ani = gfx.imagetable.new("images/actions/press")
+        ani = gfx.imagetable.new("images/actions/press"),
+        staticFrame = 3,
     },
     [actionCodes.MICROPHONE] = {
         msg = "Shout it!",
@@ -101,14 +103,16 @@ local actions <const> = {
         time = timeNormal,
         snd = snd.new("sounds/tilt"),
         img = nil,
-        ani = gfx.imagetable.new("images/actions/tilt")
+        ani = gfx.imagetable.new("images/actions/tilt"),
+        staticFrame = 2
     },
     [actionCodes.PASS_PLAYER] = {
         msg = "Pass it!",
         time = { 3000, 3000, 2500, 2500, 2000 },
         snd = snd.new("sounds/pass"),
         img = nil,
-        ani = gfx.imagetable.new("images/actions/pass")
+        ani = gfx.imagetable.new("images/actions/pass"),
+        staticFrame = 2
     },
     [actionCodes.CRANK_UNDOCK] = {
         msg = "Undock it!",
@@ -129,7 +133,8 @@ local actions <const> = {
         time = timeSlow,
         snd = snd.new("sounds/crank"),
         img = nil,
-        ani = gfx.imagetable.new("images/actions/crank")
+        ani = gfx.imagetable.new("images/actions/crank"),
+        staticFrame = 1
     },
     [actionCodes.SPEED_UP] = {
         msg = "SPEED UP",
@@ -266,9 +271,9 @@ local function setupActionGameplay(last, curr)
     end
 end
 
-local function setupActionGfxAndSound(curr)
+local function setupActionGfxAndSound(curr, static)
     if (actions[curr].ani ~= nil) then
-        actions[curr].img.frame = 1
+        actions[curr].img.frame = static and actions[curr].staticFrame or 1
         lastAnimationFrame = 1
     end
     playdate.graphics.sprite.redrawBackground()
@@ -561,7 +566,7 @@ end
 
 ------ GAME (Simon says)
 
-local SIMON_START_COUNT <const> = 3
+local SIMON_START_COUNT <const> = 1
 
 local actionChain = {}
 local score_simon = 0
@@ -578,7 +583,7 @@ local buttonHandlers_simonDockContinue = {
     crankDocked = function()
         playdate.inputHandlers.pop()
         simonWaitForDock = false
-        setupActionGfxAndSound(currAction)
+        setupActionGfxAndSound(currAction, true)
     end
 }
 
@@ -594,7 +599,7 @@ local function startGame_simon()
     end
     currAction = actionChain[1]
     if (playdate.isCrankDocked()) then
-        setupActionGfxAndSound(currAction)
+        setupActionGfxAndSound(currAction, true)
     else
         simonWaitForDock = true
         playdate.inputHandlers.push(buttonHandlers_simonDockContinue)
@@ -629,7 +634,7 @@ local function actionSuccess_simon()
         currIndex = 1
         currAction = actionChain[1]
         if (playdate.isCrankDocked()) then
-            setupActionGfxAndSound(currAction)
+            setupActionGfxAndSound(currAction, true)
         else
             simonWaitForDock = true
             playdate.inputHandlers.push(buttonHandlers_simonDockContinue)
@@ -658,11 +663,6 @@ local function actionFail_simon()
 end
 
 local function render_simon()
-    if (actions[currAction].ani ~= nil and lastAnimationFrame ~= actions[currAction].img.frame) then
-        lastAnimationFrame = actions[currAction].img.frame
-        playdate.graphics.sprite.redrawBackground()
-    end
-
     gfx.sprite.update()
 
     gfx.drawText('score: '..score_simon, 170, 224)
@@ -690,7 +690,7 @@ update_simon_show = function ()
     if (currIndex < #actionChain) then
         currIndex += 1
         currAction = actionChain[currIndex]
-        setupActionGfxAndSound(currAction)
+        setupActionGfxAndSound(currAction, true)
     else
         simonsTurn = false
         updateFnc = update_simon_action
