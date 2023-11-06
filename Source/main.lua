@@ -143,19 +143,15 @@ local actions <const> = {
 -- set up animations
 -- actions with img set, keep that as a static background
 -- actions with ani set (we assume it is a tilemap), will load it into img as an animation
--- actions with neither set will get the fallback backgroundImage
-local backgroundImage = gfx.image.new("images/background")
-assert(backgroundImage)
-
+-- actions with neither set will get an ERROR
 local ACTION_ANIMATION_FRAME_TIME_MS <const> = 500
-
 for k,v in pairs(actions) do
-    if (v.img ~= nil) then goto continue end
-
-    if (v.ani == nil) then
-        v.img = backgroundImage
-    else
+    if (v.img ~= nil) then
+        goto continue
+    elseif (v.ani ~= nil) then
         v.img = gfx.animation.loop.new(ACTION_ANIMATION_FRAME_TIME_MS, v.ani, true)
+    else
+        error("No image or animation defined for action: " .. k)
     end
     ::continue::
 end
@@ -413,11 +409,6 @@ local function render_main()
     end
 
     gfx.setFont(font)
-
-    -- fallback text description for actions without image
-    if (actions[currAction].img == backgroundImage) then
-        gfx.drawTextAligned(actions[currAction].msg, 200, 120, kTextAlignment.center)
-    end
 
     gfx.drawText('score: '..score, 80, 224)
     gfx.drawText("HIGH: "..saveData.highscore, 240, 224)
