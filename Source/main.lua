@@ -185,6 +185,7 @@ local font = gfx.font.new("images/font/whiteglove-stroked")
 local soundSuccess = snd.new("sounds/success")
 local soundLose = snd.new("sounds/lose")
 
+local currAction
 local lastAnimationFrame = 1
 local crankValue = 0
 local crankDeadzone = CRANK_DEADZONE_NORMAL
@@ -237,7 +238,7 @@ local function getValidActionCode()
     return result
 end
 
-local function setupAction(last, curr)
+local function setupActionGameplay(last, curr)
     -- increase deadzone after CRANKED action, so turning the crank
     -- a bit too far does not immediately fail the player
     if (last == actionCodes.CRANKED) then
@@ -260,7 +261,9 @@ local function setupAction(last, curr)
         -- print(string.format("Angles: %.2f %.2f %.2f", playdate.readAccelerometer()))
         -- print(string.format("Norm: %.2f %.2f %.2f", startVec[1], startVec[2], startVec[3]))
     end
+end
 
+local function setupActionGfxAndSound(curr)
     if (actions[curr].ani ~= nil) then
         actions[curr].img.frame = 1
         lastAnimationFrame = 1
@@ -275,7 +278,6 @@ end
 
 ------ GAME (MAIN)
 
-local currAction
 local actionDone
 local actionTransitionState -- -1 not started, 0 running, 1 done
 local actionTimer
@@ -290,7 +292,8 @@ local function startGame()
     speedLevel = 1
 
     currAction = getValidActionCode()
-    setupAction(0, currAction)
+    setupActionGameplay(0, currAction)
+    setupActionGfxAndSound(currAction)
     actionDone = false
     actionTransitionState = -1
     actionTransitionTimer:pause()
@@ -505,7 +508,8 @@ update_main = function ()
             end
         end
 
-        setupAction(lastAction, currAction)
+        setupActionGameplay(lastAction, currAction)
+        setupActionGfxAndSound(currAction)
 
         actionDone = false
         actionTransitionState = -1
