@@ -439,8 +439,10 @@ local buttonHandlers_main = {
 
         crankValue += math.abs(change)
         if (currAction == actionCodes.CRANKED and crankValue >= CRANK_TARGET) then
+            crankValue = 0
             actionSuccesFnc()
         elseif (currAction ~= actionCodes.CRANKED and crankValue >= crankDeadzone) then
+            crankValue = 0
             actionFailFnc()
         end
     end
@@ -644,7 +646,7 @@ local function actionSuccess_simon()
 end
 
 local function actionFail_simon()
-    if (simonsTurn or currAction == actionCodes.LOSE) then return end
+    if (currAction == actionCodes.LOSE) then return end
 
     -- if (score > saveData.highscore) then
     --     saveData.highscore = score
