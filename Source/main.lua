@@ -183,8 +183,9 @@ local TRANSITION_TIME_MS <const> = 500
 local GAME_MODE <const> = {
     CRANKIT = 1,
     SIMON = 2,
-    VERSUS = 3,--not implemented
-    BOMB = 4--not implemented
+    EOL = 3,
+    VERSUS = 99,--not implemented
+    BOMB = 100--not implemented
 }
 local GAME_MODE_STR <const> = {
     "Crank-it!",
@@ -201,6 +202,7 @@ local saveData = {
 }
 
 local font = gfx.font.new("images/font/whiteglove-stroked")
+gfx.setFont(font)
 local soundSuccess = snd.new("sounds/success")
 local soundLose = snd.new("sounds/lose")
 
@@ -560,7 +562,7 @@ local function setup_main()
             actions[currAction].img:draw(0,0)
         end
     )
-    gfx.setFont(font)
+    gfx.setColor(gfx.kColorBlack)
 
     playdate.startAccelerometer()
     playdate.inputHandlers.push(buttonHandlers_main)
@@ -756,7 +758,6 @@ local function setup_simon()
             end
         end
     )
-    gfx.setFont(font)
 
     playdate.startAccelerometer()
     playdate.inputHandlers.push(buttonHandlers_main)
@@ -771,6 +772,7 @@ end
 ------ TITLE SCREEN
 
 local currTitleCard = 1
+local selectedGame = 1
 
 local function drawTitleCard(index)
     local backgroundImage = nil
@@ -815,17 +817,42 @@ local function cleanup_title()
 end
 
 local buttonHandlers_title = {
+    leftButtonDown = function ()
+        if (selectedGame == 1) then
+            selectedGame = GAME_MODE.EOL - 1
+        else
+            selectedGame -= 1
+        end
+        gfx.fillRect(78, 190, 150, 40)
+        gfx.drawText("MODE: "..GAME_MODE_STR[selectedGame], 78, 190)
+        gfx.drawText("HIGHSCORE: "..saveData.highscore[selectedGame], 78, 210)
+    end,
+
+    rightButtonDown = function ()
+        if (selectedGame == GAME_MODE.EOL - 1) then
+            selectedGame = 1
+        else
+            selectedGame += 1
+        end
+        gfx.fillRect(78, 190, 150, 40)
+        gfx.drawText("MODE: "..GAME_MODE_STR[selectedGame], 78, 190)
+        gfx.drawText("HIGHSCORE: "..saveData.highscore[selectedGame], 78, 210)
+    end,
+
     AButtonDown = function()
         if currTitleCard == 1 then
             currTitleCard += 1
             drawTitleCard(currTitleCard)
 
-            gfx.setFont(font)
-            gfx.drawText("HIGHSCORE: "..saveData.highscore[GAME_MODE.CRANKIT], 78, 200)
+            gfx.drawText("MODE: "..GAME_MODE_STR[selectedGame], 78, 190)
+            gfx.drawText("HIGHSCORE: "..saveData.highscore[selectedGame], 78, 210)
         else
             cleanup_title()
-            -- setup_main()
-            setup_simon()
+            if (selectedGame == GAME_MODE.CRANKIT) then
+                setup_main()
+            elseif (selectedGame == GAME_MODE.SIMON) then
+                setup_simon()
+            end 
         end
     end
 }
@@ -834,6 +861,7 @@ local function setup_title()
     loadSettings()
     setupMenuItems()
     playdate.inputHandlers.push(buttonHandlers_title)
+    gfx.setColor(gfx.kColorWhite)
     drawTitleCard(currTitleCard)
     updateFnc = update_none
     reactToGlobalEvents = false
