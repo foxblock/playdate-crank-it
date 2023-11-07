@@ -48,7 +48,7 @@ local snd <const> = playdate.sound.sampleplayer
 local RAD_TO_DEG <const> = 180 / math.pi
 local DEG_TO_RAD <const> = math.pi / 180
 
-local actionCodes <const> = {
+local ACTION_CODES <const> = {
     LOSE = 0,
     DIRECTION = 1,
     BUTTON = 2,
@@ -68,14 +68,14 @@ local timeSlow <const> = { 4000, 3200, 2500, 2000, 1750 }
 
 -- TODO: Change snd entries from sampleplayer to sample and use one global player for all action sounds
 local actions <const> = {
-    [actionCodes.LOSE] = {
+    [ACTION_CODES.LOSE] = {
         msg = "You lose! (Press A to restart)",
         time = timeNormal,
         snd = snd.new("sounds/lose"),
         img = gfx.image.new("images/actions/lose"),
         ani = nil
     },
-    [actionCodes.DIRECTION] = {
+    [ACTION_CODES.DIRECTION] = {
         msg = "Move it!",
         time = timeFast,
         snd = snd.new("sounds/move"),
@@ -83,7 +83,7 @@ local actions <const> = {
         ani = gfx.imagetable.new("images/actions/move"),
         staticFrame = 2
     },
-    [actionCodes.BUTTON] = {
+    [ACTION_CODES.BUTTON] = {
         msg = "Press it!",
         time = timeFast,
         snd = snd.new("sounds/press"),
@@ -91,14 +91,14 @@ local actions <const> = {
         ani = gfx.imagetable.new("images/actions/press"),
         staticFrame = 3,
     },
-    [actionCodes.MICROPHONE] = {
+    [ACTION_CODES.MICROPHONE] = {
         msg = "Shout it!",
         time = timeFast,
         snd = snd.new("sounds/shout"),
         img = gfx.image.new("images/actions/shout"),
         ani = nil
     },
-    [actionCodes.TILT] = {
+    [ACTION_CODES.TILT] = {
         msg = "Tilt it!",
         time = timeNormal,
         snd = snd.new("sounds/tilt"),
@@ -106,7 +106,7 @@ local actions <const> = {
         ani = gfx.imagetable.new("images/actions/tilt"),
         staticFrame = 2
     },
-    [actionCodes.PASS_PLAYER] = {
+    [ACTION_CODES.PASS_PLAYER] = {
         msg = "Pass it!",
         time = { 3000, 3000, 2500, 2500, 2000 },
         snd = snd.new("sounds/pass"),
@@ -114,21 +114,21 @@ local actions <const> = {
         ani = gfx.imagetable.new("images/actions/pass"),
         staticFrame = 2
     },
-    [actionCodes.CRANK_UNDOCK] = {
+    [ACTION_CODES.CRANK_UNDOCK] = {
         msg = "Undock it!",
         time = timeNormal,
         snd = snd.new("sounds/undock"),
         img = gfx.image.new("images/actions/undock"),
         ani = nil
     },
-    [actionCodes.CRANK_DOCK] = {
+    [ACTION_CODES.CRANK_DOCK] = {
         msg = "Dock it!",
         time = timeSlow,
         snd = snd.new("sounds/dock"),
         img = gfx.image.new("images/actions/dock"),
         ani = nil
     },
-    [actionCodes.CRANKED] = {
+    [ACTION_CODES.CRANKED] = {
         msg = "Crank it!",
         time = timeSlow,
         snd = snd.new("sounds/crank"),
@@ -136,7 +136,7 @@ local actions <const> = {
         ani = gfx.imagetable.new("images/actions/crank"),
         staticFrame = 1
     },
-    [actionCodes.SPEED_UP] = {
+    [ACTION_CODES.SPEED_UP] = {
         msg = "SPEED UP",
         time = { 2000, 2000, 2000, 2000, 2000 },
         snd = snd.new("sounds/speed"),
@@ -180,8 +180,22 @@ local SPEED_UP_INTERVAL <const> = 10
 local MAX_SPEED_LEVEL <const> = 5
 local TRANSITION_TIME_MS <const> = 500
 
+local GAME_MODE <const> = {
+    CRANKIT = 1,
+    SIMON = 2,
+    VERSUS = 3,--not implemented
+    BOMB = 4--not implemented
+}
+local GAME_MODE_STR <const> = {
+    "Crank-it!",
+    "Simon cranks",
+    "Crank-it VERSUS",
+    "Crank the bomb"
+}
+
 local saveData = {
-    highscore = 0,
+    SAVE_VERSION = 1,
+    highscore = {0,0,0,0},
     musicOn = true,
     debugOn = false
 }
@@ -219,7 +233,16 @@ local function loadSettings()
 
     if (loadData == nil) then return end
 
-    saveData = loadData
+    -- convert from old save file
+    if (loadData.SAVE_VERSION == nil) then
+        saveData.debugOn = loadData.debugOn
+        saveData.musicOn = loadData.musicOn
+        saveData.highscore[GAME_MODE.CRANKIT] = loadData.highscore
+        playdate.datastore.write(saveData)
+    else
+        saveData = loadData
+    end
+
     if (saveData.musicOn) then
         currMusic:setVolume(1.0)
     else
@@ -232,16 +255,16 @@ local function getValidActionCode(allowPassAction, excludeOption, crankDocked)
     crankDocked = crankDocked or playdate.isCrankDocked()
     repeat
         if (crankDocked) then
-            result = math.random(1, actionCodes.CRANK_UNDOCK)
+            result = math.random(1, ACTION_CODES.CRANK_UNDOCK)
         else
-            result = math.random(1, actionCodes.EOL - 1)
+            result = math.random(1, ACTION_CODES.EOL - 1)
         end
     -- exclude UNDOCK action when crank is undocked
     -- exclude MICROPHONE action on simulator with microphone input
-    until ((crankDocked or result ~= actionCodes.CRANK_UNDOCK)
-            and (not playdate.isSimulator or result ~= actionCodes.MICROPHONE)
+    until ((crankDocked or result ~= ACTION_CODES.CRANK_UNDOCK)
+            and (not playdate.isSimulator or result ~= ACTION_CODES.MICROPHONE)
             and (excludeOption == nil or result ~= excludeOption)
-            and (allowPassAction or result ~= actionCodes.PASS_PLAYER))
+            and (allowPassAction or result ~= ACTION_CODES.PASS_PLAYER))
 
     return result
 end
@@ -249,7 +272,7 @@ end
 local function setupActionGameplay(last, curr)
     -- increase deadzone after CRANKED action, so turning the crank
     -- a bit too far does not immediately fail the player
-    if (last == actionCodes.CRANKED) then
+    if (last == ACTION_CODES.CRANKED) then
         crankDeadzone = CRANK_DEADZONE_AFTER_CRANKED
     else
         crankDeadzone = CRANK_DEADZONE_NORMAL
@@ -257,13 +280,13 @@ local function setupActionGameplay(last, curr)
     -- always reset crank value, because it is checked for succeed and fail
     crankValue = 0
 
-    if (curr == actionCodes.MICROPHONE) then
+    if (curr == ACTION_CODES.MICROPHONE) then
         mic.startListening()
     else
         mic.stopListening()
     end
 
-    if (curr == actionCodes.TILT) then
+    if (curr == ACTION_CODES.TILT) then
         startVec = { vec3D_norm(playdate.readAccelerometer()) }
         -- print("TILT START")
         -- print(string.format("Angles: %.2f %.2f %.2f", playdate.readAccelerometer()))
@@ -331,13 +354,13 @@ local function actionSuccess_main()
 end
 
 local function actionFail_main()
-    if (currAction == actionCodes.LOSE) then return end
+    if (currAction == ACTION_CODES.LOSE) then return end
 
-    if (score > saveData.highscore) then
-        saveData.highscore = score
+    if (score > saveData.highscore[GAME_MODE.CRANKIT]) then
+        saveData.highscore[GAME_MODE.CRANKIT] = score
         playdate.datastore.write(saveData)
     end
-    currAction = actionCodes.LOSE
+    currAction = ACTION_CODES.LOSE
     actionTimer:pause()
     playdate.graphics.sprite.redrawBackground()
     gfx.sprite.update()
@@ -351,10 +374,10 @@ local function actionFail_main()
 end
 
 local function actionTimerEnd()
-    if (currAction == actionCodes.PASS_PLAYER) then
+    if (currAction == ACTION_CODES.PASS_PLAYER) then
         actionDone = true
         return
-    elseif (currAction == actionCodes.SPEED_UP) then
+    elseif (currAction == ACTION_CODES.SPEED_UP) then
         actionDone = true
         return
     end
@@ -370,7 +393,7 @@ local actionSuccesFnc = nil
 local actionFailFnc = nil
 local buttonHandlers_main = {
     upButtonDown = function()
-        if (currAction == actionCodes.DIRECTION) then
+        if (currAction == ACTION_CODES.DIRECTION) then
             actionSuccesFnc()
         else
             actionFailFnc()
@@ -378,7 +401,7 @@ local buttonHandlers_main = {
     end,
 
     rightButtonDown = function()
-        if (currAction == actionCodes.DIRECTION) then
+        if (currAction == ACTION_CODES.DIRECTION) then
             actionSuccesFnc()
         else
             actionFailFnc()
@@ -386,7 +409,7 @@ local buttonHandlers_main = {
     end,
 
     downButtonDown = function()
-        if (currAction == actionCodes.DIRECTION) then
+        if (currAction == ACTION_CODES.DIRECTION) then
             actionSuccesFnc()
         else
             actionFailFnc()
@@ -394,7 +417,7 @@ local buttonHandlers_main = {
     end,
 
     leftButtonDown = function()
-        if (currAction == actionCodes.DIRECTION) then
+        if (currAction == ACTION_CODES.DIRECTION) then
             actionSuccesFnc()
         else
             actionFailFnc()
@@ -402,7 +425,7 @@ local buttonHandlers_main = {
     end,
 
     AButtonDown = function()
-        if (currAction == actionCodes.BUTTON) then
+        if (currAction == ACTION_CODES.BUTTON) then
             actionSuccesFnc()
         else
             actionFailFnc()
@@ -410,7 +433,7 @@ local buttonHandlers_main = {
     end,
 
     BButtonDown = function()
-        if (currAction == actionCodes.BUTTON) then
+        if (currAction == ACTION_CODES.BUTTON) then
             actionSuccesFnc()
         else
             actionFailFnc()
@@ -418,7 +441,7 @@ local buttonHandlers_main = {
     end,
 
     crankDocked = function()
-        if (currAction == actionCodes.CRANK_DOCK) then
+        if (currAction == ACTION_CODES.CRANK_DOCK) then
             actionSuccesFnc()
         else
             actionFailFnc()
@@ -426,7 +449,7 @@ local buttonHandlers_main = {
     end,
 
     crankUndocked = function()
-        if (currAction == actionCodes.CRANK_UNDOCK) then
+        if (currAction == ACTION_CODES.CRANK_UNDOCK) then
             actionSuccesFnc()
         else
             actionFailFnc()
@@ -435,13 +458,13 @@ local buttonHandlers_main = {
 
     cranked = function(change, acceleratedChange)
         -- Ignore when docking, since crank may need to be moved to do so
-        if (currAction == actionCodes.CRANK_DOCK) then return end
+        if (currAction == ACTION_CODES.CRANK_DOCK) then return end
 
         crankValue += math.abs(change)
-        if (currAction == actionCodes.CRANKED and crankValue >= CRANK_TARGET) then
+        if (currAction == ACTION_CODES.CRANKED and crankValue >= CRANK_TARGET) then
             crankValue = 0
             actionSuccesFnc()
-        elseif (currAction ~= actionCodes.CRANKED and crankValue >= crankDeadzone) then
+        elseif (currAction ~= ACTION_CODES.CRANKED and crankValue >= crankDeadzone) then
             crankValue = 0
             actionFailFnc()
         end
@@ -465,14 +488,14 @@ local function render_main()
     end
 
     gfx.drawText('score: '..score, 80, 224)
-    gfx.drawText("HIGH: "..saveData.highscore, 240, 224)
+    gfx.drawText("HIGH: "..saveData.highscore[GAME_MODE.CRANKIT], 240, 224)
 
     if (saveData.debugOn) then
         local yPos = 2
-        if (currAction == actionCodes.MICROPHONE) then
+        if (currAction == ACTION_CODES.MICROPHONE) then
             gfx.drawText(string.format("level: %.0f", mic.getLevel() * 100), 2, yPos)
             yPos += 25
-        elseif (currAction == actionCodes.TILT) then
+        elseif (currAction == ACTION_CODES.TILT) then
             gfx.drawText(string.format("val: %.2f %.2f %.2f", playdate.readAccelerometer()), 2, yPos);
             gfx.drawText(string.format("a3d: %.2f", math.acos(vec3D_dot(startVec, playdate.readAccelerometer())) * RAD_TO_DEG), 2, yPos + 15)
             gfx.drawText(string.format("cos: %.4f", vec3D_dot(startVec, playdate.readAccelerometer())), 2, yPos + 30)
@@ -486,11 +509,11 @@ end
 update_main = function ()
     playdate.timer.updateTimers()
 
-    if (currAction == actionCodes.MICROPHONE and mic.getLevel() >= MIC_LEVEL_TARGET) then
+    if (currAction == ACTION_CODES.MICROPHONE and mic.getLevel() >= MIC_LEVEL_TARGET) then
         actionSuccess_main()
     end
 
-    if (currAction == actionCodes.TILT) then
+    if (currAction == ACTION_CODES.TILT) then
         local cos_ang = vec3D_dot(startVec, playdate.readAccelerometer())
         if (cos_ang <= TILT_TARGET) then
             actionSuccess_main()
@@ -506,7 +529,7 @@ update_main = function ()
     elseif (actionDone and actionTransitionState == 1) then
         local lastAction = currAction
         if (speedLevel < MAX_SPEED_LEVEL and score == SPEED_UP_INTERVAL * speedLevel) then
-            currAction = actionCodes.SPEED_UP
+            currAction = ACTION_CODES.SPEED_UP
             speedLevel += 1
 
             currMusic:stop()
@@ -597,7 +620,7 @@ local function startGame_simon()
     actionChain = {}
     -- do not allow dock action in this set, so we don't have to track dock state
     for i=1, SIMON_START_COUNT do
-        table.insert(actionChain, getValidActionCode(false, actionCodes.CRANK_DOCK, false))
+        table.insert(actionChain, getValidActionCode(false, ACTION_CODES.CRANK_DOCK, false))
     end
     currAction = actionChain[1]
     if (playdate.isCrankDocked()) then
@@ -646,13 +669,13 @@ local function actionSuccess_simon()
 end
 
 local function actionFail_simon()
-    if (currAction == actionCodes.LOSE) then return end
+    if (currAction == ACTION_CODES.LOSE) then return end
 
-    -- if (score > saveData.highscore) then
-    --     saveData.highscore = score
-    --     playdate.datastore.write(saveData)
-    -- end
-    currAction = actionCodes.LOSE
+    if (score_simon > saveData.highscore[GAME_MODE.SIMON]) then
+        saveData.highscore[GAME_MODE.SIMON] = score_simon
+        playdate.datastore.write(saveData)
+    end
+    currAction = ACTION_CODES.LOSE
     playdate.graphics.sprite.redrawBackground()
     gfx.sprite.update()
     gfx.drawText('score: '..score_simon, 170, 224)
@@ -671,10 +694,10 @@ local function render_simon()
 
     if (saveData.debugOn and not simonsTurn) then
         local yPos = 2
-        if (currAction == actionCodes.MICROPHONE) then
+        if (currAction == ACTION_CODES.MICROPHONE) then
             gfx.drawText(string.format("level: %.0f", mic.getLevel() * 100), 2, yPos)
             yPos += 25
-        elseif (currAction == actionCodes.TILT) then
+        elseif (currAction == ACTION_CODES.TILT) then
             gfx.drawText(string.format("val: %.2f %.2f %.2f", playdate.readAccelerometer()), 2, yPos);
             gfx.drawText(string.format("a3d: %.2f", math.acos(vec3D_dot(startVec, playdate.readAccelerometer())) * RAD_TO_DEG), 2, yPos + 15)
             gfx.drawText(string.format("cos: %.4f", vec3D_dot(startVec, playdate.readAccelerometer())), 2, yPos + 30)
@@ -707,11 +730,11 @@ update_simon_show = function ()
 end
 
 update_simon_action = function ()
-    if (currAction == actionCodes.MICROPHONE and mic.getLevel() >= MIC_LEVEL_TARGET) then
+    if (currAction == ACTION_CODES.MICROPHONE and mic.getLevel() >= MIC_LEVEL_TARGET) then
         actionSuccess_simon()
     end
 
-    if (currAction == actionCodes.TILT) then
+    if (currAction == ACTION_CODES.TILT) then
         local cos_ang = vec3D_dot(startVec, playdate.readAccelerometer())
         if (cos_ang <= TILT_TARGET) then
             actionSuccess_simon()
@@ -726,7 +749,7 @@ local function setup_simon()
         function( x, y, width, height )
             if (simonWaitForUndock) then
                 simonDockImg:draw(0,0)
-            elseif (simonsTurn or currAction == actionCodes.LOSE) then
+            elseif (simonsTurn or currAction == ACTION_CODES.LOSE) then
                 actions[currAction].img:draw(0,0)
             else
                 simonYourTurnImg:draw(0,0)
@@ -775,7 +798,9 @@ local function setupMenuItems()
     end)
 
     local resetScoreMenuItem, _ = menu:addMenuItem("Reset Score", function()
-        saveData.highscore = 0
+        for i=1, #saveData.highscore do
+            saveData.highscore[i] = 0
+        end
         playdate.datastore.write(saveData)
     end)
 
@@ -796,7 +821,7 @@ local buttonHandlers_title = {
             drawTitleCard(currTitleCard)
 
             gfx.setFont(font)
-            gfx.drawText("HIGHSCORE: "..saveData.highscore, 78, 200)
+            gfx.drawText("HIGHSCORE: "..saveData.highscore[GAME_MODE.CRANKIT], 78, 200)
         else
             cleanup_title()
             -- setup_main()
