@@ -572,7 +572,7 @@ local actionChain = {}
 local score_simon = 0
 local currIndex = 1
 local simonsTurn = true
-local simonWaitForDock = false
+local simonWaitForUndock = false
 local simonYourTurnImg = gfx.image.new("images/simon")
 local simonDockImg = gfx.image.new("images/simon_dock")
 
@@ -580,9 +580,9 @@ local update_simon_show
 local update_simon_action
 
 local buttonHandlers_simonDockContinue = {
-    crankDocked = function()
+    crankUndocked = function()
         playdate.inputHandlers.pop()
-        simonWaitForDock = false
+        simonWaitForUndock = false
         setupActionGfxAndSound(currAction, true)
     end
 }
@@ -593,17 +593,17 @@ local function startGame_simon()
     simonsTurn = true
 
     actionChain = {}
-    -- do not allow undock action in this set, so we don't have to track dock state
+    -- do not allow dock action in this set, so we don't have to track dock state
     for i=1, SIMON_START_COUNT do
-        table.insert(actionChain, getValidActionCode(false, actionCodes.CRANK_UNDOCK, true))
+        table.insert(actionChain, getValidActionCode(false, actionCodes.CRANK_DOCK, false))
     end
     currAction = actionChain[1]
     if (playdate.isCrankDocked()) then
-        setupActionGfxAndSound(currAction, true)
-    else
-        simonWaitForDock = true
+        simonWaitForUndock = true
         playdate.inputHandlers.push(buttonHandlers_simonDockContinue)
         playdate.graphics.sprite.redrawBackground()
+    else
+        setupActionGfxAndSound(currAction, true)
     end
 
     currMusic:stop()
@@ -634,11 +634,11 @@ local function actionSuccess_simon()
         currIndex = 1
         currAction = actionChain[1]
         if (playdate.isCrankDocked()) then
-            setupActionGfxAndSound(currAction, true)
-        else
-            simonWaitForDock = true
+            simonWaitForUndock = true
             playdate.inputHandlers.push(buttonHandlers_simonDockContinue)
             playdate.graphics.sprite.redrawBackground()
+        else
+            setupActionGfxAndSound(currAction, true)
         end
     end
 end
@@ -683,7 +683,7 @@ local function render_simon()
 end
 
 update_simon_show = function ()
-    if (simonWaitForDock) then goto render end
+    if (simonWaitForUndock) then goto render end
 
     if (actions[currAction].snd:isPlaying()) then goto render end
 
@@ -722,7 +722,7 @@ end
 local function setup_simon()
     gfx.sprite.setBackgroundDrawingCallback(
         function( x, y, width, height )
-            if (simonWaitForDock) then
+            if (simonWaitForUndock) then
                 simonDockImg:draw(0,0)
             elseif (simonsTurn or currAction == actionCodes.LOSE) then
                 actions[currAction].img:draw(0,0)
