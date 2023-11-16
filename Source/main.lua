@@ -31,6 +31,7 @@
 -- [ ] Better score and highscore display
 -- [X] main menu - do not start the game immediately
 -- [X] add title card recommending to play without the cover (https://devforum.play.date/t/crank-docking-not-registered/10439)
+-- [ ] sound convert script: add option to convert single file if passed path is a file
 
 
 import "CoreLibs/object"
@@ -825,8 +826,8 @@ local buttonHandlers_title = {
         else
             selectedGame -= 1
         end
-        gfx.fillRect(78, 190, 150, 40)
-        gfx.drawText("MODE: "..GAME_MODE_STR[selectedGame], 78, 190)
+        gfx.fillRect(78, 190, 170, 40)
+        gfx.drawText("MODE: < "..GAME_MODE_STR[selectedGame].." >", 78, 190)
         gfx.drawText("HIGHSCORE: "..saveData.highscore[selectedGame], 78, 210)
     end,
 
@@ -836,8 +837,8 @@ local buttonHandlers_title = {
         else
             selectedGame += 1
         end
-        gfx.fillRect(78, 190, 150, 40)
-        gfx.drawText("MODE: "..GAME_MODE_STR[selectedGame], 78, 190)
+        gfx.fillRect(78, 190, 170, 40)
+        gfx.drawText("MODE: < "..GAME_MODE_STR[selectedGame].." >", 78, 190)
         gfx.drawText("HIGHSCORE: "..saveData.highscore[selectedGame], 78, 210)
     end,
 
@@ -846,7 +847,7 @@ local buttonHandlers_title = {
             currTitleCard += 1
             drawTitleCard(currTitleCard)
 
-            gfx.drawText("MODE: "..GAME_MODE_STR[selectedGame], 78, 190)
+            gfx.drawText("MODE: < "..GAME_MODE_STR[selectedGame].." >", 78, 190)
             gfx.drawText("HIGHSCORE: "..saveData.highscore[selectedGame], 78, 210)
         else
             cleanup_title()
