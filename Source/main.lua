@@ -597,10 +597,10 @@ end
 ------ GAME (Simon says)
 
 local SIMON_START_COUNT <const> = 1
-local SIMON_TIMER_DURATION_MS <const> = 10000
-local SIMON_TIMER_SHOW_MS <const> = 5000
-local SIMON_TIMER_SOUND2_MS <const> = 2500
-local SIMON_TIMER_SOUND3_MS <const> = 1000
+local SIMON_TIMER_DURATION_MS <const> = 6500
+local SIMON_TIMER_SHOW_MS <const> = 4300
+local SIMON_TIMER_SOUND2_MS <const> = 2400
+local SIMON_TIMER_SOUND3_MS <const> = 960
 
 local actionChain = {}
 local score_simon = 0
