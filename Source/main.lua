@@ -872,6 +872,8 @@ end
 
 local buttonHandlers_title = {
     leftButtonDown = function ()
+        if (currTitleCard == 1) then return end
+
         if (selectedGame == 1) then
             selectedGame = GAME_MODE.EOL - 1
         else
@@ -883,6 +885,8 @@ local buttonHandlers_title = {
     end,
 
     rightButtonDown = function ()
+        if (currTitleCard == 1) then return end
+
         if (selectedGame == GAME_MODE.EOL - 1) then
             selectedGame = 1
         else
