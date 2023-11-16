@@ -378,6 +378,8 @@ local function actionFail_main()
     updateFnc = update_none
 end
 
+local actionSuccesFnc = nil
+local actionFailFnc = nil
 local function actionTimerEnd()
     if (currAction == ACTION_CODES.PASS_PLAYER) then
         actionDone = true
@@ -387,15 +389,13 @@ local function actionTimerEnd()
         return
     end
 
-    actionFail_main()
+    actionFailFnc()
 end
 
 local function actionTransitionEnd()
     actionTransitionState = 1
 end
 
-local actionSuccesFnc = nil
-local actionFailFnc = nil
 local buttonHandlers_main = {
     upButtonDown = function()
         if (currAction == ACTION_CODES.DIRECTION) then
@@ -597,14 +597,24 @@ end
 ------ GAME (Simon says)
 
 local SIMON_START_COUNT <const> = 1
+local SIMON_TIMER_DURATION_MS <const> = 10000
+local SIMON_TIMER_SHOW_MS <const> = 5000
+local SIMON_TIMER_SOUND2_MS <const> = 2500
+local SIMON_TIMER_SOUND3_MS <const> = 1000
 
 local actionChain = {}
 local score_simon = 0
 local currIndex = 1
 local simonsTurn = true
 local simonWaitForUndock = false
+local simonTimer
 local simonYourTurnImg = gfx.image.new("images/simon")
 local simonDockImg = gfx.image.new("images/simon_dock")
+local simonTickSlow = playdate.sound.sample.new("sounds/tick1")
+local simonTickMid = playdate.sound.sample.new("sounds/tick2")
+local simonTickFast = playdate.sound.sample.new("sounds/tick3")
+local simonSampleplayer = snd.new(simonTickSlow)
+local simonTickState = 1
 
 local update_simon_show
 local update_simon_action
@@ -651,6 +661,10 @@ local function actionSuccess_simon()
     if (simonsTurn) then return end
 
     soundSuccess:play(1)
+    simonSampleplayer:stop()
+    simonTickState = 1
+    simonTimer:reset()
+    simonTimer:start()
 
     if (currIndex < #actionChain) then
         currIndex += 1
@@ -658,6 +672,7 @@ local function actionSuccess_simon()
         setupActionGameplay(actionChain[currIndex-1], currAction)
     else
         score_simon += 1
+        simonTimer:pause()
         table.insert(actionChain, getValidActionCode(false))
         simonsTurn = true
         updateFnc = update_simon_show
@@ -684,6 +699,7 @@ local function actionFail_simon()
     playdate.graphics.sprite.redrawBackground()
     gfx.sprite.update()
     gfx.drawText('score: '..score_simon, 170, 224)
+    simonSampleplayer:stop()
     soundLose:play(1)
     currMusic:stop()
     currMusic:setSample(loseMusic)
@@ -696,6 +712,11 @@ local function render_simon()
     gfx.sprite.update()
 
     gfx.drawText('score: '..score_simon, 170, 224)
+
+    if (simonTimer.timeLeft <= SIMON_TIMER_SHOW_MS) then
+        local w = screen.getWidth() * simonTimer.timeLeft / SIMON_TIMER_SHOW_MS
+        gfx.fillRect(0, screen.getHeight() - 20, w, 20)
+    end
 
     if (saveData.debugOn and not simonsTurn) then
         local yPos = 2
@@ -728,6 +749,9 @@ update_simon_show = function ()
         currAction = actionChain[1]
         setupActionGameplay(0, currAction)
         playdate.graphics.sprite.redrawBackground()
+        simonTimer:reset()
+        simonTimer:start()
+        simonTickState = 1
     end
 
     ::render::
@@ -735,6 +759,8 @@ update_simon_show = function ()
 end
 
 update_simon_action = function ()
+    playdate.timer.updateTimers()
+
     if (currAction == ACTION_CODES.MICROPHONE and mic.getLevel() >= MIC_LEVEL_TARGET) then
         actionSuccess_simon()
     end
@@ -744,6 +770,20 @@ update_simon_action = function ()
         if (cos_ang <= TILT_TARGET) then
             actionSuccess_simon()
         end
+    end
+
+    if (simonTimer.timeLeft <= SIMON_TIMER_SOUND3_MS and simonTickState == 3) then
+        simonSampleplayer:setSample(simonTickFast)
+        simonSampleplayer:play(0)
+        simonTickState = 4
+    elseif (simonTimer.timeLeft <= SIMON_TIMER_SOUND2_MS and simonTickState == 2) then
+        simonSampleplayer:setSample(simonTickMid)
+        simonSampleplayer:play(0)
+        simonTickState = 3
+    elseif (simonTimer.timeLeft <= SIMON_TIMER_SHOW_MS and simonTickState == 1) then
+        simonSampleplayer:setSample(simonTickSlow)
+        simonSampleplayer:play(0)
+        simonTickState = 2
     end
 
     render_simon()
@@ -768,8 +808,19 @@ local function setup_simon()
     actionSuccesFnc = actionSuccess_simon
     actionFailFnc = actionFail_simon
     reactToGlobalEvents = true
+    simonTimer = playdate.timer.new(SIMON_TIMER_DURATION_MS, actionTimerEnd)
+    simonTimer.discardOnCompletion = false
+    simonTimer:pause()
 
     startGame_simon()
+end
+
+local function cleanup_simon()
+    gfx.sprite.setBackgroundDrawingCallback(nil)
+    playdate.stopAccelerometer()
+    playdate.stopListening()
+    simonTimer:remove()
+    simonSampleplayer:stop()
 end
 
 ------ TITLE SCREEN
