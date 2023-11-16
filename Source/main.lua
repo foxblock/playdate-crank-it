@@ -254,7 +254,9 @@ end
 
 local function getValidActionCode(allowPassAction, excludeOption, crankDocked)
     local result = 0
-    crankDocked = crankDocked or playdate.isCrankDocked()
+    if (crankDocked == nil) then
+        crankDocked = playdate.isCrankDocked()
+    end
     repeat
         if (crankDocked) then
             result = math.random(1, ACTION_CODES.CRANK_UNDOCK)
