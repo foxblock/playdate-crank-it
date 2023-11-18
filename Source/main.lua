@@ -41,6 +41,8 @@ import "CoreLibs/sprites"
 import "CoreLibs/timer"
 import "CoreLibs/animation"
 
+local gameShouldFailAfterResume = false
+
 local gfx <const> = playdate.graphics
 local mic <const> = playdate.sound.micinput
 local v2d <const> = playdate.geometry.vector2D
@@ -346,7 +348,9 @@ local function setupActionGfxAndSound(curr, static)
 end
 
 local function update_none()
-    --
+    if (gameShouldFailAfterResume) then
+        gameShouldFailAfterResume = false
+    end
 end
 
 ------ GAME (MAIN)
@@ -549,6 +553,12 @@ local function render_main()
 end
 
 update_main = function ()
+    if (gameShouldFailAfterResume) then
+        actionFailFnc()
+        gameShouldFailAfterResume = false
+        return
+    end
+
     playdate.timer.updateTimers()
 
     if (currAction == ACTION_CODES.MICROPHONE and mic.getLevel() >= MIC_LEVEL_TARGET) then
@@ -805,6 +815,12 @@ local function render_simon()
 end
 
 update_simon_show = function ()
+    if (gameShouldFailAfterResume) then
+        actionFailFnc()
+        gameShouldFailAfterResume = false
+        return
+    end
+
     playdate.timer.updateTimers()
 
     if (simonState ~= SIMON_STATE.SHOW) then goto render end
@@ -832,6 +848,12 @@ update_simon_show = function ()
 end
 
 update_simon_action = function ()
+    if (gameShouldFailAfterResume) then
+        actionFailFnc()
+        gameShouldFailAfterResume = false
+        return
+    end
+
     playdate.timer.updateTimers()
 
     if (currAction == ACTION_CODES.MICROPHONE and mic.getLevel() >= MIC_LEVEL_TARGET) then
@@ -995,7 +1017,7 @@ end
 function playdate.gameWillResume()
     if (not reactToGlobalEvents) then return end
 
-    actionFailFnc()
+    gameShouldFailAfterResume = true
 end
 
 ------ MAIN
