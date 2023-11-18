@@ -32,7 +32,8 @@
 -- [X] main menu - do not start the game immediately
 -- [X] add title card recommending to play without the cover (https://devforum.play.date/t/crank-docking-not-registered/10439)
 -- [ ] sound convert script: add option to convert single file if passed path is a file
--- [ ] go to main menu option in menu
+-- [X] go to main menu option in menu
+-- [ ] Refactor idea: base layer of inputs -> all lose, then push/pop individual handlers for win
 
 
 import "CoreLibs/object"
@@ -316,7 +317,7 @@ end
 local function setupActionGameplay(last, curr)
     -- increase deadzone after CRANKED action, so turning the crank
     -- a bit too far does not immediately fail the player
-    if (last == ACTION_CODES.CRANKED) then
+    if (curr == ACTION_CODES.CRANKED or last == ACTION_CODES.CRANKED) then
         crankDeadzone = CRANK_DEADZONE_AFTER_CRANKED
     else
         crankDeadzone = CRANK_DEADZONE_NORMAL
