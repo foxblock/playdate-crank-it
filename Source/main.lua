@@ -215,6 +215,7 @@ local crankDeadzone = CRANK_DEADZONE_NORMAL
 local startVec = nil
 local reactToGlobalEvents = false
 local updateFnc = nil
+local cleanupFnc = nil
 
 ------ UTILITY
 
@@ -252,6 +253,41 @@ local function loadSettings()
     else
         currMusic:setVolume(0)
     end
+    -- Disable debug output for now (removed menu option)
+    saveData.debugOn = false
+end
+
+local function setupMenuItems()
+    local menu = playdate.getSystemMenu()
+
+    local musicMenuItem, _ = menu:addCheckmarkMenuItem("Music", saveData.musicOn, function(value)
+        saveData.musicOn = value
+        playdate.datastore.write(saveData)
+        if (saveData.musicOn) then
+            currMusic:setVolume(1.0)
+        else
+            currMusic:setVolume(0)
+        end
+    end)
+
+    local resetScoreMenuItem, _ = menu:addMenuItem("Main Menu", function()
+        if (cleanupFnc ~= nil) then
+            cleanupFnc()
+        end
+        Setup_title()
+    end)
+
+    -- local resetScoreMenuItem, _ = menu:addMenuItem("Reset Score", function()
+    --     for i=1, #saveData.highscore do
+    --         saveData.highscore[i] = 0
+    --     end
+    --     playdate.datastore.write(saveData)
+    -- end)
+
+    -- local debugMenuItem, _ = menu:addCheckmarkMenuItem("Debug Text", saveData.debugOn, function(value)
+    --     saveData.debugOn = value
+    --     playdate.datastore.write(saveData)
+    -- end)
 end
 
 local function getValidActionCode(allowPassAction, excludeOption, crankDocked)
@@ -558,6 +594,16 @@ update_main = function ()
     render_main()
 end
 
+local function cleanup_main()
+    gfx.sprite.setBackgroundDrawingCallback(function(x,y,width,height) end)
+    playdate.stopAccelerometer()
+    mic.stopListening()
+    actionTimer:remove()
+    actionTransitionTimer:remove()
+    currMusic:stop()
+    playdate.inputHandlers.pop()
+end
+
 local function setup_main()
     gfx.sprite.setBackgroundDrawingCallback(
         function( x, y, width, height )
@@ -578,21 +624,12 @@ local function setup_main()
     actionTransitionTimer:pause()
 
     updateFnc = update_main
+    cleanupFnc = cleanup_main
     actionSuccesFnc = actionSuccess_main
     actionFailFnc = actionFail_main
     reactToGlobalEvents = true
 
     startGame()
-end
-
-local function cleanup_main()
-    gfx.sprite.setBackgroundDrawingCallback(nil)
-    playdate.stopAccelerometer()
-    playdate.stopListening()
-    actionTimer:remove()
-    actionTransitionTimer:remove()
-    currMusic:stop()
-    playdate.inputHandlers.pop()
 end
 
 ------ GAME (Simon says)
@@ -825,6 +862,14 @@ update_simon_action = function ()
     render_simon()
 end
 
+local function cleanup_simon()
+    gfx.sprite.setBackgroundDrawingCallback(function(x,y,width,height) end)
+    playdate.stopAccelerometer()
+    mic.stopListening()
+    simonTimer:remove()
+    simonSampleplayer:stop()
+end
+
 local function setup_simon()
     gfx.sprite.setBackgroundDrawingCallback(
         function( x, y, width, height )
@@ -846,6 +891,7 @@ local function setup_simon()
     playdate.startAccelerometer()
     playdate.inputHandlers.push(buttonHandlers_main)
     updateFnc = update_simon_show
+    cleanupFnc = cleanup_simon
     actionSuccesFnc = actionSuccess_simon
     actionFailFnc = actionFail_simon
     reactToGlobalEvents = true
@@ -859,14 +905,6 @@ local function setup_simon()
     startGame_simon()
 end
 
-local function cleanup_simon()
-    gfx.sprite.setBackgroundDrawingCallback(nil)
-    playdate.stopAccelerometer()
-    playdate.stopListening()
-    simonTimer:remove()
-    simonSampleplayer:stop()
-end
-
 ------ TITLE SCREEN
 
 local currTitleCard = 1
@@ -876,38 +914,13 @@ local function drawTitleCard(index)
     local backgroundImage = nil
     if index == 1 then
         backgroundImage = gfx.image.new("images/remove_cover")
+        backgroundImage:draw(0,0)
     else
         backgroundImage = gfx.image.new("images/title")
+        backgroundImage:draw(0,0)
+        gfx.drawText("MODE: < "..GAME_MODE_STR[selectedGame].." >", 78, 190)
+        gfx.drawText("HIGHSCORE: "..saveData.highscore[selectedGame], 78, 210)
     end
-    assert(backgroundImage)
-
-    backgroundImage:draw(0,0)
-end
-
-local function setupMenuItems()
-    local menu = playdate.getSystemMenu()
-
-    local musicMenuItem, _ = menu:addCheckmarkMenuItem("Music", saveData.musicOn, function(value)
-        saveData.musicOn = value
-        playdate.datastore.write(saveData)
-        if (saveData.musicOn) then
-            currMusic:setVolume(1.0)
-        else
-            currMusic:setVolume(0)
-        end
-    end)
-
-    local resetScoreMenuItem, _ = menu:addMenuItem("Reset Score", function()
-        for i=1, #saveData.highscore do
-            saveData.highscore[i] = 0
-        end
-        playdate.datastore.write(saveData)
-    end)
-
-    local debugMenuItem, _ = menu:addCheckmarkMenuItem("Debug Text", saveData.debugOn, function(value)
-        saveData.debugOn = value
-        playdate.datastore.write(saveData)
-    end)
 end
 
 local function cleanup_title()
@@ -945,9 +958,6 @@ local buttonHandlers_title = {
         if currTitleCard == 1 then
             currTitleCard += 1
             drawTitleCard(currTitleCard)
-
-            gfx.drawText("MODE: < "..GAME_MODE_STR[selectedGame].." >", 78, 190)
-            gfx.drawText("HIGHSCORE: "..saveData.highscore[selectedGame], 78, 210)
         else
             cleanup_title()
             if (selectedGame == GAME_MODE.CRANKIT) then
@@ -959,9 +969,7 @@ local buttonHandlers_title = {
     end
 }
 
-local function setup_title()
-    loadSettings()
-    setupMenuItems()
+function Setup_title()
     playdate.inputHandlers.push(buttonHandlers_title)
     gfx.setColor(gfx.kColorWhite)
     drawTitleCard(currTitleCard)
@@ -981,6 +989,8 @@ function playdate.deviceWillLock()
     actionFailFnc()
 end
 
+-- waiting for the following bug to get fixed:
+-- https://devforum.play.date/t/calling-order-after-selecting-menu-item-is-wrong/14493
 function playdate.gameWillResume()
     if (not reactToGlobalEvents) then return end
 
@@ -991,5 +1001,6 @@ end
 
 math.randomseed(playdate.getSecondsSinceEpoch())
 playdate.setCrankSoundsDisabled(true)
-setup_title()
-updateFnc = update_none
+loadSettings()
+setupMenuItems()
+Setup_title()
