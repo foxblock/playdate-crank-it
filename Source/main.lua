@@ -746,6 +746,8 @@ local function actionSuccess_simon()
         simonTransitionTimer:reset()
         simonTransitionTimer:start()
         playdate.graphics.sprite.redrawBackground()
+        -- stop microphone now, otherwise it is only reset after all actions have been shown
+        mic.stopListening()
     end
 end
 
