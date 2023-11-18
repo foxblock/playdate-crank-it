@@ -868,6 +868,7 @@ local function cleanup_simon()
     mic.stopListening()
     simonTimer:remove()
     simonSampleplayer:stop()
+    currMusic:stop()
 end
 
 local function setup_simon()
