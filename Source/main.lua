@@ -398,7 +398,7 @@ local function actionSuccess_main()
     if (actionDone) then return end
 
     actionDone = true
-    score += 1
+    score = score + 1
     soundSuccess:play(1)
 end
 
@@ -509,7 +509,7 @@ local buttonHandlers_main = {
         -- Ignore when docking, since crank may need to be moved to do so
         if (currAction == ACTION_CODES.CRANK_DOCK) then return end
 
-        crankValue += math.abs(change)
+        crankValue = crankValue + math.abs(change)
         if (currAction == ACTION_CODES.CRANKED and crankValue >= CRANK_TARGET) then
             crankValue = 0
             actionSuccesFnc()
@@ -543,13 +543,13 @@ local function render_main()
         local yPos = 2
         if (currAction == ACTION_CODES.MICROPHONE) then
             gfx.drawText(string.format("level: %.0f", mic.getLevel() * 100), 2, yPos)
-            yPos += 25
+            yPos = yPos + 25
         elseif (currAction == ACTION_CODES.TILT) then
             gfx.drawText(string.format("val: %.2f %.2f %.2f", playdate.readAccelerometer()), 2, yPos);
             gfx.drawText(string.format("a3d: %.2f", math.acos(vec3D_dot(startVec, playdate.readAccelerometer())) * RAD_TO_DEG), 2, yPos + 15)
             gfx.drawText(string.format("cos: %.4f", vec3D_dot(startVec, playdate.readAccelerometer())), 2, yPos + 30)
             gfx.drawText(string.format("target: %.4f", TILT_TARGET), 2, yPos + 45)
-            yPos += 70
+            yPos = yPos + 70
         end
         gfx.drawText(string.format("timer: %d", actionTimer.timeLeft), 2, yPos);
     end
@@ -585,7 +585,7 @@ update_main = function ()
         local lastAction = currAction
         if (speedLevel < MAX_SPEED_LEVEL and score == SPEED_UP_INTERVAL * speedLevel) then
             currAction = ACTION_CODES.SPEED_UP
-            speedLevel += 1
+            speedLevel = speedLevel + 1
 
             currMusic:stop()
             currMusic:setSample(bgMusic[speedLevel])
@@ -734,11 +734,11 @@ local function actionSuccess_simon()
     simonTimer:start()
 
     if (currIndex < #actionChain) then
-        currIndex += 1
+        currIndex = currIndex + 1
         currAction = actionChain[currIndex]
         setupActionGameplay(actionChain[currIndex-1], currAction)
     else
-        score_simon += 1
+        score_simon = score_simon + 1
         simonTimer:pause()
         table.insert(actionChain, getValidActionCode(false))
         updateFnc = update_simon_show
@@ -807,13 +807,13 @@ local function render_simon()
             local yPos = 2
             if (currAction == ACTION_CODES.MICROPHONE) then
                 gfx.drawText(string.format("level: %.0f", mic.getLevel() * 100), 2, yPos)
-                yPos += 25
+                yPos = yPos + 25
             elseif (currAction == ACTION_CODES.TILT) then
                 gfx.drawText(string.format("val: %.2f %.2f %.2f", playdate.readAccelerometer()), 2, yPos);
                 gfx.drawText(string.format("a3d: %.2f", math.acos(vec3D_dot(startVec, playdate.readAccelerometer())) * RAD_TO_DEG), 2, yPos + 15)
                 gfx.drawText(string.format("cos: %.4f", vec3D_dot(startVec, playdate.readAccelerometer())), 2, yPos + 30)
                 gfx.drawText(string.format("target: %.4f", TILT_TARGET), 2, yPos + 45)
-                yPos += 70
+                yPos = yPos + 70
             end
         end
     end
@@ -833,7 +833,7 @@ update_simon_show = function ()
     if (actions[currAction].snd:isPlaying()) then goto render end
 
     if (currIndex < #actionChain) then
-        currIndex += 1
+        currIndex = currIndex + 1
         currAction = actionChain[currIndex]
         setupActionGfxAndSound(currAction, true)
     else
@@ -962,7 +962,7 @@ local buttonHandlers_title = {
         if (selectedGame == 1) then
             selectedGame = GAME_MODE.EOL - 1
         else
-            selectedGame -= 1
+            selectedGame = selectedGame - 1
         end
         gfx.fillRect(78, 190, 170, 40)
         gfx.drawText("MODE: < "..GAME_MODE_STR[selectedGame].." >", 78, 190)
@@ -975,7 +975,7 @@ local buttonHandlers_title = {
         if (selectedGame == GAME_MODE.EOL - 1) then
             selectedGame = 1
         else
-            selectedGame += 1
+            selectedGame = selectedGame + 1
         end
         gfx.fillRect(78, 190, 170, 40)
         gfx.drawText("MODE: < "..GAME_MODE_STR[selectedGame].." >", 78, 190)
@@ -984,7 +984,7 @@ local buttonHandlers_title = {
 
     AButtonDown = function()
         if currTitleCard == 1 then
-            currTitleCard += 1
+            currTitleCard = currTitleCard + 1
             drawTitleCard(currTitleCard)
         else
             cleanup_title()
