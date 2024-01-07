@@ -33,7 +33,7 @@
 -- [X] add title card recommending to play without the cover (https://devforum.play.date/t/crank-docking-not-registered/10439)
 -- [ ] sound convert script: add option to convert single file if passed path is a file
 -- [X] go to main menu option in menu
--- [ ] Refactor idea: base layer of inputs -> all lose, then push/pop individual handlers for win
+-- [ ] short transition/swipe/... between actions in simon mode -> helps split same actions when playing without sound
 -- [ ] Check color table: needs inverted (compared to b/w), need raw b/w version?, correct colors compared to screenshot/video?
 
 
@@ -47,9 +47,10 @@ local gameShouldFailAfterResume = false
 
 local gfx <const> = playdate.graphics
 local mic <const> = playdate.sound.micinput
-local v2d <const> = playdate.geometry.vector2D
 local screen <const> = playdate.display
 local snd <const> = playdate.sound.sampleplayer
+local sample <const> = playdate.sound.sample
+local save <const> = playdate.datastore
 
 local RAD_TO_DEG <const> = 180 / math.pi
 local DEG_TO_RAD <const> = math.pi / 180
@@ -168,13 +169,13 @@ for k,v in pairs(actions) do
 end
 
 local bgMusic <const> = {
-    playdate.sound.sample.new("music/bg1"),
-    playdate.sound.sample.new("music/bg2"),
-    playdate.sound.sample.new("music/bg3"),
-    playdate.sound.sample.new("music/bg4"),
-    playdate.sound.sample.new("music/bg5")
+    sample.new("music/bg1"),
+    sample.new("music/bg2"),
+    sample.new("music/bg3"),
+    sample.new("music/bg4"),
+    sample.new("music/bg5")
 }
-local loseMusic <const> = playdate.sound.sample.new("music/lose")
+local loseMusic <const> = sample.new("music/lose")
 local currMusic = snd.new(loseMusic)
 local bgSprite = nil
 
@@ -239,7 +240,7 @@ local function vec3D_dot(v1, x2, y2, z2)
 end
 
 local function loadSettings()
-    local loadData = playdate.datastore.read()
+    local loadData = save.read()
 
     if (loadData == nil) then return end
 
@@ -248,7 +249,7 @@ local function loadSettings()
         saveData.debugOn = loadData.debugOn
         saveData.musicOn = loadData.musicOn
         saveData.highscore[GAME_MODE.CRANKIT] = loadData.highscore
-        playdate.datastore.write(saveData)
+        save.write(saveData)
     else
         saveData = loadData
     end
@@ -267,7 +268,7 @@ local function setupMenuItems()
 
     local musicMenuItem, _ = menu:addCheckmarkMenuItem("Music", saveData.musicOn, function(value)
         saveData.musicOn = value
-        playdate.datastore.write(saveData)
+        save.write(saveData)
         if (saveData.musicOn) then
             currMusic:setVolume(1.0)
         else
@@ -286,12 +287,12 @@ local function setupMenuItems()
     --     for i=1, #saveData.highscore do
     --         saveData.highscore[i] = 0
     --     end
-    --     playdate.datastore.write(saveData)
+    --     save.write(saveData)
     -- end)
 
     -- local debugMenuItem, _ = menu:addCheckmarkMenuItem("Debug Text", saveData.debugOn, function(value)
     --     saveData.debugOn = value
-    --     playdate.datastore.write(saveData)
+    --     save.write(saveData)
     -- end)
 end
 
@@ -346,7 +347,7 @@ local function setupActionGfxAndSound(curr, static)
         actions[curr].img.frame = static and actions[curr].staticFrame or 1
         lastAnimationFrame = 1
     end
-    playdate.graphics.sprite.redrawBackground()
+    gfx.sprite.redrawBackground()
     actions[curr].snd:play(1)
 end
 
@@ -407,11 +408,11 @@ local function actionFail_main()
 
     if (score > saveData.highscore[GAME_MODE.CRANKIT]) then
         saveData.highscore[GAME_MODE.CRANKIT] = score
-        playdate.datastore.write(saveData)
+        save.write(saveData)
     end
     currAction = ACTION_CODES.LOSE
     actionTimer:pause()
-    playdate.graphics.sprite.redrawBackground()
+    gfx.sprite.redrawBackground()
     gfx.sprite.update()
     gfx.drawText('score: '..score, 170, 224)
     soundLose:play(1)
@@ -523,7 +524,7 @@ local buttonHandlers_main = {
 local function render_main()
     if (actions[currAction].ani ~= nil and lastAnimationFrame ~= actions[currAction].img.frame) then
         lastAnimationFrame = actions[currAction].img.frame
-        playdate.graphics.sprite.redrawBackground()
+        gfx.sprite.redrawBackground()
     end
 
     gfx.sprite.update()
@@ -674,9 +675,9 @@ local simonSimonsTurnImg = gfx.image.new("images/simon_show")
 local simonState
 local simonTransitionTimer
 
-local simonTickSlow = playdate.sound.sample.new("sounds/tick1")
-local simonTickMid = playdate.sound.sample.new("sounds/tick2")
-local simonTickFast = playdate.sound.sample.new("sounds/tick3")
+local simonTickSlow = sample.new("sounds/tick1")
+local simonTickMid = sample.new("sounds/tick2")
+local simonTickFast = sample.new("sounds/tick3")
 local simonSampleplayer = snd.new(simonTickSlow)
 local simonTickState = 1
 
@@ -689,7 +690,7 @@ local buttonHandlers_simonDockContinue = {
         simonState = SIMON_STATE.INSTRUCTIONS
         simonTransitionTimer:reset()
         simonTransitionTimer:start()
-        playdate.graphics.sprite.redrawBackground()
+        gfx.sprite.redrawBackground()
     end
 }
 
@@ -706,10 +707,10 @@ local function startGame_simon()
     if (playdate.isCrankDocked()) then
         simonState = SIMON_STATE.WAIT_FOR_UNDOCK
         playdate.inputHandlers.push(buttonHandlers_simonDockContinue, true)
-        playdate.graphics.sprite.redrawBackground()
+        gfx.sprite.redrawBackground()
     else
         simonState = SIMON_STATE.INSTRUCTIONS
-        playdate.graphics.sprite.redrawBackground()
+        gfx.sprite.redrawBackground()
         simonTransitionTimer:reset()
         simonTransitionTimer:start()
     end
@@ -747,7 +748,7 @@ local function actionSuccess_simon()
         simonState = SIMON_STATE.SCORE_UP
         simonTransitionTimer:reset()
         simonTransitionTimer:start()
-        playdate.graphics.sprite.redrawBackground()
+        gfx.sprite.redrawBackground()
         -- stop microphone now, otherwise it is only reset after all actions have been shown
         mic.stopListening()
     end
@@ -758,10 +759,10 @@ local function actionFail_simon()
 
     if (score_simon > saveData.highscore[GAME_MODE.SIMON]) then
         saveData.highscore[GAME_MODE.SIMON] = score_simon
-        playdate.datastore.write(saveData)
+        save.write(saveData)
     end
     currAction = ACTION_CODES.LOSE
-    playdate.graphics.sprite.redrawBackground()
+    gfx.sprite.redrawBackground()
     gfx.sprite.update()
     gfx.drawText('score: '..score_simon, 170, 224)
     simonSampleplayer:stop()
@@ -779,10 +780,10 @@ local function simonTransitionEnd()
         if (playdate.isCrankDocked()) then
             simonState = SIMON_STATE.WAIT_FOR_UNDOCK
             playdate.inputHandlers.push(buttonHandlers_simonDockContinue, true)
-            playdate.graphics.sprite.redrawBackground()
+            gfx.sprite.redrawBackground()
         else
             simonState = SIMON_STATE.INSTRUCTIONS
-            playdate.graphics.sprite.redrawBackground()
+            gfx.sprite.redrawBackground()
             simonTransitionTimer:reset()
             simonTransitionTimer:start()
         end
@@ -842,7 +843,7 @@ update_simon_show = function ()
         currIndex = 1
         currAction = actionChain[1]
         setupActionGameplay(0, currAction)
-        playdate.graphics.sprite.redrawBackground()
+        gfx.sprite.redrawBackground()
         simonTimer:reset()
         simonTimer:start()
         simonTickState = 1
