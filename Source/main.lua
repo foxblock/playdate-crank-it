@@ -34,6 +34,7 @@
 -- [ ] sound convert script: add option to convert single file if passed path is a file
 -- [X] go to main menu option in menu
 -- [ ] Refactor idea: base layer of inputs -> all lose, then push/pop individual handlers for win
+-- [ ] Check color table: needs inverted (compared to b/w), need raw b/w version?, correct colors compared to screenshot/video?
 
 
 import "CoreLibs/object"
@@ -175,6 +176,7 @@ local bgMusic <const> = {
 }
 local loseMusic <const> = playdate.sound.sample.new("music/lose")
 local currMusic = snd.new(loseMusic)
+local bgSprite = nil
 
 local MIC_LEVEL_TARGET <const> = 0.25 -- 0..1
 local CRANK_TARGET <const> = 2*360
@@ -606,7 +608,7 @@ update_main = function ()
 end
 
 local function cleanup_main()
-    gfx.sprite.setBackgroundDrawingCallback(function(x,y,width,height) end)
+    if bgSprite then bgSprite:remove() end
     playdate.stopAccelerometer()
     mic.stopListening()
     actionTimer:remove()
@@ -616,7 +618,7 @@ local function cleanup_main()
 end
 
 local function setup_main()
-    gfx.sprite.setBackgroundDrawingCallback(
+    bgSprite = gfx.sprite.setBackgroundDrawingCallback(
         function( x, y, width, height )
             -- x,y,width,height is the updated area in sprite-local coordinates
             -- The clip rect is already set to this area, so we don't need to set it ourselves
@@ -888,7 +890,7 @@ update_simon_action = function ()
 end
 
 local function cleanup_simon()
-    gfx.sprite.setBackgroundDrawingCallback(function(x,y,width,height) end)
+    if bgSprite then bgSprite:remove() end
     playdate.stopAccelerometer()
     mic.stopListening()
     simonTimer:remove()
@@ -897,7 +899,7 @@ local function cleanup_simon()
 end
 
 local function setup_simon()
-    gfx.sprite.setBackgroundDrawingCallback(
+    bgSprite = gfx.sprite.setBackgroundDrawingCallback(
         function( x, y, width, height )
             if (simonState == SIMON_STATE.SHOW or currAction == ACTION_CODES.LOSE) then
                 actions[currAction].img:draw(0,0)
