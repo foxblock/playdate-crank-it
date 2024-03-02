@@ -196,10 +196,10 @@ local GAME_MODE <const> = {
     BOMB = 100--not implemented
 }
 local GAME_MODE_STR <const> = {
-    "Crank-it!",
-    "Simon cranks",
-    "Crank-it VERSUS",
-    "Crank the bomb"
+    "CRANK-IT!",
+    "SIMON CRANKS",
+    "CRANK-IT VERSUS",
+    "CRANK THE BOMB"
 }
 
 local saveData = {
@@ -209,7 +209,7 @@ local saveData = {
     debugOn = false
 }
 
-local font = gfx.font.new("images/font/whiteglove-stroked")
+local font = gfx.font.new("images/font/party")
 gfx.setFont(font)
 local soundSuccess = snd.new("sounds/success")
 local soundLose = snd.new("sounds/lose")
@@ -414,7 +414,7 @@ local function actionFail_main()
     actionTimer:pause()
     gfx.sprite.redrawBackground()
     gfx.sprite.update()
-    gfx.drawText('score: '..score, 170, 224)
+    gfx.drawText('SCORE: '..score, 170, 224)
     soundLose:play(1)
     currMusic:stop()
     currMusic:setSample(loseMusic)
@@ -537,11 +537,12 @@ local function render_main()
         gfx.fillRect(0, screen.getHeight() - 20, w, 20)
     end
 
-    gfx.drawText('score: '..score, 80, 224)
+    gfx.drawText('SCORE: '..score, 80, 224)
     gfx.drawText("HIGH: "..saveData.highscore[GAME_MODE.CRANKIT], 240, 224)
 
     if (saveData.debugOn) then
         local yPos = 2
+        gfx.setFont(gfx.getSystemFont())
         if (currAction == ACTION_CODES.MICROPHONE) then
             gfx.drawText(string.format("level: %.0f", mic.getLevel() * 100), 2, yPos)
             yPos = yPos + 25
@@ -553,6 +554,7 @@ local function render_main()
             yPos = yPos + 70
         end
         gfx.drawText(string.format("timer: %d", actionTimer.timeLeft), 2, yPos);
+        gfx.setFont(font)
     end
 end
 
@@ -764,7 +766,7 @@ local function actionFail_simon()
     currAction = ACTION_CODES.LOSE
     gfx.sprite.redrawBackground()
     gfx.sprite.update()
-    gfx.drawText('score: '..score_simon, 170, 224)
+    gfx.drawText('SCORE: '..score_simon, 170, 224)
     simonSampleplayer:stop()
     soundLose:play(1)
     currMusic:stop()
@@ -802,9 +804,10 @@ local function render_simon()
             gfx.fillRect(0, screen.getHeight() - 20, w, 20)
         end
 
-        gfx.drawText('score: '..score_simon, 170, 224)
+        gfx.drawText('SCORE: '..score_simon, 170, 224)
 
         if (saveData.debugOn) then
+            gfx.setFont(gfx.getSystemFont())
             local yPos = 2
             if (currAction == ACTION_CODES.MICROPHONE) then
                 gfx.drawText(string.format("level: %.0f", mic.getLevel() * 100), 2, yPos)
@@ -816,6 +819,7 @@ local function render_simon()
                 gfx.drawText(string.format("target: %.4f", TILT_TARGET), 2, yPos + 45)
                 yPos = yPos + 70
             end
+            gfx.setFont(font)
         end
     end
 end
@@ -947,8 +951,8 @@ local function drawTitleCard(index)
     else
         backgroundImage = gfx.image.new("images/title")
         backgroundImage:draw(0,0)
-        gfx.drawText("MODE: < "..GAME_MODE_STR[selectedGame].." >", 78, 190)
-        gfx.drawText("HIGHSCORE: "..saveData.highscore[selectedGame], 78, 210)
+        gfx.drawText("MODE: <"..GAME_MODE_STR[selectedGame]..">", 10, 190)
+        gfx.drawText("HIGHSCORE: "..saveData.highscore[selectedGame], 10, 210)
     end
 end
 
@@ -965,9 +969,9 @@ local buttonHandlers_title = {
         else
             selectedGame = selectedGame - 1
         end
-        gfx.fillRect(78, 190, 170, 40)
-        gfx.drawText("MODE: < "..GAME_MODE_STR[selectedGame].." >", 78, 190)
-        gfx.drawText("HIGHSCORE: "..saveData.highscore[selectedGame], 78, 210)
+        gfx.fillRect(10, 190, 266, 40)
+        gfx.drawText("MODE: <"..GAME_MODE_STR[selectedGame]..">", 10, 190)
+        gfx.drawText("HIGHSCORE: "..saveData.highscore[selectedGame], 10, 210)
     end,
 
     rightButtonDown = function ()
@@ -978,9 +982,9 @@ local buttonHandlers_title = {
         else
             selectedGame = selectedGame + 1
         end
-        gfx.fillRect(78, 190, 170, 40)
-        gfx.drawText("MODE: < "..GAME_MODE_STR[selectedGame].." >", 78, 190)
-        gfx.drawText("HIGHSCORE: "..saveData.highscore[selectedGame], 78, 210)
+        gfx.fillRect(10, 190, 266, 40)
+        gfx.drawText("MODE: <"..GAME_MODE_STR[selectedGame]..">", 10, 190)
+        gfx.drawText("HIGHSCORE: "..saveData.highscore[selectedGame], 10, 210)
     end,
 
     AButtonDown = function()
