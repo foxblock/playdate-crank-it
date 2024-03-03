@@ -414,7 +414,7 @@ local function actionFail_main()
     actionTimer:pause()
     gfx.sprite.redrawBackground()
     gfx.sprite.update()
-    gfx.drawText('SCORE: '..score, 170, 224)
+    gfx.drawTextAligned('SCORE: '..score, 200, 220, kTextAlignment.center)
     soundLose:play(1)
     currMusic:stop()
     currMusic:setSample(loseMusic)
@@ -530,15 +530,17 @@ local function render_main()
     gfx.sprite.update()
 
     if (not actionDone) then
-        gfx.fillRect(0, screen.getHeight() - 20, screen.getWidth() * actionTimer.timeLeft / actionTimer.duration, 20)
+        gfx.fillRect(0, screen.getHeight() - 22, screen.getWidth() * actionTimer.timeLeft / actionTimer.duration, 22)
     elseif (actionTransitionState >= 0) then
         local w = screen.getWidth() * actionTimer.timeLeft / actionTimer.duration
         w = w + (screen.getWidth() - w) * (1 - actionTransitionTimer.timeLeft / actionTransitionTimer.duration)
-        gfx.fillRect(0, screen.getHeight() - 20, w, 20)
+        gfx.fillRect(0, screen.getHeight() - 22, w, 22)
     end
 
-    gfx.drawText('SCORE: '..score, 80, 224)
-    gfx.drawText("HIGH: "..saveData.highscore[GAME_MODE.CRANKIT], 240, 224)
+    gfx.setImageDrawMode(gfx.kDrawModeNXOR)
+    gfx.drawTextAligned('SCORE: '..score, 110, 220, kTextAlignment.center)
+    gfx.drawTextAligned("HIGH: "..saveData.highscore[GAME_MODE.CRANKIT], 290, 220, kTextAlignment.center)
+    gfx.setImageDrawMode(gfx.kDrawModeCopy)
 
     if (saveData.debugOn) then
         local yPos = 2
@@ -766,7 +768,7 @@ local function actionFail_simon()
     currAction = ACTION_CODES.LOSE
     gfx.sprite.redrawBackground()
     gfx.sprite.update()
-    gfx.drawText('SCORE: '..score_simon, 170, 224)
+    gfx.drawTextAligned('SCORE: '..score_simon, 200, 220, kTextAlignment.center)
     simonSampleplayer:stop()
     soundLose:play(1)
     currMusic:stop()
@@ -801,10 +803,12 @@ local function render_simon()
     if (simonState == SIMON_STATE.ACTION) then
         if (simonTimer.timeLeft <= SIMON_TIMER_SHOW_MS) then
             local w = screen.getWidth() * simonTimer.timeLeft / SIMON_TIMER_SHOW_MS
-            gfx.fillRect(0, screen.getHeight() - 20, w, 20)
+            gfx.fillRect(0, screen.getHeight() - 22, w, 22)
         end
 
-        gfx.drawText('SCORE: '..score_simon, 170, 224)
+        gfx.setImageDrawMode(gfx.kDrawModeNXOR)
+        gfx.drawTextAligned('SCORE: '..score_simon, 200, 220, kTextAlignment.center)
+        gfx.setImageDrawMode(gfx.kDrawModeCopy)
 
         if (saveData.debugOn) then
             gfx.setFont(gfx.getSystemFont())
