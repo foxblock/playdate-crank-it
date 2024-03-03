@@ -540,7 +540,6 @@ local function render_main()
     gfx.setImageDrawMode(gfx.kDrawModeNXOR)
     gfx.drawTextAligned('SCORE: '..score, 110, 220, kTextAlignment.center)
     gfx.drawTextAligned("HIGH: "..saveData.highscore[GAME_MODE.CRANKIT], 290, 220, kTextAlignment.center)
-    gfx.setImageDrawMode(gfx.kDrawModeCopy)
 
     if (saveData.debugOn) then
         local yPos = 2
@@ -558,6 +557,8 @@ local function render_main()
         gfx.drawText(string.format("timer: %d", actionTimer.timeLeft), 2, yPos);
         gfx.setFont(font)
     end
+
+    gfx.setImageDrawMode(gfx.kDrawModeCopy)
 end
 
 update_main = function ()
@@ -800,32 +801,35 @@ end
 local function render_simon()
     gfx.sprite.update()
 
-    if (simonState == SIMON_STATE.ACTION) then
-        if (simonTimer.timeLeft <= SIMON_TIMER_SHOW_MS) then
-            local w = screen.getWidth() * simonTimer.timeLeft / SIMON_TIMER_SHOW_MS
-            gfx.fillRect(0, screen.getHeight() - 22, w, 22)
-        end
-
-        gfx.setImageDrawMode(gfx.kDrawModeNXOR)
-        gfx.drawTextAligned('SCORE: '..score_simon, 200, 220, kTextAlignment.center)
-        gfx.setImageDrawMode(gfx.kDrawModeCopy)
-
-        if (saveData.debugOn) then
-            gfx.setFont(gfx.getSystemFont())
-            local yPos = 2
-            if (currAction == ACTION_CODES.MICROPHONE) then
-                gfx.drawText(string.format("level: %.0f", mic.getLevel() * 100), 2, yPos)
-                yPos = yPos + 25
-            elseif (currAction == ACTION_CODES.TILT) then
-                gfx.drawText(string.format("val: %.2f %.2f %.2f", playdate.readAccelerometer()), 2, yPos);
-                gfx.drawText(string.format("a3d: %.2f", math.acos(vec3D_dot(startVec, playdate.readAccelerometer())) * RAD_TO_DEG), 2, yPos + 15)
-                gfx.drawText(string.format("cos: %.4f", vec3D_dot(startVec, playdate.readAccelerometer())), 2, yPos + 30)
-                gfx.drawText(string.format("target: %.4f", TILT_TARGET), 2, yPos + 45)
-                yPos = yPos + 70
-            end
-            gfx.setFont(font)
-        end
+    if (simonState ~= SIMON_STATE.ACTION) then
+        return;
     end
+
+    if (simonTimer.timeLeft <= SIMON_TIMER_SHOW_MS) then
+        local w = screen.getWidth() * simonTimer.timeLeft / SIMON_TIMER_SHOW_MS
+        gfx.fillRect(0, screen.getHeight() - 22, w, 22)
+    end
+
+    gfx.setImageDrawMode(gfx.kDrawModeNXOR)
+    gfx.drawTextAligned('SCORE: '..score_simon, 200, 220, kTextAlignment.center)
+
+    if (saveData.debugOn) then
+        gfx.setFont(gfx.getSystemFont())
+        local yPos = 2
+        if (currAction == ACTION_CODES.MICROPHONE) then
+            gfx.drawText(string.format("level: %.0f", mic.getLevel() * 100), 2, yPos)
+            yPos = yPos + 25
+        elseif (currAction == ACTION_CODES.TILT) then
+            gfx.drawText(string.format("val: %.2f %.2f %.2f", playdate.readAccelerometer()), 2, yPos);
+            gfx.drawText(string.format("a3d: %.2f", math.acos(vec3D_dot(startVec, playdate.readAccelerometer())) * RAD_TO_DEG), 2, yPos + 15)
+            gfx.drawText(string.format("cos: %.4f", vec3D_dot(startVec, playdate.readAccelerometer())), 2, yPos + 30)
+            gfx.drawText(string.format("target: %.4f", TILT_TARGET), 2, yPos + 45)
+            yPos = yPos + 70
+        end
+        gfx.setFont(font)
+    end
+    
+    gfx.setImageDrawMode(gfx.kDrawModeCopy)
 end
 
 update_simon_show = function ()
