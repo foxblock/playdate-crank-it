@@ -280,7 +280,7 @@ local function setupMenuItems()
         end
     end)
 
-    local resetScoreMenuItem, _ = menu:addMenuItem("Main Menu", function()
+    local goToMenuItem, _ = menu:addMenuItem("Main Menu", function()
         if (cleanupFnc ~= nil) then
             cleanupFnc()
         end
@@ -688,6 +688,8 @@ local function cleanup_main()
     actionTimer:remove()
     actionTransitionTimer:remove()
     currMusic:stop()
+    -- pop twice to remove temp input handler from game over screen
+    playdate.inputHandlers.pop()
     playdate.inputHandlers.pop()
 end
 
@@ -975,8 +977,12 @@ local function cleanup_simon()
     playdate.stopAccelerometer()
     mic.stopListening()
     simonTimer:remove()
+    simonTransitionTimer:remove()
     simonSampleplayer:stop()
     currMusic:stop()
+    -- pop twice to remove temp handler from game over or undock request
+    playdate.inputHandlers.pop()
+    playdate.inputHandlers.pop()
 end
 
 local function setup_simon()
