@@ -308,7 +308,7 @@ local function getValidActionCode(allowPassAction, excludeOption, crankDocked)
             result = math.random(1, ACTION_CODES.EOL - 1)
         end
     -- exclude UNDOCK action when crank is undocked
-    -- exclude MICROPHONE action on simulator with microphone input
+    -- exclude MICROPHONE action on simulator without microphone input
     until ((crankDocked or result ~= ACTION_CODES.CRANK_UNDOCK)
             and (not playdate.isSimulator or result ~= ACTION_CODES.MICROPHONE)
             and (excludeOption == nil or result ~= excludeOption)
@@ -538,6 +538,7 @@ local function render_main()
     end
 
     gfx.setImageDrawMode(gfx.kDrawModeNXOR)
+
     gfx.drawTextAligned('SCORE: '..score, 110, 220, kTextAlignment.center)
     gfx.drawTextAligned("HIGH: "..saveData.highscore[GAME_MODE.CRANKIT], 290, 220, kTextAlignment.center)
 
@@ -951,16 +952,121 @@ end
 local currTitleCard = 1
 local selectedGame = 1
 
+local menu <const> = {
+    btnStart = {
+        img = gfx.image.new("images/menu/btn_start"),
+        x = 200,
+        y = 180,
+    },
+    btnSelect = {
+        img = gfx.image.new("images/menu/btn_select"),
+        x = 84,
+        y = 220,
+    },
+    btnSettings = {
+        img = gfx.image.new("images/menu/btn_settings"),
+        x = 304,
+        y = 220,
+    },
+    btnArrowLeft = {
+        img = gfx.image.new("images/menu/btn_arrow_left"),
+        x = 11,
+        y = 86,
+    },
+    btnArrowRight = {
+        img = gfx.image.new("images/menu/btn_arrow_right"),
+        x = 389,
+        y = 86,
+    },
+    [GAME_MODE.CRANKIT] = {
+        mascot = {
+            img = gfx.image.new("images/menu/crank_mascot"),
+            x = 322,
+            y = 75,
+        },
+        logo = {
+            img = gfx.image.new("images/menu/crank_logo"),
+            x = 139,
+            y = 53,
+        },
+        tagline = {
+            img = gfx.image.new("images/menu/crank_tagline"),
+            x = 139,
+            y = 91,
+        },
+    },
+    [GAME_MODE.SIMON] = {
+        mascot = {
+            img = gfx.image.new("images/menu/simon_mascot"),
+            x = 321,
+            y = 74,
+        },
+        logo = {
+            img = gfx.image.new("images/menu/simon_logo"),
+            x = 143,
+            y = 65,
+        },
+        tagline = {
+            img = gfx.image.new("images/menu/simon_tagline"),
+            x = 208,
+            y = 37,
+        },
+    },
+    [GAME_MODE.BOMB] = {
+        mascot = {
+            img = gfx.image.new("images/menu/bomb_mascot"),
+            x = 325,
+            y = 72,
+        },
+        logo = {
+            img = gfx.image.new("images/menu/bomb_logo"),
+            x = 135,
+            y = 63,
+        },
+        tagline = {
+            img = gfx.image.new("images/menu/bomb_tagline"),
+            x = 136,
+            y = 130,
+        },
+    },
+}
+
+local function drawMenuItem(item)
+    item.img:drawCentered(item.x, item.y)
+end
+
+local function drawGameCard(gameIndex)
+    drawMenuItem(menu[gameIndex].logo)
+    drawMenuItem(menu[gameIndex].tagline)
+    drawMenuItem(menu[gameIndex].mascot)
+
+    if gameIndex ~= GAME_MODE.BOMB then
+        gfx.drawTextAligned("HIGHSCORE: "..saveData.highscore[selectedGame], 139, 120, kTextAlignment.center)
+    end
+end
+
+-- bgSprite = gfx.sprite.setBackgroundDrawingCallback(
+--     function( x, y, width, height )
+--         -- x,y,width,height is the updated area in sprite-local coordinates
+--         -- The clip rect is already set to this area, so we don't need to set it ourselves
+--         actions[currAction].img:draw(0,0)
+--     end
+-- )
+
 local function drawTitleCard(index)
     local backgroundImage = nil
     if index == 1 then
         backgroundImage = gfx.image.new("images/remove_cover")
         backgroundImage:draw(0,0)
     else
-        backgroundImage = gfx.image.new("images/title")
-        backgroundImage:draw(0,0)
-        gfx.drawText("MODE: <"..GAME_MODE_STR[selectedGame]..">", 10, 190)
-        gfx.drawText("HIGHSCORE: "..saveData.highscore[selectedGame], 10, 210)
+        gfx.clear()
+        drawMenuItem(menu.btnStart)
+        drawMenuItem(menu.btnSelect)
+        drawMenuItem(menu.btnSettings)
+        drawMenuItem(menu.btnArrowLeft)
+        drawMenuItem(menu.btnArrowRight)
+
+        drawGameCard(selectedGame)
     end
 end
 
@@ -977,9 +1083,8 @@ local buttonHandlers_title = {
         else
             selectedGame = selectedGame - 1
         end
-        gfx.fillRect(10, 190, 266, 40)
-        gfx.drawText("MODE: <"..GAME_MODE_STR[selectedGame]..">", 10, 190)
-        gfx.drawText("HIGHSCORE: "..saveData.highscore[selectedGame], 10, 210)
+        gfx.fillRect(18, 0, 364, 149)
+        drawGameCard(selectedGame)
     end,
 
     rightButtonDown = function ()
@@ -990,9 +1095,8 @@ local buttonHandlers_title = {
         else
             selectedGame = selectedGame + 1
         end
-        gfx.fillRect(10, 190, 266, 40)
-        gfx.drawText("MODE: <"..GAME_MODE_STR[selectedGame]..">", 10, 190)
-        gfx.drawText("HIGHSCORE: "..saveData.highscore[selectedGame], 10, 210)
+        gfx.fillRect(18, 0, 364, 149)
+        drawGameCard(selectedGame)
     end,
 
     AButtonDown = function()
