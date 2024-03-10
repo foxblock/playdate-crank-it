@@ -426,12 +426,12 @@ end
 
 ------ GAME (MAIN)
 
-local actionDone
-local actionTransitionState -- -1 not started, 0 running, 1 done
+local actionDone = false
+local actionTransitionState = -1 -- -1 not started, 0 running, 1 done
 local actionTimer
 local actionTransitionTimer
-local speedLevel
-local score
+local speedLevel = 1
+local score = 0
 
 local update_main
 
@@ -1187,7 +1187,7 @@ local buttonHandlers_title = {
     end,
 
     AButtonDown = function()
-        cleanup_title()
+        cleanupFnc()
         if (selectedGame == GAME_MODE.CRANKIT) then
             setup_main()
         elseif (selectedGame == GAME_MODE.SIMON) then
@@ -1197,6 +1197,10 @@ local buttonHandlers_title = {
 }
 
 local function update_title()
+    if (gameShouldFailAfterResume) then
+        gameShouldFailAfterResume = false
+    end
+    
     gfx.setColor(gfx.kColorWhite)
     gfx.clear()
     drawGameCard(selectedGame)
@@ -1212,6 +1216,7 @@ function Setup_title()
     playdate.inputHandlers.push(buttonHandlers_title)
 
     updateFnc = update_title
+    cleanupFnc = cleanup_title
     reactToGlobalEvents = false
 end
 
