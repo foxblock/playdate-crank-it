@@ -220,8 +220,8 @@ local crankValue = 0
 local crankDeadzone = CRANK_DEADZONE_NORMAL
 local startVec = nil
 local reactToGlobalEvents = false
-local updateFnc = nil
-local cleanupFnc = nil
+local updateFnc
+local cleanupFnc
 
 ------ UTILITY
 
@@ -949,7 +949,6 @@ end
 
 ------ TITLE SCREEN
 
-local currTitleCard = 1
 local selectedGame = 1
 
 local menu <const> = {
@@ -1053,31 +1052,12 @@ end
 --     end
 -- )
 
-local function drawTitleCard(index)
-    local backgroundImage = nil
-    if index == 1 then
-        backgroundImage = gfx.image.new("images/remove_cover")
-        backgroundImage:draw(0,0)
-    else
-        gfx.clear()
-        drawMenuItem(menu.btnStart)
-        drawMenuItem(menu.btnSelect)
-        drawMenuItem(menu.btnSettings)
-        drawMenuItem(menu.btnArrowLeft)
-        drawMenuItem(menu.btnArrowRight)
-
-        drawGameCard(selectedGame)
-    end
-end
-
 local function cleanup_title()
     playdate.inputHandlers.pop()
 end
 
 local buttonHandlers_title = {
     leftButtonDown = function ()
-        if (currTitleCard == 1) then return end
-
         if (selectedGame == 1) then
             selectedGame = GAME_MODE.EOL - 1
         else
@@ -1088,8 +1068,6 @@ local buttonHandlers_title = {
     end,
 
     rightButtonDown = function ()
-        if (currTitleCard == 1) then return end
-
         if (selectedGame == GAME_MODE.EOL - 1) then
             selectedGame = 1
         else
@@ -1100,24 +1078,29 @@ local buttonHandlers_title = {
     end,
 
     AButtonDown = function()
-        if currTitleCard == 1 then
-            currTitleCard = currTitleCard + 1
-            drawTitleCard(currTitleCard)
-        else
-            cleanup_title()
-            if (selectedGame == GAME_MODE.CRANKIT) then
-                setup_main()
-            elseif (selectedGame == GAME_MODE.SIMON) then
-                setup_simon()
-            end
+        cleanup_title()
+        if (selectedGame == GAME_MODE.CRANKIT) then
+            setup_main()
+        elseif (selectedGame == GAME_MODE.SIMON) then
+            setup_simon()
         end
     end
 }
 
 function Setup_title()
     playdate.inputHandlers.push(buttonHandlers_title)
+
     gfx.setColor(gfx.kColorWhite)
-    drawTitleCard(currTitleCard)
+    gfx.clear()
+
+    drawMenuItem(menu.btnStart)
+    drawMenuItem(menu.btnSelect)
+    drawMenuItem(menu.btnSettings)
+    drawMenuItem(menu.btnArrowLeft)
+    drawMenuItem(menu.btnArrowRight)
+
+    drawGameCard(selectedGame)
+    
     updateFnc = update_none
     reactToGlobalEvents = false
 end
@@ -1148,4 +1131,18 @@ math.randomseed(playdate.getSecondsSinceEpoch())
 playdate.setCrankSoundsDisabled(true)
 loadSettings()
 setupMenuItems()
-Setup_title()
+
+local buttonHandlers_intro = {
+    AButtonDown = function()
+        playdate.inputHandlers.pop()
+        Setup_title()
+    end,
+    BButtonDown = function()
+        playdate.inputHandlers.pop()
+        Setup_title()
+    end
+}
+
+gfx.image.new("images/remove_cover"):draw(0,0)
+updateFnc = update_none
+playdate.inputHandlers.push(buttonHandlers_intro)
