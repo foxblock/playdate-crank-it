@@ -435,11 +435,13 @@ local score = 0
 
 local update_main
 
-local function startGame()
+local function startGame(skipGenNewAction)
     score = 0
     speedLevel = 1
 
-    currAction = getValidActionCode(true)
+    if not skipGenNewAction then
+        currAction = getValidActionCode(true)
+    end
     setupActionGameplay(0, currAction)
     setupActionGfxAndSound(currAction)
     actionDone = false
@@ -596,6 +598,7 @@ local function render_main()
 
     gfx.sprite.update()
 
+    gfx.setColor(gfx.kColorBlack)
     if (not actionDone) then
         gfx.fillRect(0, SCREEN_HEIGHT - 22, SCREEN_WIDTH * actionTimer.timeLeft / actionTimer.duration, 22)
     elseif (actionTransitionState >= 0) then
@@ -694,20 +697,11 @@ local function cleanup_main()
 end
 
 local function setup_main()
-    bgSprite = gfx.sprite.setBackgroundDrawingCallback(
-        function( x, y, width, height )
-            -- x,y,width,height is the updated area in sprite-local coordinates
-            -- The clip rect is already set to this area, so we don't need to set it ourselves
-            actions[currAction].img:draw(0,0)
-        end
-    )
-    gfx.setColor(gfx.kColorBlack)
+    -- NOTE: Assumes pre_setup_main_for_transition was called before
 
     playdate.startAccelerometer()
     playdate.inputHandlers.push(buttonHandlers_main)
 
-    actionTimer = playdate.timer.new(100, actionTimerEnd) -- dummy duration, proper value set in startGame
-    actionTimer.discardOnCompletion = false
     actionTransitionTimer = playdate.timer.new(TRANSITION_TIME_MS, actionTransitionEnd)
     actionTransitionTimer.discardOnCompletion = false
     actionTransitionTimer:pause()
@@ -718,7 +712,23 @@ local function setup_main()
     actionFailFnc = actionFail_main
     reactToGlobalEvents = true
 
-    startGame()
+    startGame(true)
+end
+
+local function pre_setup_main_for_transition()
+    bgSprite = gfx.sprite.setBackgroundDrawingCallback(
+        function( x, y, width, height )
+            -- x,y,width,height is the updated area in sprite-local coordinates
+            -- The clip rect is already set to this area, so we don't need to set it ourselves
+            actions[currAction].img:draw(0,0)
+        end
+    )
+
+    currAction = getValidActionCode(true)
+
+    actionTimer = playdate.timer.new(100, actionTimerEnd) -- dummy duration, proper value set in startGame
+    actionTimer.discardOnCompletion = false
+    actionTimer:pause()
 end
 
 ------ GAME (Simon says)
@@ -900,6 +910,14 @@ local function render_simon()
     end
     
     gfx.setImageDrawMode(gfx.kDrawModeCopy)
+end
+
+local function render_simon_for_transition()
+    if (playdate.isCrankDocked()) then
+        simonDockImg:draw(0,0)
+    else
+        simonSimonsTurnImg:draw(0,0)
+    end
 end
 
 update_simon_show = function ()
@@ -1195,9 +1213,10 @@ local buttonHandlers_title = {
     AButtonDown = function()
         cleanupFnc()
         if (selectedGame == GAME_MODE.CRANKIT) then
-            setup_main()
+            pre_setup_main_for_transition()
+            setup_transition(setup_main, render_main)
         elseif (selectedGame == GAME_MODE.SIMON) then
-            setup_simon()
+            setup_transition(setup_simon, render_simon_for_transition)
         end
     end
 }
@@ -1206,7 +1225,7 @@ local function update_title()
     if (gameShouldFailAfterResume) then
         gameShouldFailAfterResume = false
     end
-    
+
     gfx.setColor(gfx.kColorWhite)
     gfx.clear()
     drawGameCard(selectedGame)
