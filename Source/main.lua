@@ -42,6 +42,8 @@ import "CoreLibs/graphics"
 import "CoreLibs/sprites"
 import "CoreLibs/timer"
 import "CoreLibs/animation"
+import "CoreLibs/animator"
+import "CoreLibs/easing"
 
 local gameShouldFailAfterResume = false
 
@@ -51,6 +53,7 @@ local screen <const> = playdate.display
 local snd <const> = playdate.sound.sampleplayer
 local sample <const> = playdate.sound.sample
 local save <const> = playdate.datastore
+local easings <const> = playdate.easingFunctions
 
 local RAD_TO_DEG <const> = 180 / math.pi
 local DEG_TO_RAD <const> = math.pi / 180
@@ -193,7 +196,7 @@ local GAME_MODE <const> = {
     SIMON = 2,
     EOL = 3,
     VERSUS = 99,--not implemented
-    BOMB = 100--not implemented
+    BOMB = 100,--not implemented
 }
 local GAME_MODE_STR <const> = {
     "CRANK-IT!",
@@ -951,6 +954,30 @@ end
 
 local selectedGame = 1
 
+local function newAnimator(durationMS, min, max, easingFunction)
+    local animator = gfx.animator.new(durationMS, min, max, easingFunction)
+    animator.repeatCount = -1
+    animator.reverses = true
+    animator.value = function()
+        return animator:currentValue()
+    end
+    return animator
+end
+
+local function newBlinkerAnimator(onDurationMS, offDurationMS, offsetMS, scaleOn)
+    local animator = gfx.animator.new(onDurationMS + offDurationMS, 1, scaleOn, easings.linear, offsetMS)
+    animator.repeatCount = -1
+    animator.thresholdValue = animator.startValue + (animator.endValue - animator.startValue) * (offDurationMS / animator.duration)
+    animator.value = function()
+        -- cannot use animator:progress() here, since it does not work with repeatCount=-1 (returns nil)
+        if animator:currentValue() >= animator.thresholdValue then
+            return animator.endValue
+        end
+        return animator.startValue
+    end
+    return animator
+end
+
 local menu <const> = {
     btnStart = {
         img = gfx.image.new("images/menu/btn_start"),
@@ -971,17 +998,21 @@ local menu <const> = {
         img = gfx.image.new("images/menu/btn_arrow_left"),
         x = 11,
         y = 86,
+        scale = newBlinkerAnimator(500, 5000, 0, 1.4),
     },
     btnArrowRight = {
         img = gfx.image.new("images/menu/btn_arrow_right"),
         x = 389,
         y = 86,
+        scale = newBlinkerAnimator(500, 5000, 750, 1.4)
     },
     [GAME_MODE.CRANKIT] = {
         mascot = {
             img = gfx.image.new("images/menu/crank_mascot"),
             x = 322,
             y = 75,
+            rot = newAnimator(500, -10, 10, easings.inOutCubic),
+            scale = newAnimator(1500, 0.95, 1.05, easings.inOutBack),
         },
         logo = {
             img = gfx.image.new("images/menu/crank_logo"),
@@ -999,6 +1030,7 @@ local menu <const> = {
             img = gfx.image.new("images/menu/simon_mascot"),
             x = 321,
             y = 74,
+            rot = newAnimator(2500, -15, 5, easings.inOutSine),
         },
         logo = {
             img = gfx.image.new("images/menu/simon_logo"),
@@ -1016,6 +1048,7 @@ local menu <const> = {
             img = gfx.image.new("images/menu/bomb_mascot"),
             x = 325,
             y = 72,
+            rot = newAnimator(500, -5, 5, easings.inOutBounce),
         },
         logo = {
             img = gfx.image.new("images/menu/bomb_logo"),
@@ -1031,7 +1064,15 @@ local menu <const> = {
 }
 
 local function drawMenuItem(item)
-    item.img:drawCentered(item.x, item.y)
+    if item.rot ~= nil and item.scale ~= nil then
+        item.img:drawRotated(item.x, item.y, item.rot:currentValue(), item.scale:currentValue())
+    elseif item.rot ~= nil then
+        item.img:drawRotated(item.x, item.y, item.rot:currentValue())
+    elseif item.scale ~= nil then
+        item.img:drawRotated(item.x, item.y, 0, item.scale:value())
+    else
+        item.img:drawCentered(item.x, item.y)
+    end
 end
 
 local function drawGameCard(gameIndex)
@@ -1040,7 +1081,7 @@ local function drawGameCard(gameIndex)
     drawMenuItem(menu[gameIndex].mascot)
 
     if gameIndex ~= GAME_MODE.BOMB then
-        gfx.drawTextAligned("HIGHSCORE: "..saveData.highscore[selectedGame], 139, 120, kTextAlignment.center)
+        gfx.drawTextAligned("HIGHSCORE: "..saveData.highscore[selectedGame], 139, 118, kTextAlignment.center)
     end
 end
 
@@ -1087,6 +1128,13 @@ local buttonHandlers_title = {
     end
 }
 
+local function update_title()
+    gfx.fillRect(0, 0, 400, 149)
+    drawGameCard(selectedGame)
+    drawMenuItem(menu.btnArrowLeft)
+    drawMenuItem(menu.btnArrowRight)
+end
+
 function Setup_title()
     playdate.inputHandlers.push(buttonHandlers_title)
 
@@ -1101,7 +1149,7 @@ function Setup_title()
 
     drawGameCard(selectedGame)
     
-    updateFnc = update_none
+    updateFnc = update_title
     reactToGlobalEvents = false
 end
 
