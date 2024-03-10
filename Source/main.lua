@@ -49,7 +49,6 @@ local gameShouldFailAfterResume = false
 
 local gfx <const> = playdate.graphics
 local mic <const> = playdate.sound.micinput
-local screen <const> = playdate.display
 local snd <const> = playdate.sound.sampleplayer
 local sample <const> = playdate.sound.sample
 local save <const> = playdate.datastore
@@ -57,6 +56,8 @@ local easings <const> = playdate.easingFunctions
 
 local RAD_TO_DEG <const> = 180 / math.pi
 local DEG_TO_RAD <const> = math.pi / 180
+local SCREEN_WIDTH <const> = playdate.display.getWidth()
+local SCREEN_HEIGHT <const> = playdate.display.getHeight()
 
 local ACTION_CODES <const> = {
     LOSE = 0,
@@ -360,6 +361,69 @@ local function update_none()
     end
 end
 
+------ TRANSITION
+
+local screenTransitionTimer
+local transitionPolygon
+local transitionTargetSetup
+local transitionTargetRender
+
+-- 1--------------2
+-- |              |
+-- |              3
+-- |             /
+-- 5------------4
+
+local function update_first_transition()
+    playdate.timer.updateTimers()
+    local dist = (SCREEN_HEIGHT + SCREEN_WIDTH) * screenTransitionTimer.currentTime / screenTransitionTimer.duration
+    transitionPolygon:setPointAt(2, dist > SCREEN_WIDTH and SCREEN_WIDTH or dist, 0)
+    transitionPolygon:setPointAt(3, dist > SCREEN_WIDTH and SCREEN_WIDTH or dist, dist > SCREEN_WIDTH and (dist - SCREEN_WIDTH) or 0)
+    transitionPolygon:setPointAt(4, dist > SCREEN_HEIGHT and (dist - SCREEN_HEIGHT) or 0, dist > SCREEN_HEIGHT and SCREEN_HEIGHT or dist)
+    transitionPolygon:setPointAt(5, 0, dist > SCREEN_HEIGHT and SCREEN_HEIGHT or dist)
+    gfx.fillPolygon(transitionPolygon)
+end
+
+--   4------------5
+--  /             |
+-- 3              |
+-- |              |
+-- 2--------------1
+
+local function update_second_transition()
+    playdate.timer.updateTimers()
+    transitionTargetRender()
+    local dist = (SCREEN_HEIGHT + SCREEN_WIDTH) * screenTransitionTimer.currentTime / screenTransitionTimer.duration
+    transitionPolygon:setPointAt(2, dist > SCREEN_HEIGHT and (dist - SCREEN_HEIGHT) or 0, SCREEN_HEIGHT)
+    transitionPolygon:setPointAt(3, dist > SCREEN_HEIGHT and (dist - SCREEN_HEIGHT) or 0, dist > SCREEN_HEIGHT and SCREEN_HEIGHT or dist)
+    transitionPolygon:setPointAt(4, dist > SCREEN_WIDTH and SCREEN_WIDTH or dist, dist > SCREEN_WIDTH and (dist - SCREEN_WIDTH) or 0)
+    transitionPolygon:setPointAt(5, SCREEN_WIDTH, dist > SCREEN_WIDTH and (dist - SCREEN_WIDTH) or 0)
+    gfx.setColor(gfx.kColorWhite)
+    gfx.fillPolygon(transitionPolygon)
+end
+
+local function setup_second_transition()
+    screenTransitionTimer = playdate.timer.new(400, transitionTargetSetup)
+    transitionPolygon = playdate.geometry.polygon.new(
+        SCREEN_WIDTH, SCREEN_HEIGHT,
+        0, SCREEN_HEIGHT,
+        0, 0,
+        0, 0,
+        SCREEN_WIDTH, 0,
+        SCREEN_WIDTH, SCREEN_HEIGHT
+    )
+    updateFnc = update_second_transition
+end
+
+local function setup_transition(targetSetupFunc, targetRenderFunc)
+    gfx.setColor(gfx.kColorWhite)
+    screenTransitionTimer = playdate.timer.new(400, setup_second_transition)
+    transitionPolygon = playdate.geometry.polygon.new(0,0,0,0,0,0,0,0,0,0,0,0)
+    updateFnc = update_first_transition
+    transitionTargetSetup = targetSetupFunc
+    transitionTargetRender = targetRenderFunc
+end
+
 ------ GAME (MAIN)
 
 local actionDone
@@ -533,11 +597,11 @@ local function render_main()
     gfx.sprite.update()
 
     if (not actionDone) then
-        gfx.fillRect(0, screen.getHeight() - 22, screen.getWidth() * actionTimer.timeLeft / actionTimer.duration, 22)
+        gfx.fillRect(0, SCREEN_HEIGHT - 22, SCREEN_WIDTH * actionTimer.timeLeft / actionTimer.duration, 22)
     elseif (actionTransitionState >= 0) then
-        local w = screen.getWidth() * actionTimer.timeLeft / actionTimer.duration
-        w = w + (screen.getWidth() - w) * (1 - actionTransitionTimer.timeLeft / actionTransitionTimer.duration)
-        gfx.fillRect(0, screen.getHeight() - 22, w, 22)
+        local w = SCREEN_WIDTH * actionTimer.timeLeft / actionTimer.duration
+        w = w + (SCREEN_WIDTH - w) * (1 - actionTransitionTimer.timeLeft / actionTransitionTimer.duration)
+        gfx.fillRect(0, SCREEN_HEIGHT - 22, w, 22)
     end
 
     gfx.setImageDrawMode(gfx.kDrawModeNXOR)
@@ -810,8 +874,8 @@ local function render_simon()
     end
 
     if (simonTimer.timeLeft <= SIMON_TIMER_SHOW_MS) then
-        local w = screen.getWidth() * simonTimer.timeLeft / SIMON_TIMER_SHOW_MS
-        gfx.fillRect(0, screen.getHeight() - 22, w, 22)
+        local w = SCREEN_WIDTH * simonTimer.timeLeft / SIMON_TIMER_SHOW_MS
+        gfx.fillRect(0, SCREEN_HEIGHT - 22, w, 22)
     end
 
     gfx.setImageDrawMode(gfx.kDrawModeNXOR)
@@ -1133,6 +1197,7 @@ local buttonHandlers_title = {
 }
 
 local function update_title()
+    gfx.setColor(gfx.kColorWhite)
     gfx.clear()
     drawGameCard(selectedGame)
     drawMenuItem(menu.btnArrowLeft)
@@ -1145,8 +1210,6 @@ end
 
 function Setup_title()
     playdate.inputHandlers.push(buttonHandlers_title)
-
-    gfx.setColor(gfx.kColorWhite)
 
     updateFnc = update_title
     reactToGlobalEvents = false
@@ -1182,11 +1245,11 @@ setupMenuItems()
 local buttonHandlers_intro = {
     AButtonDown = function()
         playdate.inputHandlers.pop()
-        Setup_title()
+        setup_transition(Setup_title, update_title)
     end,
     BButtonDown = function()
         playdate.inputHandlers.pop()
-        Setup_title()
+        setup_transition(Setup_title, update_title)
     end
 }
 
