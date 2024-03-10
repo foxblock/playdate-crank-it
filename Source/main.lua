@@ -955,7 +955,7 @@ end
 local selectedGame = 1
 
 local function newAnimator(durationMS, min, max, easingFunction)
-    local animator = gfx.animator.new(durationMS, min, max, easingFunction)
+    local animator = gfx.animator.new(durationMS, min, max, easingFunction, -durationMS / 2)
     animator.repeatCount = -1
     animator.reverses = true
     animator.value = function()
@@ -983,6 +983,7 @@ local menu <const> = {
         img = gfx.image.new("images/menu/btn_start"),
         x = 200,
         y = 180,
+        rot = newAnimator(2500, -3, 3, easings.inOutSine),
     },
     btnSelect = {
         img = gfx.image.new("images/menu/btn_select"),
@@ -998,13 +999,13 @@ local menu <const> = {
         img = gfx.image.new("images/menu/btn_arrow_left"),
         x = 11,
         y = 86,
-        scale = newBlinkerAnimator(500, 5000, 0, 1.4),
+        scale = newBlinkerAnimator(500, 5000, 750, 1.4),
     },
     btnArrowRight = {
         img = gfx.image.new("images/menu/btn_arrow_right"),
         x = 389,
         y = 86,
-        scale = newBlinkerAnimator(500, 5000, 750, 1.4)
+        scale = newBlinkerAnimator(500, 5000, 0, 1.4),
     },
     [GAME_MODE.CRANKIT] = {
         mascot = {
@@ -1030,7 +1031,7 @@ local menu <const> = {
             img = gfx.image.new("images/menu/simon_mascot"),
             x = 321,
             y = 74,
-            rot = newAnimator(2500, -15, 5, easings.inOutSine),
+            rot = newAnimator(3000, -15, 5, easings.inOutSine),
         },
         logo = {
             img = gfx.image.new("images/menu/simon_logo"),
@@ -1041,6 +1042,8 @@ local menu <const> = {
             img = gfx.image.new("images/menu/simon_tagline"),
             x = 208,
             y = 37,
+            rot = newAnimator(2000, -5, 5, easings.inOutSine),
+            scale = newAnimator(2000, 0.95, 1.05, easings.inOutSine),
         },
     },
     [GAME_MODE.BOMB] = {
@@ -1048,7 +1051,7 @@ local menu <const> = {
             img = gfx.image.new("images/menu/bomb_mascot"),
             x = 325,
             y = 72,
-            rot = newAnimator(500, -5, 5, easings.inOutBounce),
+            rot = newAnimator(1000, -8, 8, easings.inOutElastic),
         },
         logo = {
             img = gfx.image.new("images/menu/bomb_logo"),
@@ -1059,6 +1062,7 @@ local menu <const> = {
             img = gfx.image.new("images/menu/bomb_tagline"),
             x = 136,
             y = 130,
+            scale = newBlinkerAnimator(500, 500, 0, 1.1)
         },
     },
 }
@@ -1129,26 +1133,21 @@ local buttonHandlers_title = {
 }
 
 local function update_title()
-    gfx.fillRect(0, 0, 400, 149)
+    gfx.clear()
     drawGameCard(selectedGame)
     drawMenuItem(menu.btnArrowLeft)
     drawMenuItem(menu.btnArrowRight)
+
+    drawMenuItem(menu.btnStart)
+    drawMenuItem(menu.btnSelect)
+    drawMenuItem(menu.btnSettings)
 end
 
 function Setup_title()
     playdate.inputHandlers.push(buttonHandlers_title)
 
     gfx.setColor(gfx.kColorWhite)
-    gfx.clear()
 
-    drawMenuItem(menu.btnStart)
-    drawMenuItem(menu.btnSelect)
-    drawMenuItem(menu.btnSettings)
-    drawMenuItem(menu.btnArrowLeft)
-    drawMenuItem(menu.btnArrowRight)
-
-    drawGameCard(selectedGame)
-    
     updateFnc = update_title
     reactToGlobalEvents = false
 end
