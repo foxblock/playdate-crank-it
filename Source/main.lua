@@ -35,6 +35,8 @@
 -- [X] go to main menu option in menu
 -- [ ] short transition/swipe/... between actions in simon mode -> helps split same actions when playing without sound
 -- [ ] Check color table: needs inverted (compared to b/w), need raw b/w version?, correct colors compared to screenshot/video?
+-- [ ] Add credits to splash screen
+-- [ ] Add transition sound effects
 
 
 import "CoreLibs/object"
@@ -298,6 +300,21 @@ local function setupMenuItems()
     --     saveData.debugOn = value
     --     save.write(saveData)
     -- end)
+end
+
+local function renderDebugInfo(yPosStart)
+    local yPos = yPosStart or 2
+    if (currAction == ACTION_CODES.MICROPHONE) then
+        gfx.drawText(string.format("level: %.0f", mic.getLevel() * 100), 2, yPos)
+        yPos = yPos + 25
+    elseif (currAction == ACTION_CODES.TILT) then
+        gfx.drawText(string.format("val: %.2f %.2f %.2f", playdate.readAccelerometer()), 2, yPos);
+        gfx.drawText(string.format("a3d: %.2f", math.acos(vec3D_dot(startVec, playdate.readAccelerometer())) * RAD_TO_DEG), 2, yPos + 15)
+        gfx.drawText(string.format("cos: %.4f", vec3D_dot(startVec, playdate.readAccelerometer())), 2, yPos + 30)
+        gfx.drawText(string.format("target: %.4f", TILT_TARGET), 2, yPos + 45)
+        yPos = yPos + 70
+    end
+    return yPos
 end
 
 local function getValidActionCode(allowPassAction, excludeOption, crankDocked)
@@ -613,18 +630,8 @@ local function render_main()
     gfx.drawTextAligned("HIGH: "..saveData.highscore[GAME_MODE.CRANKIT], 290, 220, kTextAlignment.center)
 
     if (saveData.debugOn) then
-        local yPos = 2
         gfx.setFont(gfx.getSystemFont())
-        if (currAction == ACTION_CODES.MICROPHONE) then
-            gfx.drawText(string.format("level: %.0f", mic.getLevel() * 100), 2, yPos)
-            yPos = yPos + 25
-        elseif (currAction == ACTION_CODES.TILT) then
-            gfx.drawText(string.format("val: %.2f %.2f %.2f", playdate.readAccelerometer()), 2, yPos);
-            gfx.drawText(string.format("a3d: %.2f", math.acos(vec3D_dot(startVec, playdate.readAccelerometer())) * RAD_TO_DEG), 2, yPos + 15)
-            gfx.drawText(string.format("cos: %.4f", vec3D_dot(startVec, playdate.readAccelerometer())), 2, yPos + 30)
-            gfx.drawText(string.format("target: %.4f", TILT_TARGET), 2, yPos + 45)
-            yPos = yPos + 70
-        end
+        local yPos = renderDebugInfo()
         gfx.drawText(string.format("timer: %d", actionTimer.timeLeft), 2, yPos);
         gfx.setFont(font)
     end
@@ -897,6 +904,7 @@ local function render_simon()
         return;
     end
 
+    gfx.setColor(gfx.kColorBlack)
     if (simonTimer.timeLeft <= SIMON_TIMER_SHOW_MS) then
         local w = SCREEN_WIDTH * simonTimer.timeLeft / SIMON_TIMER_SHOW_MS
         gfx.fillRect(0, SCREEN_HEIGHT - 22, w, 22)
@@ -907,20 +915,10 @@ local function render_simon()
 
     if (saveData.debugOn) then
         gfx.setFont(gfx.getSystemFont())
-        local yPos = 2
-        if (currAction == ACTION_CODES.MICROPHONE) then
-            gfx.drawText(string.format("level: %.0f", mic.getLevel() * 100), 2, yPos)
-            yPos = yPos + 25
-        elseif (currAction == ACTION_CODES.TILT) then
-            gfx.drawText(string.format("val: %.2f %.2f %.2f", playdate.readAccelerometer()), 2, yPos);
-            gfx.drawText(string.format("a3d: %.2f", math.acos(vec3D_dot(startVec, playdate.readAccelerometer())) * RAD_TO_DEG), 2, yPos + 15)
-            gfx.drawText(string.format("cos: %.4f", vec3D_dot(startVec, playdate.readAccelerometer())), 2, yPos + 30)
-            gfx.drawText(string.format("target: %.4f", TILT_TARGET), 2, yPos + 45)
-            yPos = yPos + 70
-        end
+        renderDebugInfo()
         gfx.setFont(font)
     end
-    
+
     gfx.setImageDrawMode(gfx.kDrawModeCopy)
 end
 
