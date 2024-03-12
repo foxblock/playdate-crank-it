@@ -28,7 +28,7 @@
 -- [X] title card (350 x 155), card animation and icon (32 x 32)
 -- [X] Other neccessary pdxinfo data: https://sdk.play.date/2.0.3/Inside%20Playdate.html#pdxinfo
 -- [ ] options to disable accelerometer and mic based actions
--- [ ] Better score and highscore display
+-- [x] Better score and highscore display
 -- [X] main menu - do not start the game immediately
 -- [X] add title card recommending to play without the cover (https://devforum.play.date/t/crank-docking-not-registered/10439)
 -- [ ] sound convert script: add option to convert single file if passed path is a file
@@ -697,11 +697,19 @@ local function cleanup_main()
 end
 
 local function setup_main()
-    -- NOTE: Assumes pre_setup_main_for_transition was called before
+    bgSprite = gfx.sprite.setBackgroundDrawingCallback(
+        function( x, y, width, height )
+            -- x,y,width,height is the updated area in sprite-local coordinates
+            -- The clip rect is already set to this area, so we don't need to set it ourselves
+            actions[currAction].img:draw(0,0)
+        end
+    )
 
     playdate.startAccelerometer()
     playdate.inputHandlers.push(buttonHandlers_main)
 
+    actionTimer = playdate.timer.new(100, actionTimerEnd) -- dummy duration, proper value set in startGame
+    actionTimer.discardOnCompletion = false
     actionTransitionTimer = playdate.timer.new(TRANSITION_TIME_MS, actionTransitionEnd)
     actionTransitionTimer.discardOnCompletion = false
     actionTransitionTimer:pause()
@@ -712,23 +720,27 @@ local function setup_main()
     actionFailFnc = actionFail_main
     reactToGlobalEvents = true
 
+    -- NOTE: This assumes pre_setup_main_for_transition was called before
     startGame(true)
 end
 
+local function render_main_for_transition()
+    if actions[currAction].ani ~= nil then
+        actions[currAction].img.frame = 1
+    end
+    actions[currAction].img:draw(0,0)
+
+    gfx.setColor(gfx.kColorBlack)
+    gfx.fillRect(0, SCREEN_HEIGHT - 22, SCREEN_WIDTH, 22)
+
+    gfx.setImageDrawMode(gfx.kDrawModeNXOR)
+    gfx.drawTextAligned('SCORE: 1', 110, 220, kTextAlignment.center)
+    gfx.drawTextAligned("HIGH: "..saveData.highscore[GAME_MODE.CRANKIT], 290, 220, kTextAlignment.center)
+    gfx.setImageDrawMode(gfx.kDrawModeCopy)
+end
+
 local function pre_setup_main_for_transition()
-    bgSprite = gfx.sprite.setBackgroundDrawingCallback(
-        function( x, y, width, height )
-            -- x,y,width,height is the updated area in sprite-local coordinates
-            -- The clip rect is already set to this area, so we don't need to set it ourselves
-            actions[currAction].img:draw(0,0)
-        end
-    )
-
     currAction = getValidActionCode(true)
-
-    actionTimer = playdate.timer.new(100, actionTimerEnd) -- dummy duration, proper value set in startGame
-    actionTimer.discardOnCompletion = false
-    actionTimer:pause()
 end
 
 ------ GAME (Simon says)
@@ -1214,7 +1226,7 @@ local buttonHandlers_title = {
         cleanupFnc()
         if (selectedGame == GAME_MODE.CRANKIT) then
             pre_setup_main_for_transition()
-            setup_transition(setup_main, render_main)
+            setup_transition(setup_main, render_main_for_transition)
         elseif (selectedGame == GAME_MODE.SIMON) then
             setup_transition(setup_simon, render_simon_for_transition)
         end
