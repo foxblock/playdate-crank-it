@@ -758,6 +758,7 @@ local SIMON_TIMER_SHOW_MS <const> = 4300
 local SIMON_TIMER_SOUND2_MS <const> = 2400
 local SIMON_TIMER_SOUND3_MS <const> = 960
 local SIMON_TRANSITION_FRAME_MS <const> = 1000
+local SIMON_ACTION_BLINK_MS <const> = 150
 
 local SIMON_STATE <const> = {
     SCORE_UP = 1,
@@ -777,7 +778,8 @@ local simonDockImg = gfx.image.new("images/simon_dock")
 local simonScoreImg = gfx.image.new("images/simon_score")
 local simonSimonsTurnImg = gfx.image.new("images/simon_show")
 local simonState
-local simonTransitionTimer
+local simonStateChangeTimer
+local simonActionBlinkTimer
 
 local simonTickSlow = sample.new("sounds/tick1")
 local simonTickMid = sample.new("sounds/tick2")
@@ -792,8 +794,8 @@ local buttonHandlers_simonDockContinue = {
     crankUndocked = function()
         playdate.inputHandlers.pop()
         simonState = SIMON_STATE.INSTRUCTIONS
-        simonTransitionTimer:reset()
-        simonTransitionTimer:start()
+        simonStateChangeTimer:reset()
+        simonStateChangeTimer:start()
         gfx.sprite.redrawBackground()
     end
 }
@@ -815,8 +817,8 @@ local function startGame_simon()
     else
         simonState = SIMON_STATE.INSTRUCTIONS
         gfx.sprite.redrawBackground()
-        simonTransitionTimer:reset()
-        simonTransitionTimer:start()
+        simonStateChangeTimer:reset()
+        simonStateChangeTimer:start()
     end
     currMusic:stop()
 end
@@ -850,8 +852,8 @@ local function actionSuccess_simon()
         currIndex = 1
         currAction = actionChain[1]
         simonState = SIMON_STATE.SCORE_UP
-        simonTransitionTimer:reset()
-        simonTransitionTimer:start()
+        simonStateChangeTimer:reset()
+        simonStateChangeTimer:start()
         gfx.sprite.redrawBackground()
         -- stop microphone now, otherwise it is only reset after all actions have been shown
         mic.stopListening()
@@ -879,7 +881,7 @@ local function actionFail_simon()
     updateFnc = update_none
 end
 
-local function simonTransitionEnd()
+local function simon_changeState()
     if (simonState == SIMON_STATE.SCORE_UP) then
         if (playdate.isCrankDocked()) then
             simonState = SIMON_STATE.WAIT_FOR_UNDOCK
@@ -888,8 +890,8 @@ local function simonTransitionEnd()
         else
             simonState = SIMON_STATE.INSTRUCTIONS
             gfx.sprite.redrawBackground()
-            simonTransitionTimer:reset()
-            simonTransitionTimer:start()
+            simonStateChangeTimer:reset()
+            simonStateChangeTimer:start()
         end
     elseif (simonState == SIMON_STATE.INSTRUCTIONS) then
         simonState = SIMON_STATE.SHOW
@@ -930,19 +932,7 @@ local function render_simon_for_transition()
     end
 end
 
-update_simon_show = function ()
-    if (gameShouldFailAfterResume) then
-        actionFailFnc()
-        gameShouldFailAfterResume = false
-        return
-    end
-
-    playdate.timer.updateTimers()
-
-    if (simonState ~= SIMON_STATE.SHOW) then goto render end
-
-    if (actions[currAction].snd:isPlaying()) then goto render end
-
+local function simon_showNextAction()
     if (currIndex < #actionChain) then
         currIndex = currIndex + 1
         currAction = actionChain[currIndex]
@@ -958,6 +948,27 @@ update_simon_show = function ()
         simonTimer:start()
         simonTickState = 1
     end
+end
+
+update_simon_show = function ()
+    if (gameShouldFailAfterResume) then
+        actionFailFnc()
+        gameShouldFailAfterResume = false
+        return
+    end
+
+    playdate.timer.updateTimers()
+
+    if (simonState ~= SIMON_STATE.SHOW) then goto render end
+
+    if (actions[currAction].snd:isPlaying()) then goto render end
+
+    if (not simonActionBlinkTimer.paused and simonActionBlinkTimer.timeLeft > 0) then return end
+
+    simonActionBlinkTimer:reset()
+    simonActionBlinkTimer:start()
+    gfx.clear()
+    do return end
 
     ::render::
     render_simon()
@@ -1005,7 +1016,7 @@ local function cleanup_simon()
     playdate.stopAccelerometer()
     mic.stopListening()
     simonTimer:remove()
-    simonTransitionTimer:remove()
+    simonStateChangeTimer:remove()
     simonSampleplayer:stop()
     currMusic:stop()
     -- pop twice to remove temp handler from game over or undock request
@@ -1041,9 +1052,12 @@ local function setup_simon()
     simonTimer = playdate.timer.new(SIMON_TIMER_DURATION_MS, actionTimerEnd)
     simonTimer.discardOnCompletion = false
     simonTimer:pause()
-    simonTransitionTimer = playdate.timer.new(SIMON_TRANSITION_FRAME_MS, simonTransitionEnd)
-    simonTransitionTimer.discardOnCompletion = false;
-    simonTransitionTimer:pause()
+    simonStateChangeTimer = playdate.timer.new(SIMON_TRANSITION_FRAME_MS, simon_changeState)
+    simonStateChangeTimer.discardOnCompletion = false;
+    simonStateChangeTimer:pause()
+    simonActionBlinkTimer = playdate.timer.new(SIMON_ACTION_BLINK_MS, simon_showNextAction)
+    simonActionBlinkTimer.discardOnCompletion = false;
+    simonActionBlinkTimer:pause()
 
     startGame_simon()
 end
