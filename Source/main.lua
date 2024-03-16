@@ -40,8 +40,6 @@
 
 
 import "CoreLibs/graphics"
-import "CoreLibs/sprites"
-import "CoreLibs/timer"
 
 import "game_constants"
 import "game_actions"
@@ -52,23 +50,14 @@ import "savegame"
 import "menu"
 
 local gfx <const> = playdate.graphics
-local mic <const> = playdate.sound.micinput
 local snd <const> = playdate.sound.sampleplayer
-local sample <const> = playdate.sound.sample
-local ACTION_CODES <const> = actions.codes
-
-local SCREEN_WIDTH <const> = playdate.display.getWidth()
-local SCREEN_HEIGHT <const> = playdate.display.getHeight()
-
-
-local font = gfx.font.new("images/font/party")
-gfx.setFont(font)
 
 -- Global state
 Statemachine = {
     cleanup = nil, -- needed for going back to main menu through system menu
     gameShouldFailAfterResume = false,
     music = snd.new("sounds/dummy"),
+    font = gfx.font.new("images/font/party")
 }
 
 ------ SPLASH IMAGES and MENU
@@ -149,5 +138,6 @@ end)
 menu.callback = menu_result
 
 gfx.setColor(gfx.kColorWhite)
+gfx.setFont(Statemachine.font)
 gfx.clear()
 transition.setup_second(splash_setup, splash_render)

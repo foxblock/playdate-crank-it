@@ -192,9 +192,9 @@ local function render_simon()
     gfx.drawTextAligned('SCORE: '..score_simon, 200, 220, kTextAlignment.center)
 
     if (save.data.debugOn) then
-        -- gfx.setFont(gfx.getSystemFont())
+        gfx.setFont(gfx.getSystemFont())
         actions.renderDebugInfo()
-        -- gfx.setFont(font)
+        gfx.setFont(Statemachine.font)
     end
 
     gfx.setImageDrawMode(gfx.kDrawModeCopy)
