@@ -44,19 +44,16 @@ import "CoreLibs/graphics"
 import "CoreLibs/sprites"
 import "CoreLibs/timer"
 import "CoreLibs/animation"
-import "CoreLibs/animator"
-import "CoreLibs/easing"
 
+import "game_constants"
 import "transition"
-
-local gameShouldFailAfterResume = false
+import "savegame"
+import "menu"
 
 local gfx <const> = playdate.graphics
 local mic <const> = playdate.sound.micinput
 local snd <const> = playdate.sound.sampleplayer
 local sample <const> = playdate.sound.sample
-local save <const> = playdate.datastore
-local easings <const> = playdate.easingFunctions
 
 local RAD_TO_DEG <const> = 180 / math.pi
 local DEG_TO_RAD <const> = math.pi / 180
@@ -196,26 +193,6 @@ local SPEED_UP_INTERVAL <const> = 10
 local MAX_SPEED_LEVEL <const> = 5
 local TRANSITION_TIME_MS <const> = 500
 
-local GAME_MODE <const> = {
-    CRANKIT = 1,
-    SIMON = 2,
-    EOL = 3,
-    VERSUS = 99,--not implemented
-    BOMB = 100,--not implemented
-}
-local GAME_MODE_STR <const> = {
-    "CRANK-IT!",
-    "SIMON CRANKS",
-    "CRANK-IT VERSUS",
-    "CRANK THE BOMB"
-}
-
-local saveData = {
-    SAVE_VERSION = 1,
-    highscore = {0,0,0,0},
-    musicOn = true,
-    debugOn = false
-}
 
 local font = gfx.font.new("images/font/party")
 gfx.setFont(font)
@@ -228,9 +205,11 @@ local lastAnimationFrame = 1
 local crankValue = 0
 local crankDeadzone = CRANK_DEADZONE_NORMAL
 local startVec = nil
-local reactToGlobalEvents = false
-UpdateFnc = nil
-CleanupFnc = nil
+Statemachine = {
+    update = nil,
+    cleanup = nil, -- needed for going back to main menu through system menu
+    gameShouldFailAfterResume = false
+}
 
 ------ UTILITY
 
@@ -246,63 +225,6 @@ end
 -- assumes v1 is a normalized 3D-vector stored as a table with 3 entries: {[1] = x, [2] = y, [3] = z}
 local function vec3D_dot(v1, x2, y2, z2)
     return ((v1[1] * x2 + v1[2] * y2 + v1[3] * z2) / vec3D_len(x2, y2, z2))
-end
-
-local function loadSettings()
-    local loadData = save.read()
-
-    if (loadData == nil) then return end
-
-    -- convert from old save file
-    if (loadData.SAVE_VERSION == nil) then
-        saveData.debugOn = loadData.debugOn
-        saveData.musicOn = loadData.musicOn
-        saveData.highscore[GAME_MODE.CRANKIT] = loadData.highscore
-        save.write(saveData)
-    else
-        saveData = loadData
-    end
-
-    if (saveData.musicOn) then
-        currMusic:setVolume(1.0)
-    else
-        currMusic:setVolume(0)
-    end
-    -- Disable debug output for now (removed menu option)
-    saveData.debugOn = false
-end
-
-local function setupMenuItems()
-    local menu = playdate.getSystemMenu()
-
-    local musicMenuItem, _ = menu:addCheckmarkMenuItem("Music", saveData.musicOn, function(value)
-        saveData.musicOn = value
-        save.write(saveData)
-        if (saveData.musicOn) then
-            currMusic:setVolume(1.0)
-        else
-            currMusic:setVolume(0)
-        end
-    end)
-
-    local goToMenuItem, _ = menu:addMenuItem("Main Menu", function()
-        if (CleanupFnc ~= nil) then
-            CleanupFnc()
-        end
-        Setup_title()
-    end)
-
-    -- local resetScoreMenuItem, _ = menu:addMenuItem("Reset Score", function()
-    --     for i=1, #saveData.highscore do
-    --         saveData.highscore[i] = 0
-    --     end
-    --     save.write(saveData)
-    -- end)
-
-    -- local debugMenuItem, _ = menu:addCheckmarkMenuItem("Debug Text", saveData.debugOn, function(value)
-    --     saveData.debugOn = value
-    --     save.write(saveData)
-    -- end)
 end
 
 local function renderDebugInfo(yPosStart)
@@ -376,9 +298,7 @@ local function setupActionGfxAndSound(curr, static)
 end
 
 local function update_none()
-    if (gameShouldFailAfterResume) then
-        gameShouldFailAfterResume = false
-    end
+    --
 end
 
 ------ GAME (MAIN)
@@ -392,9 +312,10 @@ local score = 0
 
 local update_main
 
-local function startGame(skipGenNewAction)
+local function main_startGame(skipGenNewAction)
     score = 0
     speedLevel = 1
+    Statemachine.gameShouldFailAfterResume = false
 
     if not skipGenNewAction then
         currAction = getValidActionCode(true)
@@ -413,15 +334,15 @@ local function startGame(skipGenNewAction)
     currMusic:play(0)
 end
 
-local buttonHandlers_mainLose = {
+local main_buttonsLose = {
     AButtonDown = function()
         playdate.inputHandlers.pop()
-        UpdateFnc = update_main 
-        startGame()
+        Statemachine.update = update_main
+        main_startGame()
     end
 }
 
-local function actionSuccess_main()
+local function main_actionSuccess()
     if (actionDone) then return end
 
     actionDone = true
@@ -429,12 +350,12 @@ local function actionSuccess_main()
     soundSuccess:play(1)
 end
 
-local function actionFail_main()
+local function main_actionFail()
     if (currAction == ACTION_CODES.LOSE) then return end
 
-    if (score > saveData.highscore[GAME_MODE.CRANKIT]) then
-        saveData.highscore[GAME_MODE.CRANKIT] = score
-        save.write(saveData)
+    if (score > save.data.highscore[GAME_MODE.CRANKIT]) then
+        save.data.highscore[GAME_MODE.CRANKIT] = score
+        save.write()
     end
     currAction = ACTION_CODES.LOSE
     actionTimer:pause()
@@ -445,8 +366,8 @@ local function actionFail_main()
     currMusic:stop()
     currMusic:setSample(loseMusic)
     currMusic:play(0)
-    playdate.inputHandlers.push(buttonHandlers_mainLose)
-    UpdateFnc = update_none 
+    playdate.inputHandlers.push(main_buttonsLose)
+    Statemachine.update = update_none 
 end
 
 local actionSuccesFnc = nil
@@ -567,9 +488,9 @@ local function render_main()
     gfx.setImageDrawMode(gfx.kDrawModeNXOR)
 
     gfx.drawTextAligned('SCORE: '..score, 110, 220, kTextAlignment.center)
-    gfx.drawTextAligned("HIGH: "..saveData.highscore[GAME_MODE.CRANKIT], 290, 220, kTextAlignment.center)
+    gfx.drawTextAligned("HIGH: "..save.data.highscore[GAME_MODE.CRANKIT], 290, 220, kTextAlignment.center)
 
-    if (saveData.debugOn) then
+    if (save.data.debugOn) then
         gfx.setFont(gfx.getSystemFont())
         local yPos = renderDebugInfo()
         gfx.drawText(string.format("timer: %d", actionTimer.timeLeft), 2, yPos);
@@ -580,22 +501,22 @@ local function render_main()
 end
 
 update_main = function ()
-    if (gameShouldFailAfterResume) then
+    if (Statemachine.gameShouldFailAfterResume) then
         actionFailFnc()
-        gameShouldFailAfterResume = false
+        Statemachine.gameShouldFailAfterResume = false
         return
     end
 
     playdate.timer.updateTimers()
 
     if (currAction == ACTION_CODES.MICROPHONE and mic.getLevel() >= MIC_LEVEL_TARGET) then
-        actionSuccess_main()
+        main_actionSuccess()
     end
 
     if (currAction == ACTION_CODES.TILT) then
         local cos_ang = vec3D_dot(startVec, playdate.readAccelerometer())
         if (cos_ang <= TILT_TARGET) then
-            actionSuccess_main()
+            main_actionSuccess()
         end
     end
     -- other actions are handled in callbacks
@@ -655,20 +576,20 @@ local function setup_main()
     playdate.startAccelerometer()
     playdate.inputHandlers.push(buttonHandlers_main)
 
-    actionTimer = playdate.timer.new(100, actionTimerEnd) -- dummy duration, proper value set in startGame
+    actionTimer = playdate.timer.new(100, actionTimerEnd) -- dummy duration, proper value set in main_startGame
     actionTimer.discardOnCompletion = false
     actionTransitionTimer = playdate.timer.new(TRANSITION_TIME_MS, actionTransitionEnd)
     actionTransitionTimer.discardOnCompletion = false
     actionTransitionTimer:pause()
 
-    UpdateFnc = update_main 
-    CleanupFnc = cleanup_main
-    actionSuccesFnc = actionSuccess_main
-    actionFailFnc = actionFail_main
-    reactToGlobalEvents = true
+    Statemachine.update = update_main
+    Statemachine.cleanup = cleanup_main
+    actionSuccesFnc = main_actionSuccess
+    actionFailFnc = main_actionFail
+    Statemachine.reactToGlobalEvents = true
 
     -- NOTE: This assumes pre_setup_main_for_transition was called before
-    startGame(true)
+    main_startGame(true)
 end
 
 local function render_main_for_transition()
@@ -681,8 +602,8 @@ local function render_main_for_transition()
     gfx.fillRect(0, SCREEN_HEIGHT - 22, SCREEN_WIDTH, 22)
 
     gfx.setImageDrawMode(gfx.kDrawModeNXOR)
-    gfx.drawTextAligned('SCORE: 1', 110, 220, kTextAlignment.center)
-    gfx.drawTextAligned("HIGH: "..saveData.highscore[GAME_MODE.CRANKIT], 290, 220, kTextAlignment.center)
+    gfx.drawTextAligned('SCORE: 0', 110, 220, kTextAlignment.center)
+    gfx.drawTextAligned("HIGH: "..save.data.highscore[GAME_MODE.CRANKIT], 290, 220, kTextAlignment.center)
     gfx.setImageDrawMode(gfx.kDrawModeCopy)
 end
 
@@ -743,6 +664,7 @@ local buttonHandlers_simonDockContinue = {
 local function startGame_simon()
     score_simon = 0
     currIndex = 1
+    Statemachine.gameShouldFailAfterResume = false
 
     actionChain = {}
     -- do not allow dock action in this set, so we don't have to track dock state
@@ -766,7 +688,7 @@ end
 local buttonHandlers_simonLose = {
     AButtonDown = function()
         playdate.inputHandlers.pop()
-        UpdateFnc = update_simon_show 
+        Statemachine.update = update_simon_show 
         startGame_simon()
     end
 }
@@ -788,7 +710,7 @@ local function actionSuccess_simon()
         score_simon = score_simon + 1
         simonTimer:pause()
         table.insert(actionChain, getValidActionCode(false))
-        UpdateFnc = update_simon_show 
+        Statemachine.update = update_simon_show 
         currIndex = 1
         currAction = actionChain[1]
         simonState = SIMON_STATE.SCORE_UP
@@ -803,9 +725,9 @@ end
 local function actionFail_simon()
     if (currAction == ACTION_CODES.LOSE) then return end
 
-    if (score_simon > saveData.highscore[GAME_MODE.SIMON]) then
-        saveData.highscore[GAME_MODE.SIMON] = score_simon
-        save.write(saveData)
+    if (score_simon > save.data.highscore[GAME_MODE.SIMON]) then
+        save.data.highscore[GAME_MODE.SIMON] = score_simon
+        save.write()
     end
     currAction = ACTION_CODES.LOSE
     gfx.sprite.redrawBackground()
@@ -818,7 +740,7 @@ local function actionFail_simon()
     currMusic:play(0)
     simonTimer:pause()
     playdate.inputHandlers.push(buttonHandlers_simonLose, true)
-    UpdateFnc = update_none 
+    Statemachine.update = update_none 
 end
 
 local function simon_changeState()
@@ -855,7 +777,7 @@ local function render_simon()
     gfx.setImageDrawMode(gfx.kDrawModeNXOR)
     gfx.drawTextAligned('SCORE: '..score_simon, 200, 220, kTextAlignment.center)
 
-    if (saveData.debugOn) then
+    if (save.data.debugOn) then
         gfx.setFont(gfx.getSystemFont())
         renderDebugInfo()
         gfx.setFont(font)
@@ -879,7 +801,7 @@ local function simon_showNextAction()
         setupActionGfxAndSound(currAction, true)
     else
         simonState = SIMON_STATE.ACTION
-        UpdateFnc = update_simon_action 
+        Statemachine.update = update_simon_action 
         currIndex = 1
         currAction = actionChain[1]
         setupActionGameplay(0, currAction)
@@ -891,9 +813,9 @@ local function simon_showNextAction()
 end
 
 update_simon_show = function ()
-    if (gameShouldFailAfterResume) then
+    if (Statemachine.gameShouldFailAfterResume) then
         actionFailFnc()
-        gameShouldFailAfterResume = false
+        Statemachine.gameShouldFailAfterResume = false
         return
     end
 
@@ -915,9 +837,9 @@ update_simon_show = function ()
 end
 
 update_simon_action = function ()
-    if (gameShouldFailAfterResume) then
+    if (Statemachine.gameShouldFailAfterResume) then
         actionFailFnc()
-        gameShouldFailAfterResume = false
+        Statemachine.gameShouldFailAfterResume = false
         return
     end
 
@@ -984,11 +906,11 @@ local function setup_simon()
     gfx.setColor(gfx.kColorBlack)
     playdate.startAccelerometer()
     playdate.inputHandlers.push(buttonHandlers_main)
-    UpdateFnc = update_simon_show 
-    CleanupFnc = cleanup_simon
+    Statemachine.update = update_simon_show 
+    Statemachine.cleanup = cleanup_simon
     actionSuccesFnc = actionSuccess_simon
     actionFailFnc = actionFail_simon
-    reactToGlobalEvents = true
+    Statemachine.reactToGlobalEvents = true
     simonTimer = playdate.timer.new(SIMON_TIMER_DURATION_MS, actionTimerEnd)
     simonTimer.discardOnCompletion = false
     simonTimer:pause()
@@ -1002,223 +924,16 @@ local function setup_simon()
     startGame_simon()
 end
 
------- TITLE SCREEN
-
-local selectedGame = 1
-
-local function newAnimator(durationMS, min, max, easingFunction)
-    local animator = gfx.animator.new(durationMS, min, max, easingFunction, -durationMS / 2)
-    animator.repeatCount = -1
-    animator.reverses = true
-    animator.value = function()
-        return animator:currentValue()
-    end
-    return animator
-end
-
-local function newBlinkerAnimator(onDurationMS, offDurationMS, offsetMS, scaleOn)
-    local animator = gfx.animator.new(onDurationMS + offDurationMS, 1, scaleOn, easings.linear, offsetMS)
-    animator.repeatCount = -1
-    animator.thresholdValue = animator.startValue + (animator.endValue - animator.startValue) * (offDurationMS / animator.duration)
-    animator.value = function()
-        -- cannot use animator:progress() here, since it does not work with repeatCount=-1 (returns nil)
-        if animator:currentValue() >= animator.thresholdValue then
-            return animator.endValue
-        end
-        return animator.startValue
-    end
-    return animator
-end
-
-local menu <const> = {
-    btnStart = {
-        img = gfx.image.new("images/menu/btn_start"),
-        x = 200,
-        y = 180,
-        rot = newAnimator(2500, -3, 3, easings.inOutSine),
-    },
-    btnSelect = {
-        img = gfx.image.new("images/menu/btn_select"),
-        x = 84,
-        y = 220,
-    },
-    btnSettings = {
-        img = gfx.image.new("images/menu/btn_settings"),
-        x = 304,
-        y = 220,
-    },
-    btnArrowLeft = {
-        img = gfx.image.new("images/menu/btn_arrow_left"),
-        x = 11,
-        y = 86,
-        scale = newBlinkerAnimator(500, 5000, 750, 1.4),
-    },
-    btnArrowRight = {
-        img = gfx.image.new("images/menu/btn_arrow_right"),
-        x = 389,
-        y = 86,
-        scale = newBlinkerAnimator(500, 5000, 0, 1.4),
-    },
-    [GAME_MODE.CRANKIT] = {
-        mascot = {
-            img = gfx.image.new("images/menu/crank_mascot"),
-            x = 322,
-            y = 75,
-            rot = newAnimator(500, -10, 10, easings.inOutCubic),
-            scale = newAnimator(1500, 0.95, 1.05, easings.inOutBack),
-        },
-        logo = {
-            img = gfx.image.new("images/menu/crank_logo"),
-            x = 139,
-            y = 53,
-        },
-        tagline = {
-            img = gfx.image.new("images/menu/crank_tagline"),
-            x = 139,
-            y = 91,
-        },
-    },
-    [GAME_MODE.SIMON] = {
-        mascot = {
-            img = gfx.image.new("images/menu/simon_mascot"),
-            x = 321,
-            y = 74,
-            rot = newAnimator(3000, -15, 5, easings.inOutSine),
-        },
-        logo = {
-            img = gfx.image.new("images/menu/simon_logo"),
-            x = 143,
-            y = 65,
-        },
-        tagline = {
-            img = gfx.image.new("images/menu/simon_tagline"),
-            x = 208,
-            y = 37,
-            rot = newAnimator(2000, -5, 5, easings.inOutSine),
-            scale = newAnimator(2000, 0.95, 1.05, easings.inOutSine),
-        },
-    },
-    [GAME_MODE.BOMB] = {
-        mascot = {
-            img = gfx.image.new("images/menu/bomb_mascot"),
-            x = 325,
-            y = 72,
-            rot = newAnimator(1000, -8, 8, easings.inOutElastic),
-        },
-        logo = {
-            img = gfx.image.new("images/menu/bomb_logo"),
-            x = 135,
-            y = 63,
-        },
-        tagline = {
-            img = gfx.image.new("images/menu/bomb_tagline"),
-            x = 136,
-            y = 130,
-            scale = newBlinkerAnimator(500, 500, 0, 1.1)
-        },
-    },
-}
-
-local function drawMenuItem(item)
-    if item.rot ~= nil and item.scale ~= nil then
-        item.img:drawRotated(item.x, item.y, item.rot:currentValue(), item.scale:currentValue())
-    elseif item.rot ~= nil then
-        item.img:drawRotated(item.x, item.y, item.rot:currentValue())
-    elseif item.scale ~= nil then
-        item.img:drawRotated(item.x, item.y, 0, item.scale:value())
-    else
-        item.img:drawCentered(item.x, item.y)
-    end
-end
-
-local function drawGameCard(gameIndex)
-    drawMenuItem(menu[gameIndex].logo)
-    drawMenuItem(menu[gameIndex].tagline)
-    drawMenuItem(menu[gameIndex].mascot)
-
-    if gameIndex ~= GAME_MODE.BOMB then
-        gfx.drawTextAligned("HIGHSCORE: "..saveData.highscore[selectedGame], 139, 118, kTextAlignment.center)
-    end
-end
-
--- bgSprite = gfx.sprite.setBackgroundDrawingCallback(
---     function( x, y, width, height )
---         -- x,y,width,height is the updated area in sprite-local coordinates
---         -- The clip rect is already set to this area, so we don't need to set it ourselves
---         actions[currAction].img:draw(0,0)
---     end
--- )
-
-local function cleanup_title()
-    playdate.inputHandlers.pop()
-end
-
-local buttonHandlers_title = {
-    leftButtonDown = function ()
-        if (selectedGame == 1) then
-            selectedGame = GAME_MODE.EOL - 1
-        else
-            selectedGame = selectedGame - 1
-        end
-        gfx.fillRect(18, 0, 364, 149)
-        drawGameCard(selectedGame)
-    end,
-
-    rightButtonDown = function ()
-        if (selectedGame == GAME_MODE.EOL - 1) then
-            selectedGame = 1
-        else
-            selectedGame = selectedGame + 1
-        end
-        gfx.fillRect(18, 0, 364, 149)
-        drawGameCard(selectedGame)
-    end,
-
-    AButtonDown = function()
-        CleanupFnc()
-        if (selectedGame == GAME_MODE.CRANKIT) then
-            pre_setup_main_for_transition()
-            transition.setup(setup_main, render_main_for_transition)
-        elseif (selectedGame == GAME_MODE.SIMON) then
-            transition.setup(setup_simon, render_simon_for_transition)
-        end
-    end
-}
-
-local function update_title()
-    if (gameShouldFailAfterResume) then
-        gameShouldFailAfterResume = false
-    end
-
-    gfx.setColor(gfx.kColorWhite)
-    gfx.clear()
-    drawGameCard(selectedGame)
-    drawMenuItem(menu.btnArrowLeft)
-    drawMenuItem(menu.btnArrowRight)
-
-    drawMenuItem(menu.btnStart)
-    drawMenuItem(menu.btnSelect)
-    drawMenuItem(menu.btnSettings)
-end
-
-function Setup_title()
-    playdate.inputHandlers.push(buttonHandlers_title)
-
-    UpdateFnc = update_title 
-    CleanupFnc = cleanup_title
-    reactToGlobalEvents = false
-end
-
------- SPLASH IMAGES
+------ SPLASH IMAGES and MENU
 
 local buttonHandlers_intro = {
     AButtonDown = function()
         playdate.inputHandlers.pop()
-        transition.setup(Setup_title, update_title)
+        transition.setup(menu.setup, menu.update)
     end,
     BButtonDown = function()
         playdate.inputHandlers.pop()
-        transition.setup(Setup_title, update_title)
+        transition.setup(menu.setup, menu.update)
     end
 }
 
@@ -1230,32 +945,65 @@ local function splash_setup()
     playdate.inputHandlers.push(buttonHandlers_intro)
 end
 
+local function menu_result(optionIndex)
+    if (optionIndex == GAME_MODE.CRANKIT) then
+        pre_setup_main_for_transition()
+        transition.setup(setup_main, render_main_for_transition)
+    elseif (optionIndex == GAME_MODE.SIMON) then
+        transition.setup(setup_simon, render_simon_for_transition)
+    end
+end
+
 ------ CALLBACKS
 
 function playdate.update()
-    UpdateFnc()
+    Statemachine.update()
 end
 
 function playdate.deviceWillLock()
-    if (not reactToGlobalEvents) then return end
-
-    actionFailFnc()
+    Statemachine.gameShouldFailAfterResume = true
 end
 
 -- waiting for the following bug to get fixed:
 -- https://devforum.play.date/t/calling-order-after-selecting-menu-item-is-wrong/14493
 function playdate.gameWillResume()
-    if (not reactToGlobalEvents) then return end
-
-    gameShouldFailAfterResume = true
+    Statemachine.gameShouldFailAfterResume = true
 end
 
 ------ MAIN
 
 math.randomseed(playdate.getSecondsSinceEpoch())
 playdate.setCrankSoundsDisabled(true)
-loadSettings()
-setupMenuItems()
+
+save.load()
+if (save.data.musicOn) then
+    currMusic:setVolume(1.0)
+else
+    currMusic:setVolume(0)
+end
+
+---- setup playdate menu
+local sytemMenu = playdate.getSystemMenu()
+
+local musicMenuItem, _ = sytemMenu:addCheckmarkMenuItem("Music", save.data.musicOn, function(value)
+    save.data.musicOn = value
+    save.write()
+    if (save.data.musicOn) then
+        currMusic:setVolume(1.0)
+    else
+        currMusic:setVolume(0)
+    end
+end)
+
+local goToMenuItem, _ = sytemMenu:addMenuItem("Main Menu", function()
+    if (Statemachine.cleanup ~= nil) then
+        Statemachine.cleanup()
+    end
+    menu.setup()
+end)
+
+---- setup our menu
+menu.callback = menu_result
 
 gfx.setColor(gfx.kColorWhite)
 gfx.clear()

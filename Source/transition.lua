@@ -1,5 +1,3 @@
--- Modifies global state: UpdateFnc
-
 if transition then return end  -- avoid loading twice the same module
 transition = {}  -- create a table to represent the module
 
@@ -64,13 +62,13 @@ function transition.setup_second(targetSetupFunc, targetRenderFunc)
         SCREEN_WIDTH, 0,
         SCREEN_WIDTH, SCREEN_HEIGHT
     )
-    UpdateFnc = update_second_transition
+    Statemachine.update = update_second_transition
     transitionTargetRender = targetRenderFunc
 end
 
 function transition.setup(targetSetupFunc, targetRenderFunc)
     screenTransitionTimer = timer.new(400, transition.setup_second, targetSetupFunc, targetRenderFunc)
     transitionPolygon = poly.new(0,0,0,0,0,0,0,0,0,0,0,0)
-    UpdateFnc = update_first_transition
+    Statemachine.update = update_first_transition
     transitionTargetRender = targetRenderFunc
 end
