@@ -382,7 +382,6 @@ end
 
 local screenTransitionTimer
 local transitionPolygon
-local transitionTargetSetup
 local transitionTargetRender
 
 -- 1--------------2
@@ -398,6 +397,7 @@ local function update_first_transition()
     transitionPolygon:setPointAt(3, dist > SCREEN_WIDTH and SCREEN_WIDTH or dist, dist > SCREEN_WIDTH and (dist - SCREEN_WIDTH) or 0)
     transitionPolygon:setPointAt(4, dist > SCREEN_HEIGHT and (dist - SCREEN_HEIGHT) or 0, dist > SCREEN_HEIGHT and SCREEN_HEIGHT or dist)
     transitionPolygon:setPointAt(5, 0, dist > SCREEN_HEIGHT and SCREEN_HEIGHT or dist)
+    gfx.setColor(gfx.kColorWhite)
     gfx.fillPolygon(transitionPolygon)
 end
 
@@ -419,8 +419,8 @@ local function update_second_transition()
     gfx.fillPolygon(transitionPolygon)
 end
 
-local function setup_second_transition()
-    screenTransitionTimer = playdate.timer.new(400, transitionTargetSetup)
+local function setup_second_transition(targetSetupFunc, targetRenderFunc)
+    screenTransitionTimer = playdate.timer.new(400, targetSetupFunc)
     transitionPolygon = playdate.geometry.polygon.new(
         SCREEN_WIDTH, SCREEN_HEIGHT,
         0, SCREEN_HEIGHT,
@@ -430,14 +430,13 @@ local function setup_second_transition()
         SCREEN_WIDTH, SCREEN_HEIGHT
     )
     updateFnc = update_second_transition
+    transitionTargetRender = targetRenderFunc
 end
 
 local function setup_transition(targetSetupFunc, targetRenderFunc)
-    gfx.setColor(gfx.kColorWhite)
-    screenTransitionTimer = playdate.timer.new(400, setup_second_transition)
+    screenTransitionTimer = playdate.timer.new(400, setup_second_transition, targetSetupFunc, targetRenderFunc)
     transitionPolygon = playdate.geometry.polygon.new(0,0,0,0,0,0,0,0,0,0,0,0)
     updateFnc = update_first_transition
-    transitionTargetSetup = targetSetupFunc
     transitionTargetRender = targetRenderFunc
 end
 
@@ -1269,6 +1268,27 @@ function Setup_title()
     reactToGlobalEvents = false
 end
 
+------ SPLASH IMAGES
+
+local buttonHandlers_intro = {
+    AButtonDown = function()
+        playdate.inputHandlers.pop()
+        setup_transition(Setup_title, update_title)
+    end,
+    BButtonDown = function()
+        playdate.inputHandlers.pop()
+        setup_transition(Setup_title, update_title)
+    end
+}
+
+local function splash_render()
+    gfx.image.new("images/remove_cover"):draw(0,0)
+end
+
+local function splash_setup()
+    playdate.inputHandlers.push(buttonHandlers_intro)
+end
+
 ------ CALLBACKS
 
 function playdate.update()
@@ -1296,17 +1316,6 @@ playdate.setCrankSoundsDisabled(true)
 loadSettings()
 setupMenuItems()
 
-local buttonHandlers_intro = {
-    AButtonDown = function()
-        playdate.inputHandlers.pop()
-        setup_transition(Setup_title, update_title)
-    end,
-    BButtonDown = function()
-        playdate.inputHandlers.pop()
-        setup_transition(Setup_title, update_title)
-    end
-}
-
-gfx.image.new("images/remove_cover"):draw(0,0)
-updateFnc = update_none
-playdate.inputHandlers.push(buttonHandlers_intro)
+gfx.setColor(gfx.kColorWhite)
+gfx.clear()
+setup_second_transition(splash_setup, splash_render)
