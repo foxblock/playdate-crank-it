@@ -204,7 +204,7 @@ end
 function menu.setup()
     playdate.inputHandlers.push(buttonHandlers_title)
 
-    Statemachine.update = menu.update
+    playdate.update = menu.update
     Statemachine.cleanup = menu_cleanup
     Statemachine.reactToGlobalEvents = false
 end

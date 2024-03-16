@@ -62,13 +62,13 @@ function transition.setup_second(targetSetupFunc, targetRenderFunc)
         SCREEN_WIDTH, 0,
         SCREEN_WIDTH, SCREEN_HEIGHT
     )
-    Statemachine.update = update_second_transition
+    playdate.update = update_second_transition
     transitionTargetRender = targetRenderFunc
 end
 
 function transition.setup(targetSetupFunc, targetRenderFunc)
     screenTransitionTimer = timer.new(400, transition.setup_second, targetSetupFunc, targetRenderFunc)
     transitionPolygon = poly.new(0,0,0,0,0,0,0,0,0,0,0,0)
-    Statemachine.update = update_first_transition
+    playdate.update = update_first_transition
     transitionTargetRender = targetRenderFunc
 end

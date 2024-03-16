@@ -206,7 +206,6 @@ local crankValue = 0
 local crankDeadzone = CRANK_DEADZONE_NORMAL
 local startVec = nil
 Statemachine = {
-    update = nil,
     cleanup = nil, -- needed for going back to main menu through system menu
     gameShouldFailAfterResume = false
 }
@@ -337,7 +336,7 @@ end
 local main_buttonsLose = {
     AButtonDown = function()
         playdate.inputHandlers.pop()
-        Statemachine.update = update_main
+        playdate.update = update_main
         main_startGame()
     end
 }
@@ -367,7 +366,7 @@ local function main_actionFail()
     currMusic:setSample(loseMusic)
     currMusic:play(0)
     playdate.inputHandlers.push(main_buttonsLose)
-    Statemachine.update = update_none 
+    playdate.update = update_none
 end
 
 local actionSuccesFnc = nil
@@ -582,7 +581,7 @@ local function setup_main()
     actionTransitionTimer.discardOnCompletion = false
     actionTransitionTimer:pause()
 
-    Statemachine.update = update_main
+    playdate.update = update_main
     Statemachine.cleanup = cleanup_main
     actionSuccesFnc = main_actionSuccess
     actionFailFnc = main_actionFail
@@ -688,7 +687,7 @@ end
 local buttonHandlers_simonLose = {
     AButtonDown = function()
         playdate.inputHandlers.pop()
-        Statemachine.update = update_simon_show 
+        playdate.update = update_simon_show 
         startGame_simon()
     end
 }
@@ -710,7 +709,7 @@ local function actionSuccess_simon()
         score_simon = score_simon + 1
         simonTimer:pause()
         table.insert(actionChain, getValidActionCode(false))
-        Statemachine.update = update_simon_show 
+        playdate.update = update_simon_show 
         currIndex = 1
         currAction = actionChain[1]
         simonState = SIMON_STATE.SCORE_UP
@@ -740,7 +739,7 @@ local function actionFail_simon()
     currMusic:play(0)
     simonTimer:pause()
     playdate.inputHandlers.push(buttonHandlers_simonLose, true)
-    Statemachine.update = update_none 
+    playdate.update = update_none 
 end
 
 local function simon_changeState()
@@ -801,7 +800,7 @@ local function simon_showNextAction()
         setupActionGfxAndSound(currAction, true)
     else
         simonState = SIMON_STATE.ACTION
-        Statemachine.update = update_simon_action 
+        playdate.update = update_simon_action 
         currIndex = 1
         currAction = actionChain[1]
         setupActionGameplay(0, currAction)
@@ -906,7 +905,7 @@ local function setup_simon()
     gfx.setColor(gfx.kColorBlack)
     playdate.startAccelerometer()
     playdate.inputHandlers.push(buttonHandlers_main)
-    Statemachine.update = update_simon_show 
+    playdate.update = update_simon_show 
     Statemachine.cleanup = cleanup_simon
     actionSuccesFnc = actionSuccess_simon
     actionFailFnc = actionFail_simon
@@ -955,10 +954,6 @@ local function menu_result(optionIndex)
 end
 
 ------ CALLBACKS
-
-function playdate.update()
-    Statemachine.update()
-end
 
 function playdate.deviceWillLock()
     Statemachine.gameShouldFailAfterResume = true
