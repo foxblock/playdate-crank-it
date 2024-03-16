@@ -47,6 +47,8 @@ import "CoreLibs/animation"
 import "CoreLibs/animator"
 import "CoreLibs/easing"
 
+import "transition"
+
 local gameShouldFailAfterResume = false
 
 local gfx <const> = playdate.graphics
@@ -220,14 +222,15 @@ gfx.setFont(font)
 local soundSuccess = snd.new("sounds/success")
 local soundLose = snd.new("sounds/lose")
 
+-- "Gloabal" state
 local currAction
 local lastAnimationFrame = 1
 local crankValue = 0
 local crankDeadzone = CRANK_DEADZONE_NORMAL
 local startVec = nil
 local reactToGlobalEvents = false
-local updateFnc
-local cleanupFnc
+UpdateFnc = nil
+CleanupFnc = nil
 
 ------ UTILITY
 
@@ -283,8 +286,8 @@ local function setupMenuItems()
     end)
 
     local goToMenuItem, _ = menu:addMenuItem("Main Menu", function()
-        if (cleanupFnc ~= nil) then
-            cleanupFnc()
+        if (CleanupFnc ~= nil) then
+            CleanupFnc()
         end
         Setup_title()
     end)
@@ -378,68 +381,6 @@ local function update_none()
     end
 end
 
------- TRANSITION
-
-local screenTransitionTimer
-local transitionPolygon
-local transitionTargetRender
-
--- 1--------------2
--- |              |
--- |              3
--- |             /
--- 5------------4
-
-local function update_first_transition()
-    playdate.timer.updateTimers()
-    local dist = (SCREEN_HEIGHT + SCREEN_WIDTH) * screenTransitionTimer.currentTime / screenTransitionTimer.duration
-    transitionPolygon:setPointAt(2, dist > SCREEN_WIDTH and SCREEN_WIDTH or dist, 0)
-    transitionPolygon:setPointAt(3, dist > SCREEN_WIDTH and SCREEN_WIDTH or dist, dist > SCREEN_WIDTH and (dist - SCREEN_WIDTH) or 0)
-    transitionPolygon:setPointAt(4, dist > SCREEN_HEIGHT and (dist - SCREEN_HEIGHT) or 0, dist > SCREEN_HEIGHT and SCREEN_HEIGHT or dist)
-    transitionPolygon:setPointAt(5, 0, dist > SCREEN_HEIGHT and SCREEN_HEIGHT or dist)
-    gfx.setColor(gfx.kColorWhite)
-    gfx.fillPolygon(transitionPolygon)
-end
-
---   4------------5
---  /             |
--- 3              |
--- |              |
--- 2--------------1
-
-local function update_second_transition()
-    playdate.timer.updateTimers()
-    transitionTargetRender()
-    local dist = (SCREEN_HEIGHT + SCREEN_WIDTH) * screenTransitionTimer.currentTime / screenTransitionTimer.duration
-    transitionPolygon:setPointAt(2, dist > SCREEN_HEIGHT and (dist - SCREEN_HEIGHT) or 0, SCREEN_HEIGHT)
-    transitionPolygon:setPointAt(3, dist > SCREEN_HEIGHT and (dist - SCREEN_HEIGHT) or 0, dist > SCREEN_HEIGHT and SCREEN_HEIGHT or dist)
-    transitionPolygon:setPointAt(4, dist > SCREEN_WIDTH and SCREEN_WIDTH or dist, dist > SCREEN_WIDTH and (dist - SCREEN_WIDTH) or 0)
-    transitionPolygon:setPointAt(5, SCREEN_WIDTH, dist > SCREEN_WIDTH and (dist - SCREEN_WIDTH) or 0)
-    gfx.setColor(gfx.kColorWhite)
-    gfx.fillPolygon(transitionPolygon)
-end
-
-local function setup_second_transition(targetSetupFunc, targetRenderFunc)
-    screenTransitionTimer = playdate.timer.new(400, targetSetupFunc)
-    transitionPolygon = playdate.geometry.polygon.new(
-        SCREEN_WIDTH, SCREEN_HEIGHT,
-        0, SCREEN_HEIGHT,
-        0, 0,
-        0, 0,
-        SCREEN_WIDTH, 0,
-        SCREEN_WIDTH, SCREEN_HEIGHT
-    )
-    updateFnc = update_second_transition
-    transitionTargetRender = targetRenderFunc
-end
-
-local function setup_transition(targetSetupFunc, targetRenderFunc)
-    screenTransitionTimer = playdate.timer.new(400, setup_second_transition, targetSetupFunc, targetRenderFunc)
-    transitionPolygon = playdate.geometry.polygon.new(0,0,0,0,0,0,0,0,0,0,0,0)
-    updateFnc = update_first_transition
-    transitionTargetRender = targetRenderFunc
-end
-
 ------ GAME (MAIN)
 
 local actionDone = false
@@ -475,7 +416,7 @@ end
 local buttonHandlers_mainLose = {
     AButtonDown = function()
         playdate.inputHandlers.pop()
-        updateFnc = update_main
+        UpdateFnc = update_main 
         startGame()
     end
 }
@@ -505,7 +446,7 @@ local function actionFail_main()
     currMusic:setSample(loseMusic)
     currMusic:play(0)
     playdate.inputHandlers.push(buttonHandlers_mainLose)
-    updateFnc = update_none
+    UpdateFnc = update_none 
 end
 
 local actionSuccesFnc = nil
@@ -720,8 +661,8 @@ local function setup_main()
     actionTransitionTimer.discardOnCompletion = false
     actionTransitionTimer:pause()
 
-    updateFnc = update_main
-    cleanupFnc = cleanup_main
+    UpdateFnc = update_main 
+    CleanupFnc = cleanup_main
     actionSuccesFnc = actionSuccess_main
     actionFailFnc = actionFail_main
     reactToGlobalEvents = true
@@ -825,7 +766,7 @@ end
 local buttonHandlers_simonLose = {
     AButtonDown = function()
         playdate.inputHandlers.pop()
-        updateFnc = update_simon_show
+        UpdateFnc = update_simon_show 
         startGame_simon()
     end
 }
@@ -847,7 +788,7 @@ local function actionSuccess_simon()
         score_simon = score_simon + 1
         simonTimer:pause()
         table.insert(actionChain, getValidActionCode(false))
-        updateFnc = update_simon_show
+        UpdateFnc = update_simon_show 
         currIndex = 1
         currAction = actionChain[1]
         simonState = SIMON_STATE.SCORE_UP
@@ -877,7 +818,7 @@ local function actionFail_simon()
     currMusic:play(0)
     simonTimer:pause()
     playdate.inputHandlers.push(buttonHandlers_simonLose, true)
-    updateFnc = update_none
+    UpdateFnc = update_none 
 end
 
 local function simon_changeState()
@@ -938,7 +879,7 @@ local function simon_showNextAction()
         setupActionGfxAndSound(currAction, true)
     else
         simonState = SIMON_STATE.ACTION
-        updateFnc = update_simon_action
+        UpdateFnc = update_simon_action 
         currIndex = 1
         currAction = actionChain[1]
         setupActionGameplay(0, currAction)
@@ -1043,8 +984,8 @@ local function setup_simon()
     gfx.setColor(gfx.kColorBlack)
     playdate.startAccelerometer()
     playdate.inputHandlers.push(buttonHandlers_main)
-    updateFnc = update_simon_show
-    cleanupFnc = cleanup_simon
+    UpdateFnc = update_simon_show 
+    CleanupFnc = cleanup_simon
     actionSuccesFnc = actionSuccess_simon
     actionFailFnc = actionFail_simon
     reactToGlobalEvents = true
@@ -1234,12 +1175,12 @@ local buttonHandlers_title = {
     end,
 
     AButtonDown = function()
-        cleanupFnc()
+        CleanupFnc()
         if (selectedGame == GAME_MODE.CRANKIT) then
             pre_setup_main_for_transition()
-            setup_transition(setup_main, render_main_for_transition)
+            transition.setup(setup_main, render_main_for_transition)
         elseif (selectedGame == GAME_MODE.SIMON) then
-            setup_transition(setup_simon, render_simon_for_transition)
+            transition.setup(setup_simon, render_simon_for_transition)
         end
     end
 }
@@ -1263,8 +1204,8 @@ end
 function Setup_title()
     playdate.inputHandlers.push(buttonHandlers_title)
 
-    updateFnc = update_title
-    cleanupFnc = cleanup_title
+    UpdateFnc = update_title 
+    CleanupFnc = cleanup_title
     reactToGlobalEvents = false
 end
 
@@ -1273,11 +1214,11 @@ end
 local buttonHandlers_intro = {
     AButtonDown = function()
         playdate.inputHandlers.pop()
-        setup_transition(Setup_title, update_title)
+        transition.setup(Setup_title, update_title)
     end,
     BButtonDown = function()
         playdate.inputHandlers.pop()
-        setup_transition(Setup_title, update_title)
+        transition.setup(Setup_title, update_title)
     end
 }
 
@@ -1292,7 +1233,7 @@ end
 ------ CALLBACKS
 
 function playdate.update()
-    updateFnc()
+    UpdateFnc()
 end
 
 function playdate.deviceWillLock()
@@ -1318,4 +1259,4 @@ setupMenuItems()
 
 gfx.setColor(gfx.kColorWhite)
 gfx.clear()
-setup_second_transition(splash_setup, splash_render)
+transition.setup_second(splash_setup, splash_render)
