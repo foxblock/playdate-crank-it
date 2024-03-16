@@ -28,14 +28,14 @@
 -- [X] title card (350 x 155), card animation and icon (32 x 32)
 -- [X] Other neccessary pdxinfo data: https://sdk.play.date/2.0.3/Inside%20Playdate.html#pdxinfo
 -- [ ] options to disable accelerometer and mic based actions
--- [x] Better score and highscore display
+-- [X] Better score and highscore display
 -- [X] main menu - do not start the game immediately
 -- [X] add title card recommending to play without the cover (https://devforum.play.date/t/crank-docking-not-registered/10439)
 -- [ ] sound convert script: add option to convert single file if passed path is a file
 -- [X] go to main menu option in menu
--- [ ] short transition/swipe/... between actions in simon mode -> helps split same actions when playing without sound
+-- [x] short transition/swipe/... between actions in simon mode -> helps split same actions when playing without sound
 -- [ ] Check color table: needs inverted (compared to b/w), need raw b/w version?, correct colors compared to screenshot/video?
--- [ ] Add credits to splash screen
+-- [X] Add credits to splash screen
 -- [ ] Add transition sound effects
 
 
@@ -60,26 +60,43 @@ Statemachine = {
     font = gfx.font.new("images/font/party")
 }
 
------- SPLASH IMAGES and MENU
+------ SPLASH IMAGES
+
+local splashImages = {
+    gfx.image.new("images/remove_cover"),
+    gfx.image.new("images/credits"),
+}
+
+local currentSplash = 1
+
+local function splash_render()
+    splashImages[currentSplash]:draw(0,0)
+end
+
+local function splash_next()
+    currentSplash = currentSplash + 1
+    if currentSplash > #splashImages then
+        playdate.inputHandlers.pop()
+        transition.setup(menu.setup, menu.update)
+    else
+        transition.setup(nil, splash_render)
+    end
+end
 
 local buttonHandlers_intro = {
     AButtonDown = function()
-        playdate.inputHandlers.pop()
-        transition.setup(menu.setup, menu.update)
+        splash_next()
     end,
     BButtonDown = function()
-        playdate.inputHandlers.pop()
-        transition.setup(menu.setup, menu.update)
-    end
+        splash_next()
+    end,
 }
-
-local function splash_render()
-    gfx.image.new("images/remove_cover"):draw(0,0)
-end
 
 local function splash_setup()
     playdate.inputHandlers.push(buttonHandlers_intro)
 end
+
+----- MENU
 
 local function menu_result(optionIndex)
     if (optionIndex == GAME_MODE.CRANKIT) then
@@ -89,6 +106,8 @@ local function menu_result(optionIndex)
         transition.setup(simon.setup, simon.render_for_transition)
     end
 end
+
+menu.callback = menu_result
 
 ------ CALLBACKS
 
@@ -103,18 +122,7 @@ function playdate.gameWillResume()
 end
 
 ------ MAIN
-
-math.randomseed(playdate.getSecondsSinceEpoch())
-playdate.setCrankSoundsDisabled(true)
-
-save.load()
-if (save.data.musicOn) then
-    Statemachine.music:setVolume(1.0)
-else
-    Statemachine.music:setVolume(0)
-end
-
----- setup playdate menu
+-- setup playdate menu
 local sytemMenu = playdate.getSystemMenu()
 
 local musicMenuItem, _ = sytemMenu:addCheckmarkMenuItem("Music", save.data.musicOn, function(value)
@@ -134,8 +142,16 @@ local goToMenuItem, _ = sytemMenu:addMenuItem("Main Menu", function()
     menu.setup()
 end)
 
----- setup our menu
-menu.callback = menu_result
+-- Start
+math.randomseed(playdate.getSecondsSinceEpoch())
+playdate.setCrankSoundsDisabled(true)
+
+save.load()
+if (save.data.musicOn) then
+    Statemachine.music:setVolume(1.0)
+else
+    Statemachine.music:setVolume(0)
+end
 
 gfx.setColor(gfx.kColorWhite)
 gfx.setFont(Statemachine.font)
