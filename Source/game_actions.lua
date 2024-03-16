@@ -52,19 +52,16 @@ actions.data = {
         time = TIME_NORMAL,
         snd = snd.new("sounds/lose"),
         img = gfx.image.new("images/actions/lose"),
-        ani = nil
     },
     [actions.codes.DIRECTION] = {
         time = TIME_FAST,
         snd = snd.new("sounds/move"),
-        img = nil,
         ani = gfx.imagetable.new("images/actions/move"),
         staticFrame = 2
     },
     [actions.codes.BUTTON] = {
         time = TIME_FAST,
         snd = snd.new("sounds/press"),
-        img = nil,
         ani = gfx.imagetable.new("images/actions/press"),
         staticFrame = 3,
     },
@@ -72,19 +69,16 @@ actions.data = {
         time = TIME_FAST,
         snd = snd.new("sounds/shout"),
         img = gfx.image.new("images/actions/shout"),
-        ani = nil
     },
     [actions.codes.TILT] = {
         time = TIME_NORMAL,
         snd = snd.new("sounds/tilt"),
-        img = nil,
         ani = gfx.imagetable.new("images/actions/tilt"),
         staticFrame = 2
     },
     [actions.codes.PASS_PLAYER] = {
         time = { 3000, 3000, 2500, 2500, 2000 },
         snd = snd.new("sounds/pass"),
-        img = nil,
         ani = gfx.imagetable.new("images/actions/pass"),
         staticFrame = 2
     },
@@ -92,18 +86,15 @@ actions.data = {
         time = TIME_NORMAL,
         snd = snd.new("sounds/undock"),
         img = gfx.image.new("images/actions/undock"),
-        ani = nil
     },
     [actions.codes.CRANK_DOCK] = {
         time = TIME_SLOW,
         snd = snd.new("sounds/dock"),
         img = gfx.image.new("images/actions/dock"),
-        ani = nil
     },
     [actions.codes.CRANKED] = {
         time = TIME_SLOW,
         snd = snd.new("sounds/crank"),
-        img = nil,
         ani = gfx.imagetable.new("images/actions/crank"),
         staticFrame = 1
     },
@@ -111,7 +102,6 @@ actions.data = {
         time = { 2000, 2000, 2000, 2000, 2000 },
         snd = snd.new("sounds/speed"),
         img = gfx.image.new("images/actions/speed"),
-        ani = nil
     }
 }
 
