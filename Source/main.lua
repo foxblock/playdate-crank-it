@@ -37,7 +37,7 @@
 -- [ ] Check color table: needs inverted (compared to b/w), need raw b/w version?, correct colors compared to screenshot/video?
 -- [X] Add credits to splash screen
 -- [ ] Add transition sound effects
--- [ ] Fix being able to skip transitions in splash -> error
+-- [X] Fix being able to skip transitions in splash -> error
 
 
 import "CoreLibs/graphics"
@@ -70,24 +70,7 @@ local splashImages = {
 }
 
 local currentSplash = 1
-
-local function splash_render()
-    splashImages[currentSplash]:draw(0,0)
-end
-
-local function splash_cleanup()
-    playdate.inputHandlers.pop()
-end
-
-local function splash_next()
-    currentSplash = currentSplash + 1
-    if currentSplash > #splashImages then
-        splash_cleanup()
-        transition.setup(menu.setup, menu.update)
-    else
-        transition.setup(nil, splash_render)
-    end
-end
+local splash_next
 
 local buttonHandlers_intro = {
     AButtonDown = function()
@@ -98,8 +81,27 @@ local buttonHandlers_intro = {
     end,
 }
 
+local function splash_render()
+    splashImages[currentSplash]:draw(0,0)
+end
+
+local function splash_cleanup()
+    playdate.inputHandlers.pop()
+end
+
 local function splash_setup()
     playdate.inputHandlers.push(buttonHandlers_intro)
+end
+
+splash_next = function()
+    currentSplash = currentSplash + 1
+    if currentSplash > #splashImages then
+        splash_cleanup()
+        transition.setup(menu.setup, menu.update)
+    else
+        splash_cleanup()
+        transition.setup(splash_setup, splash_render)
+    end
 end
 
 ------ MENU
