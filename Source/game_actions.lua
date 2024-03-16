@@ -3,6 +3,7 @@ actions = {}  -- create a table to represent the module
 
 import "CoreLibs/graphics"
 import "CoreLibs/animation"
+import "vec3d"
 
 local gfx <const> = playdate.graphics
 local mic <const> = playdate.sound.micinput
@@ -13,6 +14,7 @@ local TIME_NORMAL <const> = { 4000, 3000, 2200, 1600, 1200 }
 local TIME_SLOW <const> = { 4000, 3200, 2500, 2000, 1750 }
 
 local DEG_TO_RAD <const> = math.pi / 180
+local RAD_TO_DEG <const> = 180 / math.pi
 
 local CRANK_DEADZONE_NORMAL <const> = 45
 local CRANK_DEADZONE_AFTER_CRANKED <const> = 360
@@ -258,11 +260,28 @@ function actions.checkTilt()
     return 0
 end
 
+-- return 1 on action success, 0 on no status change, -1 on action fail (currently no fail condition)
 function actions.checkMic()
     if (actions.current == actions.codes.MICROPHONE and mic.getLevel() >= MIC_LEVEL_TARGET) then
         return 1
     end
     return 0
+end
+
+
+function actions.renderDebugInfo(yPosStart)
+    local yPos = yPosStart or 2
+    if (actions.current == actions.codes.MICROPHONE) then
+        gfx.drawText(string.format("level: %.0f", mic.getLevel() * 100), 2, yPos)
+        yPos = yPos + 25
+    elseif (actions.current == actions.codes.TILT) then
+        gfx.drawText(string.format("val: %.2f %.2f %.2f", playdate.readAccelerometer()), 2, yPos);
+        gfx.drawText(string.format("a3d: %.2f", math.acos(vec3d.dot(startVec, playdate.readAccelerometer())) * RAD_TO_DEG), 2, yPos + 15)
+        gfx.drawText(string.format("cos: %.4f", vec3d.dot(startVec, playdate.readAccelerometer())), 2, yPos + 30)
+        gfx.drawText(string.format("target: %.4f", TILT_TARGET), 2, yPos + 45)
+        yPos = yPos + 70
+    end
+    return yPos
 end
 
 -- set up animations
