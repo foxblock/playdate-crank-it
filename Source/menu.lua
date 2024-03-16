@@ -186,7 +186,12 @@ local buttonHandlers_title = {
     AButtonDown = function()
         menu_cleanup()
         menu.callback(selectedGame)
-    end
+    end,
+
+    BButtonDown = function()
+        menu_cleanup()
+        menu.callback(GAME_MODE.SETTINGS)
+    end,
 }
 
 function menu.update()
@@ -203,7 +208,6 @@ end
 
 function menu.setup()
     playdate.inputHandlers.push(buttonHandlers_title)
-
     playdate.update = menu.update
     Statemachine.cleanup = menu_cleanup
     Statemachine.reactToGlobalEvents = false

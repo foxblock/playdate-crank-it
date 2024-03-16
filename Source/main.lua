@@ -37,6 +37,7 @@
 -- [ ] Check color table: needs inverted (compared to b/w), need raw b/w version?, correct colors compared to screenshot/video?
 -- [X] Add credits to splash screen
 -- [ ] Add transition sound effects
+-- [ ] Fix being able to skip transitions in splash -> error
 
 
 import "CoreLibs/graphics"
@@ -45,6 +46,7 @@ import "game_constants"
 import "game_actions"
 import "mode_crankit"
 import "mode_simon"
+import "settings"
 import "transition"
 import "savegame"
 import "menu"
@@ -73,10 +75,14 @@ local function splash_render()
     splashImages[currentSplash]:draw(0,0)
 end
 
+local function splash_cleanup()
+    playdate.inputHandlers.pop()
+end
+
 local function splash_next()
     currentSplash = currentSplash + 1
     if currentSplash > #splashImages then
-        playdate.inputHandlers.pop()
+        splash_cleanup()
         transition.setup(menu.setup, menu.update)
     else
         transition.setup(nil, splash_render)
@@ -96,7 +102,7 @@ local function splash_setup()
     playdate.inputHandlers.push(buttonHandlers_intro)
 end
 
------ MENU
+------ MENU
 
 local function menu_result(optionIndex)
     if (optionIndex == GAME_MODE.CRANKIT) then
@@ -104,10 +110,26 @@ local function menu_result(optionIndex)
         transition.setup(crankit.setup, crankit.render_for_transition)
     elseif (optionIndex == GAME_MODE.SIMON) then
         transition.setup(simon.setup, simon.render_for_transition)
+    elseif (optionIndex == GAME_MODE.SETTINGS) then
+        transition.setup(settings.setup, settings.render)
     end
 end
 
 menu.callback = menu_result
+
+------ SETTINGS
+
+local function settings_result(data)
+    if (data ~= nil) then
+        for k, v in pairs(data) do save.data[k] = v end
+        save.write()
+    end
+
+    splash_cleanup()
+    transition.setup(menu.setup, menu.update)
+end
+
+settings.callback = settings_result
 
 ------ CALLBACKS
 
