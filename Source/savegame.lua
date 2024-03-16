@@ -4,10 +4,15 @@ save = {}  -- create a table to represent the module
 local datastore <const> = playdate.datastore
 
 save.data = {
-    SAVE_VERSION = 1,
+    SAVE_VERSION = 2,
     highscore = {0,0,0,0},
-    musicOn = true,
-    debugOn = false
+    settings = {
+        musicOn = true,
+        debugOn = false,
+        allowMic = true,
+        allowTilt = true,
+        bombSeconds = 60,
+    }
 }
 
 function save.write()
@@ -20,7 +25,11 @@ function save.load()
     if (loadData == nil) then return end
 
     -- convert from old save file
-    if (loadData.SAVE_VERSION == nil) then
+    if (loadData.SAVE_VERSION == 1) then
+        save.data.settings.musicOn = loadData.musicOn
+        save.data.settings.debugOn = loadData.debugOn
+        save.write()
+    elseif (loadData.SAVE_VERSION == nil) then
         save.data.debugOn = loadData.debugOn
         save.data.musicOn = loadData.musicOn
         save.data.highscore[GAME_MODE.CRANKIT] = loadData.highscore

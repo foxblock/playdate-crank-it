@@ -62,6 +62,11 @@ Statemachine = {
     font = gfx.font.new("images/font/party")
 }
 
+local function copyTable(dst, src)
+    for k in pairs(dst) do dst[k] = nil end
+    for k, v in pairs(src) do dst[k] = v end
+end
+
 ------ SPLASH IMAGES
 
 local splashImages = {
@@ -113,6 +118,7 @@ local function menu_result(optionIndex)
     elseif (optionIndex == GAME_MODE.SIMON) then
         transition.setup(simon.setup, simon.render_for_transition)
     elseif (optionIndex == GAME_MODE.SETTINGS) then
+        copyTable(settings.data, save.data.settings)
         transition.setup(settings.setup, settings.render)
     end
 end
@@ -123,7 +129,7 @@ menu.callback = menu_result
 
 local function settings_result(data)
     if (data ~= nil) then
-        for k, v in pairs(data) do save.data[k] = v end
+        copyTable(save.data.settings, settings.data)
         save.write()
     end
 
@@ -149,10 +155,10 @@ end
 -- setup playdate menu
 local sytemMenu = playdate.getSystemMenu()
 
-local musicMenuItem, _ = sytemMenu:addCheckmarkMenuItem("Music", save.data.musicOn, function(value)
-    save.data.musicOn = value
+local musicMenuItem, _ = sytemMenu:addCheckmarkMenuItem("Music", save.data.settings.musicOn, function(value)
+    save.data.settings.musicOn = value
     save.write()
-    if (save.data.musicOn) then
+    if (save.data.settings.musicOn) then
         Statemachine.music:setVolume(1.0)
     else
         Statemachine.music:setVolume(0)
@@ -171,7 +177,7 @@ math.randomseed(playdate.getSecondsSinceEpoch())
 playdate.setCrankSoundsDisabled(true)
 
 save.load()
-if (save.data.musicOn) then
+if (save.data.settings.musicOn) then
     Statemachine.music:setVolume(1.0)
 else
     Statemachine.music:setVolume(0)

@@ -143,7 +143,7 @@ local function render_main()
     gfx.drawTextAligned('SCORE: '..score, 110, 220, kTextAlignment.center)
     gfx.drawTextAligned("HIGH: "..save.data.highscore[GAME_MODE.CRANKIT], 290, 220, kTextAlignment.center)
 
-    if (save.data.debugOn) then
+    if (save.data.settings.debugOn) then
         gfx.setFont(gfx.getSystemFont())
         local yPos = actions.renderDebugInfo()
         gfx.drawText(string.format("timer: %d", actionTimer.timeLeft), 2, yPos);

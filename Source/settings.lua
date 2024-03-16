@@ -70,6 +70,22 @@ function settings.render()
     gfx.setColor(gfx.kColorBlack)
     gfx.drawLine(366, 18, 366, 25 + (82 - 25) * crankProgress)
     imgCrank:drawCentered(366,38 + (96 - 38) * crankProgress)
+
+    local yPos = 40
+    local spacing <const> = 24
+    gfx.drawTextAligned("MUSIC", 12, yPos, kTextAlignment.left)
+    gfx.drawTextAligned(settings.data.musicOn and "ON" or "OFF", 230, yPos, kTextAlignment.right)
+    yPos = yPos + spacing
+    gfx.drawTextAligned("MICROPHONE", 12, yPos, kTextAlignment.left)
+    gfx.drawTextAligned(settings.data.allowMic and "ON" or "OFF", 230, yPos, kTextAlignment.right)
+    yPos = yPos + spacing
+    gfx.drawTextAligned("TILT", 12, yPos, kTextAlignment.left)
+    gfx.drawTextAligned(settings.data.allowTilt and "ON" or "OFF", 230, yPos, kTextAlignment.right)
+    yPos = yPos + spacing
+    gfx.drawTextAligned("BOMB", 12, yPos, kTextAlignment.left)
+    gfx.drawTextAligned(settings.data.bombSeconds, 230, yPos, kTextAlignment.right)
+    yPos = yPos + spacing
+
 end
 
 function settings.setup()
@@ -79,5 +95,5 @@ function settings.setup()
     Statemachine.reactToGlobalEvents = false
 end
 
-settings.data = nil
+settings.data = {}
 settings.callback = nil
