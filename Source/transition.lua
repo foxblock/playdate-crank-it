@@ -52,8 +52,8 @@ local function update_second_transition()
     gfx.fillPolygon(transitionPolygon)
 end
 
-function transition.setup_second(targetSetupFunc, targetRenderFunc)
-    screenTransitionTimer = timer.new(400, targetSetupFunc)
+function transition.setup_second(callOnTransitionEnd, secondPhaseRenderFunc)
+    screenTransitionTimer = timer.new(400, callOnTransitionEnd)
     transitionPolygon = poly.new(
         SCREEN_WIDTH, SCREEN_HEIGHT,
         0, SCREEN_HEIGHT,
@@ -63,12 +63,12 @@ function transition.setup_second(targetSetupFunc, targetRenderFunc)
         SCREEN_WIDTH, SCREEN_HEIGHT
     )
     playdate.update = update_second_transition
-    transitionTargetRender = targetRenderFunc
+    transitionTargetRender = secondPhaseRenderFunc
 end
 
-function transition.setup(targetSetupFunc, targetRenderFunc)
-    screenTransitionTimer = timer.new(400, transition.setup_second, targetSetupFunc, targetRenderFunc)
+function transition.setup(callOnTransitionEnd, secondPhaseRenderFunc)
+    screenTransitionTimer = timer.new(400, transition.setup_second, callOnTransitionEnd, secondPhaseRenderFunc)
     transitionPolygon = poly.new(0,0,0,0,0,0,0,0,0,0,0,0)
     playdate.update = update_first_transition
-    transitionTargetRender = targetRenderFunc
+    transitionTargetRender = secondPhaseRenderFunc
 end
