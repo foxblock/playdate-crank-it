@@ -137,8 +137,7 @@ local function settings_result(data)
 end
 
 settings.callback = settings_result
-settings.strings = save.settingsStrings
-settings.itemsOrder = save.settingsOrder
+settings.config = save.settingsMetadata
 
 ------ CALLBACKS
 

@@ -28,14 +28,14 @@ local settings_buttonHandler = {
     end,
 
     downButtonDown = function()
-        if selectedIndex < #settings.itemsOrder then
+        if selectedIndex < #settings.config then
             selectedIndex = selectedIndex + 1
             settings.render()
         end
     end,
 
     rightButtonDown = function()
-        local k = settings.itemsOrder[selectedIndex]
+        local k = settings.config[selectedIndex].k
         local v = settings.data[k]
         if type(v) == "boolean" then
             settings.data[k] = not settings.data[k]
@@ -44,7 +44,7 @@ local settings_buttonHandler = {
     end,
 
     leftButtonDown = function()
-        local k = settings.itemsOrder[selectedIndex]
+        local k = settings.config[selectedIndex].k
         local v = settings.data[k]
         if type(v) == "boolean" then
             settings.data[k] = not settings.data[k]
@@ -73,7 +73,7 @@ function settings.render()
     imgButtons:drawCentered(330,204)
     imgCrane:drawCentered(347,14)
 
-    local crankProgress = (selectedIndex - 1) / (#settings.itemsOrder - 1)
+    local crankProgress = (selectedIndex - 1) / (#settings.config - 1)
     gfx.setLineWidth(4)
     gfx.setColor(gfx.kColorBlack)
     gfx.drawLine(366, 18, 366, 25 + (82 - 25) * crankProgress)
@@ -81,10 +81,11 @@ function settings.render()
 
     local yPos = 40
     local spacing <const> = 24
-    for i = 1, #settings.itemsOrder do
-        local k = settings.itemsOrder[i]
+    for i = 1, #settings.config do
+        local k = settings.config[i].k
         local v = settings.data[k]
-        gfx.drawTextAligned(settings.strings[k], 12, yPos, kTextAlignment.left)
+        local label = settings.config[i].s
+        gfx.drawTextAligned(label, 12, yPos, kTextAlignment.left)
         local str
         if type(v) == "boolean" then
             str = v and "ON" or "OFF"
@@ -114,6 +115,5 @@ end
 
 -- actual data and structure of settings defined in savegame.lua
 settings.data = {}
-settings.strings = nil
-settings.itemsOrder = nil
+settings.config = nil
 settings.callback = nil

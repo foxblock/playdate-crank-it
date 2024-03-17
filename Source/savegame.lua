@@ -8,29 +8,21 @@ save.data = {
     highscore = {0,0,0,0},
     settings = {
         musicOn = true,
-        debugOn = false,
         allowMic = true,
         allowTilt = true,
         bombSeconds = 60,
+        debugOn = false,
     }
 }
 
--- keys of save.data.settings in the order they should appear in settings menu
+-- k = keys of save.data.settings in the order they should appear in settings menu
 -- need to do this, since pairs() returns elements in random order
-save.settingsOrder = {
-    "musicOn",
-    "allowMic",
-    "allowTilt",
-    "bombSeconds",
-}
-
--- label text for save.data.settings options in settings menu
-save.settingsStrings = {
-    musicOn = "MUSIC",
-    debugOn = "DEBUG",
-    allowMic = "MICROPHONE",
-    allowTilt = "TILT",
-    bombSeconds = "BOMB TIME",
+save.settingsMetadata = {
+    { k="musicOn", s="MUSIC" },
+    { k="allowMic", s="MICROPHONE" },
+    { k="allowTilt", s="TILT" },
+    { k="bombSeconds", s="BOMB TIME" },
+    { k="debugOn", s="DEBUG" },
 }
 
 function save.write()
