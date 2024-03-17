@@ -19,8 +19,6 @@ local function settings_cleanup()
     playdate.inputHandlers.pop()
 end
 
-local MAX_SETTINGS <const> = 5
-
 local settings_buttonHandler = {
     upButtonDown = function()
         if selectedIndex > 1 then
@@ -30,7 +28,7 @@ local settings_buttonHandler = {
     end,
     
     downButtonDown = function()
-        if selectedIndex < MAX_SETTINGS then
+        if selectedIndex < #settings.itemsOrder then
             selectedIndex = selectedIndex + 1
             settings.render()
         end
@@ -65,7 +63,7 @@ function settings.render()
     imgButtons:drawCentered(330,204)
     imgCrane:drawCentered(347,14)
 
-    local crankProgress = (selectedIndex - 1) / (MAX_SETTINGS - 1)
+    local crankProgress = (selectedIndex - 1) / (#settings.itemsOrder - 1)
     gfx.setLineWidth(4)
     gfx.setColor(gfx.kColorBlack)
     gfx.drawLine(366, 18, 366, 25 + (82 - 25) * crankProgress)
@@ -73,8 +71,9 @@ function settings.render()
 
     local yPos = 40
     local spacing <const> = 24
-    local drawIndex = 1
-    for k,v in pairs(settings.data) do
+    for i = 1, #settings.itemsOrder do
+        local k = settings.itemsOrder[i]
+        local v = settings.data[k]
         gfx.drawTextAligned(settings.strings[k], 12, yPos, kTextAlignment.left)
         local str
         if type(v) == "boolean" then
@@ -84,7 +83,7 @@ function settings.render()
         end
         gfx.drawTextAligned(str, 230, yPos, kTextAlignment.right)
 
-        if drawIndex == selectedIndex then
+        if i == selectedIndex then
             -- drawTextAligned sadly does not return width,height like drawText does
             local width = Statemachine.font:getTextWidth(str)
             gfx.drawText("<", 230 - width - 21, yPos)
@@ -92,7 +91,7 @@ function settings.render()
         end
 
         yPos = yPos + spacing
-        drawIndex = drawIndex + 1
+        i = i + 1
     end
 end
 
@@ -103,6 +102,8 @@ function settings.setup()
     Statemachine.reactToGlobalEvents = false
 end
 
+-- actual data and structure of settings defined in savegame.lua
 settings.data = {}
 settings.strings = nil
+settings.itemsOrder = nil
 settings.callback = nil

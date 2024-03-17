@@ -15,6 +15,15 @@ save.data = {
     }
 }
 
+-- keys of save.data.settings in the order they should appear in settings menu
+-- need to do this, since pairs() returns elements in random order
+save.settingsOrder = {
+    "musicOn",
+    "allowMic",
+    "allowTilt",
+    "bombSeconds",
+}
+
 -- label text for save.data.settings options in settings menu
 save.settingsStrings = {
     musicOn = "MUSIC",

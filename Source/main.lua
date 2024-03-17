@@ -139,6 +139,7 @@ end
 
 settings.callback = settings_result
 settings.strings = save.settingsStrings
+settings.itemsOrder = save.settingsOrder
 
 ------ CALLBACKS
 
