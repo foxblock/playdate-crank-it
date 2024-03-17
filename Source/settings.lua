@@ -98,16 +98,16 @@ function settings.render()
 
     local yPos = 40
     local spacing <const> = 24
-    for i = 1, #settings.config do
-        local k = settings.config[i].k
-        local v = settings.data[k]
-        local label = settings.config[i].s
-        gfx.drawTextAligned(label, 15, yPos, kTextAlignment.left)
+    for i,cfg in ipairs(settings.config) do
+        local v = settings.data[cfg.k]
+
+        gfx.drawTextAligned(cfg.s, 15, yPos, kTextAlignment.left)
+
         local str
         if type(v) == "boolean" then
             str = v and "ON" or "OFF"
-        elseif settings.config[i].optionsStr ~= nil then
-            str = settings.config[i].optionsStr[settings.config[i].optionIndex]
+        elseif cfg.optionsStr ~= nil then
+            str = cfg.optionsStr[cfg.optionIndex]
         else
             str = ""..v
         end
@@ -121,7 +121,6 @@ function settings.render()
         end
 
         yPos = yPos + spacing
-        i = i + 1
     end
 end
 

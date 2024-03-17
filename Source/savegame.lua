@@ -65,10 +65,15 @@ function save.load()
         save.data = loadData
     end
 
-    for i = 1, #save.settingsMetadata do
-        if save.settingsMetadata[i].options == nil then goto continue end
-        save.settingsMetadata[i].optionIndex = indexInArray(save.settingsMetadata[i].options, 
-                save.data.settings[save.settingsMetadata[i].k])
+    for _,v in ipairs(save.settingsMetadata) do
+        if v.options == nil then goto continue end
+        
+        v.optionIndex = indexInArray(v.options, save.data.settings[v.k])
+        -- Fix invalid values (not defined in options list)
+        if v.optionIndex == 0 then
+            v.optionIndex = 1
+            save.data.settings[v.k] = v.options[1]
+        end
         ::continue::
     end
 
