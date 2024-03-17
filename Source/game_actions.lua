@@ -185,6 +185,8 @@ actions.buttonHandler = {
     end
 }
 
+-- crankDocked override for simon gamemode (since actual crank might be different
+-- from needed crank state at specific point in chain)
 function actions.getValidActionCode(allowPassAction, excludeOption, crankDocked)
     local result = 0
     if (crankDocked == nil) then

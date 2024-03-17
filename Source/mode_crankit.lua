@@ -53,7 +53,7 @@ local function main_startGame(skipGenNewAction)
     Statemachine.gameShouldFailAfterResume = false
 
     if not skipGenNewAction then
-        actions.current = actions.getValidActionCode(true, ACTION_CODES.PASS_PLAYER)
+        actions.current = actions.getValidActionCode(false)
     end
     actions.setupActionGameplay(0, actions.current)
     actions.setupActionGfxAndSound(actions.current)
@@ -269,5 +269,5 @@ function crankit.render_for_transition()
 end
 
 function crankit.pre_setup_for_transition()
-    actions.current = actions.getValidActionCode(true, ACTION_CODES.PASS_PLAYER)
+    actions.current = actions.getValidActionCode(false)
 end
