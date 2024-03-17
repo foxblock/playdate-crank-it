@@ -15,6 +15,15 @@ save.data = {
     }
 }
 
+-- label text for save.data.settings options in settings menu
+save.settingsStrings = {
+    musicOn = "MUSIC",
+    debugOn = "DEBUG",
+    allowMic = "MICROPHONE",
+    allowTilt = "TILT",
+    bombSeconds = "BOMB TIME",
+}
+
 function save.write()
     datastore.write(save.data)
 end

@@ -138,6 +138,7 @@ local function settings_result(data)
 end
 
 settings.callback = settings_result
+settings.strings = save.settingsStrings
 
 ------ CALLBACKS
 

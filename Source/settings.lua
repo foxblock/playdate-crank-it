@@ -73,19 +73,27 @@ function settings.render()
 
     local yPos = 40
     local spacing <const> = 24
-    gfx.drawTextAligned("MUSIC", 12, yPos, kTextAlignment.left)
-    gfx.drawTextAligned(settings.data.musicOn and "ON" or "OFF", 230, yPos, kTextAlignment.right)
-    yPos = yPos + spacing
-    gfx.drawTextAligned("MICROPHONE", 12, yPos, kTextAlignment.left)
-    gfx.drawTextAligned(settings.data.allowMic and "ON" or "OFF", 230, yPos, kTextAlignment.right)
-    yPos = yPos + spacing
-    gfx.drawTextAligned("TILT", 12, yPos, kTextAlignment.left)
-    gfx.drawTextAligned(settings.data.allowTilt and "ON" or "OFF", 230, yPos, kTextAlignment.right)
-    yPos = yPos + spacing
-    gfx.drawTextAligned("BOMB", 12, yPos, kTextAlignment.left)
-    gfx.drawTextAligned(settings.data.bombSeconds, 230, yPos, kTextAlignment.right)
-    yPos = yPos + spacing
+    local drawIndex = 1
+    for k,v in pairs(settings.data) do
+        gfx.drawTextAligned(settings.strings[k], 12, yPos, kTextAlignment.left)
+        local str
+        if type(v) == "boolean" then
+            str = v and "ON" or "OFF"
+        else
+            str = ""..v
+        end
+        gfx.drawTextAligned(str, 230, yPos, kTextAlignment.right)
 
+        if drawIndex == selectedIndex then
+            -- drawTextAligned sadly does not return width,height like drawText does
+            local width = Statemachine.font:getTextWidth(str)
+            gfx.drawText("<", 230 - width - 21, yPos)
+            gfx.drawText(">", 230 + 6, yPos)
+        end
+
+        yPos = yPos + spacing
+        drawIndex = drawIndex + 1
+    end
 end
 
 function settings.setup()
@@ -96,4 +104,5 @@ function settings.setup()
 end
 
 settings.data = {}
+settings.strings = nil
 settings.callback = nil
