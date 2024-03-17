@@ -35,6 +35,12 @@ save.settingsStrings = {
 
 function save.write()
     datastore.write(save.data)
+
+    if (save.data.settings.musicOn) then
+        Statemachine.music:setVolume(1.0)
+    else
+        Statemachine.music:setVolume(0)
+    end
 end
 
 function save.load()
@@ -48,14 +54,20 @@ function save.load()
         save.data.settings.debugOn = loadData.debugOn
         save.write()
     elseif (loadData.SAVE_VERSION == nil) then
-        save.data.debugOn = loadData.debugOn
-        save.data.musicOn = loadData.musicOn
-        save.data.highscore[GAME_MODE.CRANKIT] = loadData.highscore
+        save.data.settings.debugOn = loadData.debugOn
+        save.data.settings.musicOn = loadData.musicOn
+        save.data.settings.highscore[GAME_MODE.CRANKIT] = loadData.highscore
         save.write()
     else
         save.data = loadData
     end
 
+    if (save.data.settings.musicOn) then
+        Statemachine.music:setVolume(1.0)
+    else
+        Statemachine.music:setVolume(0)
+    end
+
     -- Disable debug output for now (removed menu option)
-    save.data.debugOn = false
+    save.data.settings.debugOn = false
 end

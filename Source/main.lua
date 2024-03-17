@@ -133,7 +133,6 @@ local function settings_result(data)
         save.write()
     end
 
-    splash_cleanup()
     transition.setup(menu.setup, menu.update)
 end
 
@@ -154,17 +153,14 @@ function playdate.gameWillResume()
 end
 
 ------ MAIN
+save.load()
+
 -- setup playdate menu
 local sytemMenu = playdate.getSystemMenu()
 
 local musicMenuItem, _ = sytemMenu:addCheckmarkMenuItem("Music", save.data.settings.musicOn, function(value)
     save.data.settings.musicOn = value
     save.write()
-    if (save.data.settings.musicOn) then
-        Statemachine.music:setVolume(1.0)
-    else
-        Statemachine.music:setVolume(0)
-    end
 end)
 
 local goToMenuItem, _ = sytemMenu:addMenuItem("Main Menu", function()
@@ -177,13 +173,6 @@ end)
 -- Start
 math.randomseed(playdate.getSecondsSinceEpoch())
 playdate.setCrankSoundsDisabled(true)
-
-save.load()
-if (save.data.settings.musicOn) then
-    Statemachine.music:setVolume(1.0)
-else
-    Statemachine.music:setVolume(0)
-end
 
 gfx.setColor(gfx.kColorWhite)
 gfx.setFont(Statemachine.font)
