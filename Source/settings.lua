@@ -1,9 +1,14 @@
 if settings then return end  -- avoid loading twice the same module
 settings = {}  -- create a table to represent the module
 
+import "CoreLibs/graphics"
+import "CoreLibs/animator"
+import "CoreLibs/easing"
+
 import "savegame"
 
 local gfx <const> = playdate.graphics
+local easings <const> = playdate.easingFunctions
 
 
 local background = gfx.image.new("images/settings/bg")
@@ -12,17 +17,31 @@ local imgCrane = gfx.image.new("images/settings/crane")
 local imgCrank = gfx.image.new("images/settings/crank")
 local imgButtons = gfx.image.new("images/settings/buttons")
 
+local CRANK_START_Y <const> = 25
+local CRANK_END_Y <const> = 82
+
 local selectedIndex = 1
+local craneAnimator = gfx.animator.new(500, CRANK_START_Y, CRANK_START_Y)
 
 
 local function settings_cleanup()
     playdate.inputHandlers.pop()
 end
 
+local function start_crane()
+    local currVal = craneAnimator:currentValue()
+    local craneProgress = (selectedIndex - 1) / (#settings.config - 1)
+    craneAnimator = gfx.animator.new(500, 
+        currVal, 
+        CRANK_START_Y + (CRANK_END_Y - CRANK_START_Y) * craneProgress,
+        easings.inOutQuad)
+end
+
 local settings_buttonHandler = {
     upButtonDown = function()
         if selectedIndex > 1 then
             selectedIndex = selectedIndex - 1
+            start_crane()
             settings.render()
         end
     end,
@@ -30,6 +49,7 @@ local settings_buttonHandler = {
     downButtonDown = function()
         if selectedIndex < #settings.config then
             selectedIndex = selectedIndex + 1
+            start_crane()
             settings.render()
         end
     end,
@@ -79,22 +99,32 @@ local settings_buttonHandler = {
     end,
 }
 
-local function settings_update()
+local function render_crane(clear)
+    if clear then
+        gfx.setColor(gfx.kColorWhite)
+        gfx.fillRect(341, 11, 387, 122)
+    end
 
+    imgCrane:drawCentered(347,14)
+    imgPlaydate:drawCentered(319,98)
+
+    gfx.setLineWidth(4)
+    gfx.setColor(gfx.kColorBlack)
+    gfx.drawLine(366, 18, 366, craneAnimator:currentValue())
+    imgCrank:drawCentered(366, 13 + craneAnimator:currentValue())
 end
 
+local function settings_update()
+    if not craneAnimator:ended() then
+        render_crane(true)
+    end
+end
 
 function settings.render()
     background:draw(0,0)
-    imgPlaydate:drawCentered(319,116)
     imgButtons:drawCentered(330,204)
-    imgCrane:drawCentered(347,14)
 
-    local crankProgress = (selectedIndex - 1) / (#settings.config - 1)
-    gfx.setLineWidth(4)
-    gfx.setColor(gfx.kColorBlack)
-    gfx.drawLine(366, 18, 366, 25 + (82 - 25) * crankProgress)
-    imgCrank:drawCentered(366, 38 + (96 - 38) * crankProgress)
+    render_crane()
 
     local yPos = 40
     local spacing <const> = 24
