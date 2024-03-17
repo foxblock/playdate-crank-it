@@ -4,12 +4,13 @@ save = {}  -- create a table to represent the module
 local datastore <const> = playdate.datastore
 
 save.data = {
-    SAVE_VERSION = 2,
+    SAVE_VERSION = 3,
     highscore = {0,0,0,0},
     settings = {
         musicOn = true,
         allowMic = true,
         allowTilt = true,
+        allowPass = true,
         bombSeconds = 60,
         debugOn = false,
     }
@@ -20,8 +21,9 @@ save.data = {
 -- (this is kinda overengineered, probably should have just hard coded the options...)
 save.settingsMetadata = {
     { k="musicOn", s="MUSIC" },
-    { k="allowMic", s="MICROPHONE" },
-    { k="allowTilt", s="TILT" },
+    { k="allowMic", s="SHOUT IT" },
+    { k="allowTilt", s="TILT IT" },
+    { k="allowPass", s="PASS IT" },
     { k="bombSeconds", s="BOMB TIME", optionIndex=0, options={ 30, 60, 90, 120, 180 }, optionsStr={ "30 S", "1 MIN", "90 S", "2 MIN", "3 MIN" } },
     { k="debugOn", s="DEBUG" },
     -- { k="test", s="TEST", options={ 10, -10, 20, 0, 500, 1e7 } },
@@ -52,15 +54,19 @@ function save.load()
     if (loadData == nil) then return end
 
     -- convert from old save file
-    if (loadData.SAVE_VERSION == 1) then
+    if (loadData.SAVE_VERSION == nil) then
+        save.data.settings.musicOn = loadData.musicOn
+        save.data.settings.debugOn = loadData.debugOn
+        save.data.highscore[GAME_MODE.CRANKIT] = loadData.highscore
+        save.write()
+    elseif (loadData.SAVE_VERSION == 1) then
         save.data.settings.musicOn = loadData.musicOn
         save.data.settings.debugOn = loadData.debugOn
         save.data.highscore = loadData.highscore
         save.write()
-    elseif (loadData.SAVE_VERSION == nil) then
-        save.data.settings.debugOn = loadData.debugOn
-        save.data.settings.musicOn = loadData.musicOn
-        save.data.highscore[GAME_MODE.CRANKIT] = loadData.highscore
+    elseif loadData.SAVE_VERSION == 2 then
+        save.data = loadData
+        save.data.settings.allowPass = true
         save.write()
     else
         save.data = loadData

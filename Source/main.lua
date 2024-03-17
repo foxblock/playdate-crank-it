@@ -27,7 +27,7 @@
 -- [X] save highscore values
 -- [X] title card (350 x 155), card animation and icon (32 x 32)
 -- [X] Other neccessary pdxinfo data: https://sdk.play.date/2.0.3/Inside%20Playdate.html#pdxinfo
--- [ ] options to disable accelerometer and mic based actions
+-- [X] options to disable accelerometer and mic based actions
 -- [X] Better score and highscore display
 -- [X] main menu - do not start the game immediately
 -- [X] add title card recommending to play without the cover (https://devforum.play.date/t/crank-docking-not-registered/10439)
@@ -38,6 +38,8 @@
 -- [X] Add credits to splash screen
 -- [ ] Add transition sound effects
 -- [X] Fix being able to skip transitions in splash -> error
+-- [ ] Main menu music
+-- [ ] Crane sound in settings
 
 
 import "CoreLibs/graphics"

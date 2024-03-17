@@ -198,10 +198,15 @@ function actions.getValidActionCode(allowPassAction, excludeOption, crankDocked)
         end
     -- exclude UNDOCK action when crank is undocked
     -- exclude MICROPHONE action on simulator without microphone input
+    -- exclude disabled actions (as per settings)
     until ((crankDocked or result ~= actions.codes.CRANK_UNDOCK)
-            and (not playdate.isSimulator or result ~= actions.codes.MICROPHONE)
-            and (excludeOption == nil or result ~= excludeOption)
-            and (allowPassAction or result ~= actions.codes.PASS_PLAYER))
+        and (not playdate.isSimulator or result ~= actions.codes.MICROPHONE)
+        and (excludeOption == nil or result ~= excludeOption)
+        and (allowPassAction or result ~= actions.codes.PASS_PLAYER)
+        and (save.data.settings.allowMic or result ~= actions.codes.MICROPHONE)
+        and (save.data.settings.allowTilt or result ~= actions.codes.TILT)
+        and (save.data.settings.allowPass or result ~= actions.codes.PASS_PLAYER)
+    )
 
     return result
 end
