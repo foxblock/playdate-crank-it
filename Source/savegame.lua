@@ -55,11 +55,12 @@ function save.load()
     if (loadData.SAVE_VERSION == 1) then
         save.data.settings.musicOn = loadData.musicOn
         save.data.settings.debugOn = loadData.debugOn
+        save.data.highscore = loadData.highscore
         save.write()
     elseif (loadData.SAVE_VERSION == nil) then
         save.data.settings.debugOn = loadData.debugOn
         save.data.settings.musicOn = loadData.musicOn
-        save.data.settings.highscore[GAME_MODE.CRANKIT] = loadData.highscore
+        save.data.highscore[GAME_MODE.CRANKIT] = loadData.highscore
         save.write()
     else
         save.data = loadData
