@@ -16,13 +16,6 @@ local imgPlaydate = gfx.image.new("images/settings/playdate")
 local imgCrane = gfx.image.new("images/settings/crane")
 local imgCrank = gfx.image.new("images/settings/crank")
 local imgButtons = gfx.image.new("images/settings/buttons")
-
-local CRANK_START_Y <const> = 25
-local CRANK_END_Y <const> = 82
-
-local selectedIndex = 1
-local craneAnimator = gfx.animator.new(500, CRANK_START_Y, CRANK_START_Y)
-
 local zzz = {
     { x = 315, y = 62, img = gfx.image.new("images/settings/z"), scale = gfx.animator.new(2500, 0.3, 1, easings.inOutCubic) },
     { x = 322, y = 50, img = gfx.image.new("images/settings/zz"), scale = gfx.animator.new(2500, 0.3, 1, easings.inOutCubic, 500) },
@@ -33,6 +26,15 @@ for _,v in ipairs(zzz) do
     v.scale.reverses = true
 end
 
+local CRANK_START_Y <const> = 25
+local CRANK_END_Y <const> = 82
+
+local craneAnimator = gfx.animator.new(750, CRANK_START_Y, CRANK_START_Y)
+local craneSound = playdate.sound.sampleplayer.new("sounds/crane_move")
+
+local selectedIndex = 1
+
+
 
 local function settings_cleanup()
     playdate.inputHandlers.pop()
@@ -41,7 +43,7 @@ end
 local function start_crane()
     local currVal = craneAnimator:currentValue()
     local craneProgress = (selectedIndex - 1) / (#settings.config - 1)
-    craneAnimator = gfx.animator.new(500, 
+    craneAnimator = gfx.animator.new(750, 
         currVal, 
         CRANK_START_Y + (CRANK_END_Y - CRANK_START_Y) * craneProgress,
         easings.inOutQuad)
@@ -53,6 +55,8 @@ local settings_buttonHandler = {
             selectedIndex = selectedIndex - 1
             start_crane()
             settings.render()
+            craneSound:stop()
+            craneSound:play(1)
         end
     end,
 
@@ -61,6 +65,8 @@ local settings_buttonHandler = {
             selectedIndex = selectedIndex + 1
             start_crane()
             settings.render()
+            craneSound:stop()
+            craneSound:play(1)
         end
     end,
 

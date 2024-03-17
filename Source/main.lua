@@ -12,6 +12,10 @@
 --    /
 --   v  y = 1
 
+-- Sound Credits:
+-- success.wav: https://freesound.org/people/rhodesmas/sounds/342750/
+-- crane_move.wav: https://freesound.org/people/DCSFX/sounds/366123/
+
 ------ TODO
 -- [X] action: pass to other player
 -- [X] action: speed up
@@ -31,7 +35,7 @@
 -- [X] Better score and highscore display
 -- [X] main menu - do not start the game immediately
 -- [X] add title card recommending to play without the cover (https://devforum.play.date/t/crank-docking-not-registered/10439)
--- [ ] sound convert script: add option to convert single file if passed path is a file
+-- [X] sound convert script: add option to convert single file if passed path is a file
 -- [X] go to main menu option in menu
 -- [x] short transition/swipe/... between actions in simon mode -> helps split same actions when playing without sound
 -- [ ] Check color table: needs inverted (compared to b/w), need raw b/w version?, correct colors compared to screenshot/video?
@@ -39,7 +43,8 @@
 -- [ ] Add transition sound effects
 -- [X] Fix being able to skip transitions in splash -> error
 -- [ ] Main menu music
--- [ ] Crane sound in settings
+-- [X] Crane sound in settings
+-- [ ] Other sound effects: select game, change game in main menu, change settings, restart?
 
 
 import "CoreLibs/graphics"
