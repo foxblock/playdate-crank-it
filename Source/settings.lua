@@ -35,19 +35,35 @@ local settings_buttonHandler = {
     end,
 
     rightButtonDown = function()
-        local k = settings.config[selectedIndex].k
+        local cfg = settings.config[selectedIndex]
+        local k = cfg.k
         local v = settings.data[k]
         if type(v) == "boolean" then
-            settings.data[k] = not settings.data[k]
+            settings.data[k] = not v
+        elseif cfg.options ~= nil then
+            if cfg.optionIndex < #cfg.options then
+                cfg.optionIndex = cfg.optionIndex + 1
+                settings.data[k] = cfg.options[cfg.optionIndex]
+            end
+        else
+            settings.data[k] = settings.data[k] + 1
         end
         settings.render()
     end,
 
     leftButtonDown = function()
-        local k = settings.config[selectedIndex].k
+        local cfg = settings.config[selectedIndex]
+        local k = cfg.k
         local v = settings.data[k]
         if type(v) == "boolean" then
-            settings.data[k] = not settings.data[k]
+            settings.data[k] = not v
+        elseif cfg.options ~= nil then
+            if cfg.optionIndex > 1 then
+                cfg.optionIndex = cfg.optionIndex - 1
+                settings.data[k] = cfg.options[cfg.optionIndex]
+            end
+        else
+            settings.data[k] = settings.data[k] - 1
         end
         settings.render()
     end,
@@ -67,6 +83,7 @@ local function settings_update()
 
 end
 
+
 function settings.render()
     background:draw(0,0)
     imgPlaydate:drawCentered(319,116)
@@ -85,20 +102,22 @@ function settings.render()
         local k = settings.config[i].k
         local v = settings.data[k]
         local label = settings.config[i].s
-        gfx.drawTextAligned(label, 12, yPos, kTextAlignment.left)
+        gfx.drawTextAligned(label, 15, yPos, kTextAlignment.left)
         local str
         if type(v) == "boolean" then
             str = v and "ON" or "OFF"
+        elseif settings.config[i].optionsStr ~= nil then
+            str = settings.config[i].optionsStr[settings.config[i].optionIndex]
         else
             str = ""..v
         end
-        gfx.drawTextAligned(str, 230, yPos, kTextAlignment.right)
+        gfx.drawTextAligned(str, 244, yPos, kTextAlignment.right)
 
         if i == selectedIndex then
             -- drawTextAligned sadly does not return width,height like drawText does
             local width = Statemachine.font:getTextWidth(str)
-            gfx.drawText("<", 230 - width - 21, yPos)
-            gfx.drawText(">", 230 + 6, yPos)
+            gfx.drawText("<", 244 - width - 21, yPos)
+            gfx.drawText(">", 244 + 6, yPos)
         end
 
         yPos = yPos + spacing

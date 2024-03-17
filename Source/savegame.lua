@@ -17,13 +17,24 @@ save.data = {
 
 -- k = keys of save.data.settings in the order they should appear in settings menu
 -- need to do this, since pairs() returns elements in random order
+-- (this is kinda overengineered, probably should have just hard coded the options...)
 save.settingsMetadata = {
     { k="musicOn", s="MUSIC" },
     { k="allowMic", s="MICROPHONE" },
     { k="allowTilt", s="TILT" },
-    { k="bombSeconds", s="BOMB TIME" },
+    { k="bombSeconds", s="BOMB TIME", optionIndex=0, options={ 30, 60, 90, 120, 180 }, optionsStr={ "30 S", "1 MIN", "90 S", "2 MIN", "3 MIN" } },
     { k="debugOn", s="DEBUG" },
+    -- { k="test", s="TEST", options={ 10, -10, 20, 0, 500, 1e7 } },
 }
+
+local function indexInArray(array, val)
+    for i=1, #array do
+        if array[i] == val then
+            return i
+        end
+    end
+    return 0
+end
 
 function save.write()
     datastore.write(save.data)
@@ -52,6 +63,13 @@ function save.load()
         save.write()
     else
         save.data = loadData
+    end
+
+    for i = 1, #save.settingsMetadata do
+        if save.settingsMetadata[i].options == nil then goto continue end
+        save.settingsMetadata[i].optionIndex = indexInArray(save.settingsMetadata[i].options, 
+                save.data.settings[save.settingsMetadata[i].k])
+        ::continue::
     end
 
     if (save.data.settings.musicOn) then
