@@ -23,6 +23,16 @@ local CRANK_END_Y <const> = 82
 local selectedIndex = 1
 local craneAnimator = gfx.animator.new(500, CRANK_START_Y, CRANK_START_Y)
 
+local zzz = {
+    { x = 315, y = 62, img = gfx.image.new("images/settings/z"), scale = gfx.animator.new(2500, 0.3, 1, easings.inOutCubic) },
+    { x = 322, y = 50, img = gfx.image.new("images/settings/zz"), scale = gfx.animator.new(2500, 0.3, 1, easings.inOutCubic, 500) },
+    { x = 331, y = 39, img = gfx.image.new("images/settings/zzz"), scale = gfx.animator.new(2500, 0.3, 1, easings.inOutCubic, 1000) },
+}
+for _,v in ipairs(zzz) do
+    v.scale.repeatCount = -1
+    v.scale.reverses = true
+end
+
 
 local function settings_cleanup()
     playdate.inputHandlers.pop()
@@ -106,7 +116,7 @@ local function render_crane(clear)
     end
 
     imgCrane:drawCentered(347,14)
-    imgPlaydate:drawCentered(319,98)
+    imgPlaydate:drawCentered(319,116)
 
     gfx.setLineWidth(4)
     gfx.setColor(gfx.kColorBlack)
@@ -114,10 +124,22 @@ local function render_crane(clear)
     imgCrank:drawCentered(366, 13 + craneAnimator:currentValue())
 end
 
+local function render_zzz(clear)
+    if clear then
+        gfx.setColor(gfx.kColorWhite)
+        gfx.fillRect(309, 31, 29, 38)
+    end
+    for _,v in ipairs(zzz) do
+        -- Round 0.99x up to 1 (easing functions might not reach 1 exactly, which looks off)
+        v.img:drawRotated(v.x, v.y, 0, math.floor(100 * v.scale:currentValue() + 1) / 100)
+    end
+end
+
 local function settings_update()
     if not craneAnimator:ended() then
         render_crane(true)
     end
+    render_zzz(true)
 end
 
 function settings.render()
@@ -125,6 +147,7 @@ function settings.render()
     imgButtons:drawCentered(330,204)
 
     render_crane()
+    render_zzz()
 
     local yPos = 40
     local spacing <const> = 24
