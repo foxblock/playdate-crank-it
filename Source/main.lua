@@ -86,6 +86,10 @@ local buttonHandlers_intro = {
     end,
 }
 
+local function update_none()
+    --
+end
+
 local function splash_render()
     splashImages[currentSplash]:draw(0,0)
 end
@@ -96,6 +100,7 @@ end
 
 local function splash_setup()
     playdate.inputHandlers.push(buttonHandlers_intro)
+    playdate.update = update_none
 end
 
 splash_next = function()
