@@ -26,7 +26,7 @@ local settings_buttonHandler = {
             settings.render()
         end
     end,
-    
+
     downButtonDown = function()
         if selectedIndex < #settings.itemsOrder then
             selectedIndex = selectedIndex + 1
@@ -35,11 +35,21 @@ local settings_buttonHandler = {
     end,
 
     rightButtonDown = function()
-
+        local k = settings.itemsOrder[selectedIndex]
+        local v = settings.data[k]
+        if type(v) == "boolean" then
+            settings.data[k] = not settings.data[k]
+        end
+        settings.render()
     end,
 
     leftButtonDown = function()
-
+        local k = settings.itemsOrder[selectedIndex]
+        local v = settings.data[k]
+        if type(v) == "boolean" then
+            settings.data[k] = not settings.data[k]
+        end
+        settings.render()
     end,
 
     AButtonDown = function()
@@ -67,7 +77,7 @@ function settings.render()
     gfx.setLineWidth(4)
     gfx.setColor(gfx.kColorBlack)
     gfx.drawLine(366, 18, 366, 25 + (82 - 25) * crankProgress)
-    imgCrank:drawCentered(366,38 + (96 - 38) * crankProgress)
+    imgCrank:drawCentered(366, 38 + (96 - 38) * crankProgress)
 
     local yPos = 40
     local spacing <const> = 24

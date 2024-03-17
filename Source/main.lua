@@ -158,11 +158,6 @@ save.load()
 -- setup playdate menu
 local sytemMenu = playdate.getSystemMenu()
 
-local musicMenuItem, _ = sytemMenu:addCheckmarkMenuItem("Music", save.data.settings.musicOn, function(value)
-    save.data.settings.musicOn = value
-    save.write()
-end)
-
 local goToMenuItem, _ = sytemMenu:addMenuItem("Main Menu", function()
     if (Statemachine.cleanup ~= nil) then
         Statemachine.cleanup()
