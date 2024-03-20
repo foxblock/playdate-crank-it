@@ -8,9 +8,11 @@ import "CoreLibs/timer"
 local gfx <const> = playdate.graphics
 local timer <const> = playdate.timer
 local poly <const> = playdate.geometry.polygon
+local snd <const> = playdate.sound.sampleplayer
 
 local SCREEN_WIDTH <const> = playdate.display.getWidth()
 local SCREEN_HEIGHT <const> = playdate.display.getHeight()
+local TRANSITION_SOUND <const> = snd.new("sounds/woosh")
 
 local screenTransitionTimer
 local transitionPolygon
@@ -71,4 +73,5 @@ function transition.setup(callOnTransitionEnd, secondPhaseRenderFunc)
     transitionPolygon = poly.new(0,0,0,0,0,0,0,0,0,0,0,0)
     playdate.update = update_first_transition
     transitionTargetRender = secondPhaseRenderFunc
+    TRANSITION_SOUND:play(1)
 end

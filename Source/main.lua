@@ -15,6 +15,8 @@
 -- Sound Credits:
 -- success.wav: https://freesound.org/people/rhodesmas/sounds/342750/
 -- crane_move.wav: https://freesound.org/people/DCSFX/sounds/366123/
+-- woosh.wav: https://freesound.org/people/Vilkas_Sound/sounds/460476/
+-- tick.wav: https://freesound.org/people/MrOwn1/sounds/110314/
 
 ------ TODO
 -- [X] action: pass to other player

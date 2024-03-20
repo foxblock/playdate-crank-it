@@ -9,6 +9,7 @@ import "savegame"
 
 local gfx <const> = playdate.graphics
 local easings <const> = playdate.easingFunctions
+local snd <const> = playdate.sound.sampleplayer
 
 
 local background = gfx.image.new("images/settings/bg")
@@ -17,9 +18,9 @@ local imgCrane = gfx.image.new("images/settings/crane")
 local imgCrank = gfx.image.new("images/settings/crank")
 local imgButtons = gfx.image.new("images/settings/buttons")
 local zzz = {
-    { x = 315, y = 62, img = gfx.image.new("images/settings/z"), scale = gfx.animator.new(2500, 0.3, 1, easings.inOutCubic) },
-    { x = 322, y = 50, img = gfx.image.new("images/settings/zz"), scale = gfx.animator.new(2500, 0.3, 1, easings.inOutCubic, 500) },
-    { x = 331, y = 39, img = gfx.image.new("images/settings/zzz"), scale = gfx.animator.new(2500, 0.3, 1, easings.inOutCubic, 1000) },
+    { x = 315, y = 62, img = gfx.image.new("images/settings/z"), scale = gfx.animator.new(2500, 0.5, 1, easings.inOutCubic) },
+    { x = 322, y = 50, img = gfx.image.new("images/settings/zz"), scale = gfx.animator.new(2500, 0.5, 1, easings.inOutCubic, 500) },
+    { x = 331, y = 39, img = gfx.image.new("images/settings/zzz"), scale = gfx.animator.new(2500, 0.5, 1, easings.inOutCubic, 1000) },
 }
 for _,v in ipairs(zzz) do
     v.scale.repeatCount = -1
@@ -30,7 +31,8 @@ local CRANK_START_Y <const> = 25
 local CRANK_END_Y <const> = 82
 
 local craneAnimator = gfx.animator.new(750, CRANK_START_Y, CRANK_START_Y)
-local craneSound = playdate.sound.sampleplayer.new("sounds/crane_move")
+local craneSound = snd.new("sounds/crane_move")
+local sndTick = snd.new("sounds/menu_tick")
 
 local selectedIndex = 1
 
@@ -77,16 +79,17 @@ local settings_buttonHandler = {
         if type(v) == "boolean" then
             settings.data[k] = not v
         elseif cfg.options ~= nil then
-            if cfg.optionIndex < #cfg.options then
-                cfg.optionIndex = cfg.optionIndex + 1
-                settings.data[k] = cfg.options[cfg.optionIndex]
-            end
+            if cfg.optionIndex >= #cfg.options then return end
+            
+            cfg.optionIndex = cfg.optionIndex + 1
+            settings.data[k] = cfg.options[cfg.optionIndex]
         else
             settings.data[k] = settings.data[k] + 1
         end
+        sndTick:play(1)
         settings.render()
     end,
-
+    
     leftButtonDown = function()
         local cfg = settings.config[selectedIndex]
         local k = cfg.k
@@ -94,13 +97,14 @@ local settings_buttonHandler = {
         if type(v) == "boolean" then
             settings.data[k] = not v
         elseif cfg.options ~= nil then
-            if cfg.optionIndex > 1 then
-                cfg.optionIndex = cfg.optionIndex - 1
-                settings.data[k] = cfg.options[cfg.optionIndex]
-            end
+            if cfg.optionIndex <= 1 then return end
+            
+            cfg.optionIndex = cfg.optionIndex - 1
+            settings.data[k] = cfg.options[cfg.optionIndex]
         else
             settings.data[k] = settings.data[k] - 1
         end
+        sndTick:play(1)
         settings.render()
     end,
 
