@@ -10,10 +10,10 @@ import "game_constants"
 
 local gfx <const> = playdate.graphics
 local easings <const> = playdate.easingFunctions
+local snd <const> = playdate.sound.sampleplayer
 
-
-local selectedGame = 1
-
+local gameChangeSound = snd.new("sounds/menu_game_change")
+local gameSelectSound = snd.new("sounds/menu_game_select")
 
 local function newAnimator(durationMS, min, max, easingFunction)
     local animator = gfx.animator.new(durationMS, min, max, easingFunction, -durationMS / 2)
@@ -128,6 +128,10 @@ local elements <const> = {
     },
 }
 
+
+local selectedGame = 1
+
+
 local function drawMenuItem(item)
     if item.rot ~= nil and item.scale ~= nil then
         item.img:drawRotated(item.x, item.y, item.rot:currentValue(), item.scale:currentValue())
@@ -171,8 +175,9 @@ local buttonHandlers_title = {
         end
         gfx.fillRect(18, 0, 364, 149)
         drawGameCard(selectedGame)
+        gameChangeSound:play(1)
     end,
-
+    
     rightButtonDown = function ()
         if (selectedGame == GAME_MODE.EOL - 1) then
             selectedGame = 1
@@ -181,9 +186,11 @@ local buttonHandlers_title = {
         end
         gfx.fillRect(18, 0, 364, 149)
         drawGameCard(selectedGame)
+        gameChangeSound:play(1)
     end,
 
     AButtonDown = function()
+        gameSelectSound:play(1)
         menu_cleanup()
         menu.callback(selectedGame)
     end,
