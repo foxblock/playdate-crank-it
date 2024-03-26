@@ -16,6 +16,7 @@ local SCREEN_WIDTH <const> = playdate.display.getWidth()
 local SCREEN_HEIGHT <const> = playdate.display.getHeight()
 
 local TRANSITION_TIME_MS <const> = 500
+local ACTIONS_PER_PASS <const> = 3
 
 local bgMusic <const> = sample.new("music/bg5")
 local loseMusic <const> = sample.new("music/lose")
@@ -30,6 +31,7 @@ local actionTimer
 local bombTimer
 local actionTransitionTimer
 local lastAnimationFrame = 1
+local actionPassCounter = 0
 
 local update_main
 
@@ -47,6 +49,7 @@ local function main_startGame(skipGenNewAction)
     actions.setupActionGameplay(0, actions.current)
     actions.setupActionGfxAndSound(actions.current)
     actionDone = false
+    actionPassCounter = 0
     actionTransitionState = -1
     actionTransitionTimer:pause()
     bombTimer.duration = save.data.settings.bombSeconds * math.random(8, 12) * 100
@@ -71,6 +74,7 @@ local function main_actionSuccess()
     if (actionDone) then return end
 
     actionDone = true
+    actionPassCounter = actionPassCounter + 1
     soundSuccess:play(1)
 end
 
@@ -119,6 +123,7 @@ local function render_main()
         gfx.setFont(gfx.getSystemFont())
         local yPos = actions.renderDebugInfo()
         gfx.drawText(string.format("bomb: %d", bombTimer.timeLeft), 2, yPos);
+        gfx.drawText(string.format("cnt: %d", actionPassCounter), 2, yPos + 15);
         gfx.setFont(Statemachine.font)
     end
 
@@ -151,7 +156,12 @@ update_main = function ()
         actionTransitionState = 0
     elseif (actionDone and actionTransitionState == 1) then
         local lastAction = actions.current
-        actions.current = actions.getValidActionCode(true, lastAction)
+        if actionPassCounter == ACTIONS_PER_PASS then
+            actions.current = ACTION_CODES.PASS_PLAYER
+            actionPassCounter = 0
+        else
+            actions.current = actions.getValidActionCode(false, lastAction)
+        end
 
         actions.setupActionGameplay(lastAction, actions.current)
         actions.setupActionGfxAndSound(actions.current)
@@ -160,7 +170,7 @@ update_main = function ()
         actionDone = false
         actionTransitionState = -1
         if actions.current == ACTION_CODES.PASS_PLAYER then
-            actionTimer.duration = actions.data[ACTION_CODES.PASS_PLAYER].time[5]
+            actionTimer.duration = actions.data[ACTION_CODES.PASS_PLAYER].time[3]
             actionTimer:reset()
             actionTimer:start()
             bombTimer:pause()
