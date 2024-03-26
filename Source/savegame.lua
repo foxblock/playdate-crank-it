@@ -89,7 +89,4 @@ function save.load()
     else
         Statemachine.music:setVolume(0)
     end
-
-    -- Disable debug output for now (removed menu option)
-    save.data.settings.debugOn = false
 end

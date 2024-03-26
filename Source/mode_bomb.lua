@@ -93,6 +93,7 @@ end
 local function actionTimerEnd()
     if (actions.current == ACTION_CODES.PASS_PLAYER) then
         actionDone = true
+        actionTransitionState = 1
         bombTimer:start()
         return
     end
