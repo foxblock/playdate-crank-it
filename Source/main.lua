@@ -46,7 +46,8 @@
 -- [X] Fix being able to skip transitions in splash -> error
 -- [ ] Main menu music
 -- [X] Crane sound in settings
--- [ ] Other sound effects: select game, change game in main menu, change settings, restart?
+-- [ ] Other sound effects: select game, change game in main menu, change settings, restart? 
+--     Individual select sounds per game (current select might fit simon well)
 
 
 import "CoreLibs/graphics"
@@ -55,6 +56,7 @@ import "game_constants"
 import "game_actions"
 import "mode_crankit"
 import "mode_simon"
+import "mode_bomb"
 import "settings"
 import "transition"
 import "savegame"
@@ -131,6 +133,9 @@ local function menu_result(optionIndex)
         transition.setup(crankit.setup, crankit.render_for_transition)
     elseif (optionIndex == GAME_MODE.SIMON) then
         transition.setup(simon.setup, simon.render_for_transition)
+    elseif (optionIndex == GAME_MODE.BOMB) then
+        bomb.pre_setup_for_transition()
+        transition.setup(bomb.setup, bomb.render_for_transition)
     elseif (optionIndex == GAME_MODE.SETTINGS) then
         copyTable(settings.data, save.data.settings)
         transition.setup(settings.setup, settings.render)
