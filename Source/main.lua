@@ -17,6 +17,8 @@
 -- crane_move.wav: https://freesound.org/people/DCSFX/sounds/366123/
 -- woosh.wav: https://freesound.org/people/Vilkas_Sound/sounds/460476/
 -- tick.wav: https://freesound.org/people/MrOwn1/sounds/110314/
+-- reset_score.wav: https://freesound.org/people/steeltowngaming/sounds/537739/
+-- game change.wav: https://freesound.org/people/F.M.Audio/sounds/560330/
 
 ------ TODO
 -- [X] action: pass to other player

@@ -14,6 +14,7 @@ local snd <const> = playdate.sound.sampleplayer
 
 local gameChangeSound = snd.new("sounds/menu_game_change")
 local gameSelectSound = snd.new("sounds/menu_game_select")
+local scoreResetSound = snd.new("sounds/score_reset")
 
 local function newAnimator(durationMS, min, max, easingFunction)
     local animator = gfx.animator.new(durationMS, min, max, easingFunction, -durationMS / 2)
@@ -202,6 +203,7 @@ local buttonHandlers_title = {
         if crankToReset >= CRANK_RESET_TRIGGER then
             save.data.highscore[selectedGame] = 0
             save.write()
+            scoreResetSound:play(1)
             crankToReset = 0
         elseif crankToReset < 0 then
             crankToReset = 0
