@@ -136,6 +136,15 @@ local function actionSuccess_simon()
         particles.add("images/plusone", 68, 120,  0,  5, 0)
         particles.add("images/plusone", 68, 120, -4,  3, 0)
         particles.add("images/plusone", 68, 120, -4, -3, 0)
+        if score_simon > save.data.highscore[GAME_MODE.SIMON] then
+            save.data.highscore[GAME_MODE.SIMON] = score_simon
+            particles.add("images/star", 68, 120,  5,  0, 0)
+            particles.add("images/star", 68, 120,  3,  4, 0)
+            particles.add("images/star", 68, 120, -3,  4, 0)
+            particles.add("images/star", 68, 120, -5,  0, 0)
+            particles.add("images/star", 68, 120, -3, -4, 0)
+            particles.add("images/star", 68, 120,  3, -4, 0)
+        end
         -- stop microphone now, otherwise it is only reset after all actions have been shown
         mic.stopListening()
     end
@@ -144,14 +153,15 @@ end
 local function actionFail_simon()
     if (actions.current == ACTION_CODES.LOSE) then return end
 
-    if (score_simon > save.data.highscore[GAME_MODE.SIMON]) then
+    if (score_simon >= save.data.highscore[GAME_MODE.SIMON]) then
         save.data.highscore[GAME_MODE.SIMON] = score_simon
         save.write()
     end
     actions.current = ACTION_CODES.LOSE
     gfx.sprite.redrawBackground()
     gfx.sprite.update()
-    gfx.drawTextAligned('SCORE: '..score_simon, 200, 220, kTextAlignment.center)
+    gfx.drawTextAligned('SCORE: '..score_simon, 110, 220, kTextAlignment.center)
+    gfx.drawTextAligned("HIGH: "..save.data.highscore[GAME_MODE.SIMON], 290, 220, kTextAlignment.center)
     simonSampleplayer:stop()
     soundLose:play(1)
     Statemachine.music:stop()
@@ -200,7 +210,8 @@ local function render_simon()
     end
 
     gfx.setImageDrawMode(gfx.kDrawModeNXOR)
-    gfx.drawTextAligned('SCORE: '..score_simon, 200, 220, kTextAlignment.center)
+    gfx.drawTextAligned('SCORE: '..score_simon, 110, 220, kTextAlignment.center)
+    gfx.drawTextAligned("HIGH: "..save.data.highscore[GAME_MODE.SIMON], 290, 220, kTextAlignment.center)
 
     if (save.data.settings.debugOn) then
         gfx.setFont(gfx.getSystemFont())
