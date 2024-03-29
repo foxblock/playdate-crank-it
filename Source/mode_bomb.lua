@@ -21,7 +21,6 @@ local ACTIONS_PER_PASS <const> = 3
 local bgMusic <const> = sample.new("music/bg5")
 local loseMusic <const> = sample.new("music/lose")
 local soundSuccess = snd.new("sounds/success")
-local soundLose = snd.new("sounds/lose")
 local bgSprite = nil
 
 
@@ -84,9 +83,8 @@ local function main_actionFail()
     actions.current = ACTION_CODES.LOSE
     if not actionTimer.paused then actionTimer:pause() end
     if not bombTimer.paused then bombTimer:pause() end
-    gfx.sprite.redrawBackground()
+    actions.setupActionGfxAndSound(actions.current)
     gfx.sprite.update()
-    soundLose:play(1)
     Statemachine.music:stop()
     Statemachine.music:setSample(loseMusic)
     Statemachine.music:play(0)

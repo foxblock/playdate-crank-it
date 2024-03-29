@@ -29,7 +29,6 @@ local bgMusic <const> = {
 }
 local loseMusic <const> = sample.new("music/lose")
 local soundSuccess = snd.new("sounds/success")
-local soundLose = snd.new("sounds/lose")
 local bgSprite = nil
 
 
@@ -39,6 +38,7 @@ local actionTimer
 local actionTransitionTimer
 local speedLevel = 1
 local score = 0
+local newHighscore = false
 local lastAnimationFrame = 1
 
 local update_main
@@ -50,6 +50,7 @@ end
 
 local function main_startGame(skipGenNewAction)
     score = 0
+    newHighscore = false
     speedLevel = 1
     Statemachine.gameShouldFailAfterResume = false
 
@@ -91,6 +92,7 @@ local function main_actionSuccess()
 
     if score > save.data.highscore[GAME_MODE.CRANKIT] then
         save.data.highscore[GAME_MODE.CRANKIT] = score
+        newHighscore = true
         particles.add("images/star", 290, 220, math.random(-10, 10) / 10, math.random(-110, -85) / 10, math.random(-10, 10))
         particles.add("images/star", 290, 220, math.random(-65, -45) / 10, math.random(-80, -60) / 10, math.random(-30, -10))
         particles.add("images/star", 290, 220, math.random(45, 65) / 10, math.random(-80, -60) / 10, math.random(10, 30))
@@ -98,18 +100,18 @@ local function main_actionSuccess()
 end
 
 local function main_actionFail()
-    if (actions.current == ACTION_CODES.LOSE) then return end
+    if actions.current < 1 then return end
 
-    if (score >= save.data.highscore[GAME_MODE.CRANKIT]) then
-        save.data.highscore[GAME_MODE.CRANKIT] = score
+    if newHighscore then
         save.write()
+        actions.current = ACTION_CODES.HIGHSCORE
+    else
+        actions.current = ACTION_CODES.LOSE
     end
-    actions.current = ACTION_CODES.LOSE
     if not actionTimer.paused then actionTimer:pause() end
-    gfx.sprite.redrawBackground()
+    actions.setupActionGfxAndSound(actions.current)
     gfx.sprite.update()
     gfx.drawTextAligned('SCORE: '..score, 200, 220, kTextAlignment.center)
-    soundLose:play(1)
     Statemachine.music:stop()
     Statemachine.music:setSample(loseMusic)
     Statemachine.music:play(0)

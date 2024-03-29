@@ -33,6 +33,7 @@ actions.failFnc = nil
 actions.current = nil
 
 actions.codes = {
+    HIGHSCORE = -1,
     LOSE = 0,
     DIRECTION = 1,
     BUTTON = 2,
@@ -48,6 +49,11 @@ actions.codes = {
 
 -- TODO: Change snd entries from sampleplayer to sample and use one global player for all action sounds
 actions.data = {
+    [actions.codes.HIGHSCORE] = {
+        time = TIME_NORMAL,
+        snd = snd.new("sounds/highscore"),
+        img = gfx.image.new("images/actions/highscore"),
+    },
     [actions.codes.LOSE] = {
         time = TIME_NORMAL,
         snd = snd.new("sounds/lose"),

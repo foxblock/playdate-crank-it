@@ -13,6 +13,7 @@
 --   v  y = 1
 
 -- Sound Credits:
+-- voice: https://ttsfree.com/ - English (US), Jenny
 -- success.wav: https://freesound.org/people/rhodesmas/sounds/342750/
 -- crane_move.wav: https://freesound.org/people/DCSFX/sounds/366123/
 -- woosh.wav: https://freesound.org/people/Vilkas_Sound/sounds/460476/
@@ -49,9 +50,10 @@
 -- [ ] Main menu music
 -- [X] Crane sound in settings
 -- [ ] Other sound effects: select game, change game in main menu, change settings, restart?, reset scores
---     Individual select sounds per game (current select might fit simon well)
+--     Individual select sounds per game (current select might fit simon well), individual lose sounds? (current fits bomb)
 -- [X] Reset score (menu item? in settings?)
-
+-- [X] new highscore screen and sound
+-- [ ] new highscore music
 
 import "CoreLibs/graphics"
 

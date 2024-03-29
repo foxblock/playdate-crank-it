@@ -34,6 +34,7 @@ local SIMON_STATE <const> = {
 
 local actionChain = {}
 local score_simon = 0
+local newHighscore = false
 local currIndex = 1
 local simonTimer
 
@@ -47,7 +48,6 @@ local simonActionBlinkTimer
 
 local loseMusic <const> = sample.new("music/lose")
 local soundSuccess = snd.new("sounds/success")
-local soundLose = snd.new("sounds/lose")
 local simonTickSlow = sample.new("sounds/tick1")
 local simonTickMid = sample.new("sounds/tick2")
 local simonTickFast = sample.new("sounds/tick3")
@@ -84,6 +84,7 @@ end
 
 startGame_simon = function()
     score_simon = 0
+    newHighscore = false
     currIndex = 1
     Statemachine.gameShouldFailAfterResume = false
 
@@ -139,6 +140,7 @@ local function actionSuccess_simon()
         particles.add("images/plusone", 68, 120, -4.33, -2.5, 0)
         if score_simon > save.data.highscore[GAME_MODE.SIMON] then
             save.data.highscore[GAME_MODE.SIMON] = score_simon
+            newHighscore = true
             particles.add("images/star", 68, 120,  5  ,  0   , 0)
             particles.add("images/star", 68, 120,  2.5,  4.33, 0)
             particles.add("images/star", 68, 120, -2.5,  4.33, 0)
@@ -152,19 +154,19 @@ local function actionSuccess_simon()
 end
 
 local function actionFail_simon()
-    if (actions.current == ACTION_CODES.LOSE) then return end
+    if actions.current and actions.current < 1 then return end
 
-    if (score_simon >= save.data.highscore[GAME_MODE.SIMON]) then
-        save.data.highscore[GAME_MODE.SIMON] = score_simon
+    if newHighscore then
         save.write()
+        actions.current = ACTION_CODES.HIGHSCORE
+    else
+        actions.current = ACTION_CODES.LOSE
     end
-    actions.current = ACTION_CODES.LOSE
-    gfx.sprite.redrawBackground()
+    actions.setupActionGfxAndSound(actions.current)
     gfx.sprite.update()
     gfx.drawTextAligned('SCORE: '..score_simon, 110, 220, kTextAlignment.center)
     gfx.drawTextAligned("HIGH: "..save.data.highscore[GAME_MODE.SIMON], 290, 220, kTextAlignment.center)
     simonSampleplayer:stop()
-    soundLose:play(1)
     Statemachine.music:stop()
     Statemachine.music:setSample(loseMusic)
     Statemachine.music:play(0)
@@ -324,8 +326,8 @@ end
 function simon.setup()
     bgSprite = gfx.sprite.setBackgroundDrawingCallback(
         function( x, y, width, height )
-            if actions.current == ACTION_CODES.LOSE then
-                actions.data[ACTION_CODES.LOSE].img:draw(0,0)
+            if actions.current and actions.current < 1 then
+                actions.data[actions.current].img:draw(0,0)
             elseif (simonState == SIMON_STATE.SHOW) then
                 actions.data[actionChain[currIndex]].img:draw(0,0)
             elseif (simonState == SIMON_STATE.SCORE_UP) then
