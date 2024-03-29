@@ -8,9 +8,8 @@ local gfx <const> = playdate.graphics
 local SCREEN_WIDTH <const> = playdate.display.getWidth()
 local SCREEN_HEIGHT <const> = playdate.display.getHeight()
 
-local gravity <const> = 1
-local friction <const> = 0.92
 local entities = {}
+local physics = {}
 
 function particles.add(imgPath, x, y, velx, vely, velrot)
     local p = {
@@ -21,7 +20,7 @@ function particles.add(imgPath, x, y, velx, vely, velrot)
     }
     p.hw, p.hh = p.img:getSize()
     p.hw, p.hh = p.hw / 2, p.hh / 2
-    
+
     p.img:add()
     p.img:moveTo(x, y)
 
@@ -33,18 +32,36 @@ function particles.update()
         p.img:moveBy(p.vx, p.vy)
 
         if p.img.x < -p.hw 
-            or p.img.x > SCREEN_WIDTH + p.hw 
-            or p.img.y < -p.hh 
-            or p.img.y > SCREEN_HEIGHT + p.hh 
+            or p.img.x > SCREEN_WIDTH + p.hw
+            or p.img.y < -p.hh
+            or p.img.y > SCREEN_HEIGHT + p.hh
         then
             p.img:remove()
             particles[k] = nil
         end
 
-        p.vx = p.vx * friction
-        p.vy = p.vy + gravity
+        p.vx = p.vx + physics.gravityX
+        p.vy = p.vy + physics.gravityY
+        p.vx = p.vx * physics.frictionX
+        p.vy = p.vy * physics.frictionY
         if p.rot ~= 0 then
             p.img:setRotation(p.img:getRotation() + p.rot)
         end
     end
 end
+
+function particles.setDefaultPhysics()
+    physics.gravityX = 0
+    physics.gravityY = 1
+    physics.frictionX = 0.92
+    physics.frictionY = 1
+end
+
+function particles.setPhysics(addX, addY, multX, multY)
+    physics.gravityX = addX
+    physics.gravityY = addY
+    physics.frictionX = multX
+    physics.frictionY = multY
+end
+
+particles.setDefaultPhysics()

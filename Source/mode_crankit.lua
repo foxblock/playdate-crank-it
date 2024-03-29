@@ -139,8 +139,8 @@ local function render_main()
         gfx.sprite.redrawBackground()
     end
 
-    gfx.sprite.update()
     particles.update()
+    gfx.sprite.update()
 
     gfx.setColor(gfx.kColorBlack)
     if (not actionDone) then
@@ -261,6 +261,7 @@ function crankit.setup()
     actions.succesFnc = main_actionSuccess
     actions.failFnc = main_actionFail
     Statemachine.reactToGlobalEvents = true
+    particles.setDefaultPhysics()
 
     -- NOTE: This assumes pre_setup_main_for_transition was called before
     main_startGame(true)
