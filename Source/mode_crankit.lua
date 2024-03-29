@@ -5,6 +5,7 @@ import "CoreLibs/graphics"
 import "CoreLibs/sprites"
 import "CoreLibs/timer"
 import "game_actions"
+import "particles"
 
 local gfx <const> = playdate.graphics
 local snd <const> = playdate.sound.sampleplayer
@@ -42,43 +43,6 @@ local lastAnimationFrame = 1
 
 local update_main
 
-
-local gravity <const> = 1
-local friction <const> = 0.92
-local particles = {}
-
-local function addParticle(x, y, velx, vely, rotation)
-    local p = {
-        img = gfx.sprite.new(gfx.image.new("images/star")),
-        vx = velx,
-        vy = vely,
-        rot = rotation
-    }
-    p.img:add()
-    p.img:moveTo(x, y)
-    p.hw, p.hh = p.img:getSize()
-    p.hw, p.hh = p.hw / 2, p.hh / 2
-    table.insert(particles, p)
-end
-
-local function updateParticles()
-    for k, p in pairs(particles) do
-        p.img:moveBy(p.vx, p.vy)
-        if p.img.x < -p.hw 
-            or p.img.x > SCREEN_WIDTH + p.hw 
-            or p.img.y < -p.hh 
-            or p.img.y > SCREEN_HEIGHT + p.hh 
-        then
-            p.img:remove()
-            particles[k] = nil
-        end
-        p.vx = p.vx * friction
-        p.vy = p.vy + gravity
-        if p.rot ~= 0 then
-            p.img:setRotation(p.img:getRotation() + p.rot)
-        end
-    end
-end
 
 local function update_none()
     --
@@ -121,15 +85,15 @@ local function main_actionSuccess()
     score = score + 1
     soundSuccess:play(1)
 
-    addParticle(110, 220, math.random(-10, 10) / 10, math.random(-110, -85) / 10, math.random(-10, 10))
-    addParticle(110, 220, math.random(-65, -45) / 10, math.random(-80, -60) / 10, math.random(-30, -10))
-    addParticle(110, 220, math.random(45, 65) / 10, math.random(-80, -60) / 10, math.random(10, 30))
+    particles.add("images/star", 110, 220, math.random(-10, 10) / 10, math.random(-110, -85) / 10, math.random(-10, 10))
+    particles.add("images/star", 110, 220, math.random(-65, -45) / 10, math.random(-80, -60) / 10, math.random(-30, -10))
+    particles.add("images/star", 110, 220, math.random(45, 65) / 10, math.random(-80, -60) / 10, math.random(10, 30))
 
     if score > save.data.highscore[GAME_MODE.CRANKIT] then
         save.data.highscore[GAME_MODE.CRANKIT] = score
-        addParticle(290, 220, math.random(-10, 10) / 10, math.random(-110, -85) / 10, math.random(-10, 10))
-        addParticle(290, 220, math.random(-65, -45) / 10, math.random(-80, -60) / 10, math.random(-30, -10))
-        addParticle(290, 220, math.random(45, 65) / 10, math.random(-80, -60) / 10, math.random(10, 30))
+        particles.add("images/star", 290, 220, math.random(-10, 10) / 10, math.random(-110, -85) / 10, math.random(-10, 10))
+        particles.add("images/star", 290, 220, math.random(-65, -45) / 10, math.random(-80, -60) / 10, math.random(-30, -10))
+        particles.add("images/star", 290, 220, math.random(45, 65) / 10, math.random(-80, -60) / 10, math.random(10, 30))
     end
 end
 
@@ -176,7 +140,7 @@ local function render_main()
     end
 
     gfx.sprite.update()
-    updateParticles()
+    particles.update()
 
     gfx.setColor(gfx.kColorBlack)
     if (not actionDone) then
@@ -196,9 +160,6 @@ local function render_main()
         gfx.setFont(gfx.getSystemFont())
         local yPos = actions.renderDebugInfo()
         gfx.drawText(string.format("timer: %d", actionTimer.timeLeft), 2, yPos);
-        local count = 0
-        for _ in pairs(particles) do count = count + 1 end
-        gfx.drawText(string.format("particles: %d", count), 2, yPos+15);
         gfx.setFont(Statemachine.font)
     end
 
