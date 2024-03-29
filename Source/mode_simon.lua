@@ -60,7 +60,8 @@ local update_simon_action
 
 local buttonHandlers_simonDockContinue = {
     crankUndocked = function()
-        playdate.inputHandlers.pop()
+        playdate.inputHandlers.pop() -- pop buttonHandlers_simonDockContinue
+        playdate.inputHandlers.push(actions.buttonHandler)
         simonState = SIMON_STATE.INSTRUCTIONS
         simonStateChangeTimer:reset()
         simonStateChangeTimer:start()
@@ -82,9 +83,10 @@ local function startGame_simon()
     for i=1, SIMON_START_COUNT do
         table.insert(actionChain, actions.getValidActionCode(false, ACTION_CODES.CRANK_DOCK, false))
     end
-    actions.current = actionChain[1]
+    actions.current = nil
     if (playdate.isCrankDocked()) then
         simonState = SIMON_STATE.WAIT_FOR_UNDOCK
+        playdate.inputHandlers.pop() -- pop actions.buttonHandler
         playdate.inputHandlers.push(buttonHandlers_simonDockContinue, true)
         gfx.sprite.redrawBackground()
     else
@@ -98,8 +100,8 @@ end
 
 local buttonHandlers_simonLose = {
     AButtonDown = function()
-        playdate.inputHandlers.pop()
-        playdate.update = update_simon_show 
+        playdate.inputHandlers.pop() -- pop buttonHandlers_simonLose
+        playdate.update = update_simon_show
         startGame_simon()
     end
 }
@@ -123,7 +125,7 @@ local function actionSuccess_simon()
         table.insert(actionChain, actions.getValidActionCode(false))
         playdate.update = update_simon_show
         currIndex = 1
-        actions.current = actionChain[1]
+        actions.current = nil
         simonState = SIMON_STATE.SCORE_UP
         simonStateChangeTimer:reset()
         simonStateChangeTimer:start()
@@ -156,6 +158,7 @@ local function actionFail_simon()
     Statemachine.music:setSample(loseMusic)
     Statemachine.music:play(0)
     simonTimer:pause()
+    simonStateChangeTimer:pause()
     playdate.inputHandlers.push(buttonHandlers_simonLose, true)
     playdate.update = update_none
 end
@@ -178,7 +181,7 @@ local function simon_changeState()
         end
     elseif (simonState == SIMON_STATE.INSTRUCTIONS) then
         simonState = SIMON_STATE.SHOW
-        actions.setupActionGfxAndSound(actions.current, true)
+        actions.setupActionGfxAndSound(actionChain[currIndex], true)
     end
 end
 
@@ -211,11 +214,10 @@ end
 local function simon_showNextAction()
     if (currIndex < #actionChain) then
         currIndex = currIndex + 1
-        actions.current = actionChain[currIndex]
-        actions.setupActionGfxAndSound(actions.current, true)
+        actions.setupActionGfxAndSound(actionChain[currIndex], true)
     else
         simonState = SIMON_STATE.ACTION
-        playdate.update = update_simon_action 
+        playdate.update = update_simon_action
         currIndex = 1
         actions.current = actionChain[1]
         actions.setupActionGameplay(0, actions.current)
@@ -237,7 +239,7 @@ update_simon_show = function ()
 
     if (simonState ~= SIMON_STATE.SHOW) then goto render end
 
-    if (actions.data[actions.current].snd:isPlaying()) then goto render end
+    if (actions.data[actionChain[currIndex]].snd:isPlaying()) then goto render end
 
     if (not simonActionBlinkTimer.paused and simonActionBlinkTimer.timeLeft > 0) then return end
 
@@ -306,8 +308,10 @@ end
 function simon.setup()
     bgSprite = gfx.sprite.setBackgroundDrawingCallback(
         function( x, y, width, height )
-            if (simonState == SIMON_STATE.SHOW or actions.current == ACTION_CODES.LOSE) then
-                actions.data[actions.current].img:draw(0,0)
+            if actions.current == ACTION_CODES.LOSE then
+                actions.data[ACTION_CODES.LOSE].img:draw(0,0)
+            elseif (simonState == SIMON_STATE.SHOW) then
+                actions.data[actionChain[currIndex]].img:draw(0,0)
             elseif (simonState == SIMON_STATE.SCORE_UP) then
                 simonScoreImg:draw(0,0)
             elseif (simonState == SIMON_STATE.WAIT_FOR_UNDOCK) then
