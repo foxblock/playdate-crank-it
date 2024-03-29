@@ -5,6 +5,8 @@ local datastore <const> = playdate.datastore
 
 save.data = {
     SAVE_VERSION = 3,
+    -- keep space for all games, even the ones without highscore tracking!
+    -- this saves us from doing a bunch of if checks when dealing with this
     highscore = {0,0,0,0},
     settings = {
         musicOn = true,

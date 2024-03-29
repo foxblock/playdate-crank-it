@@ -48,6 +48,7 @@
 -- [X] Crane sound in settings
 -- [ ] Other sound effects: select game, change game in main menu, change settings, restart? 
 --     Individual select sounds per game (current select might fit simon well)
+-- [ ] Reset score (menu item? in settings?)
 
 
 import "CoreLibs/graphics"
@@ -174,9 +175,9 @@ end
 save.load()
 
 -- setup playdate menu
-local sytemMenu = playdate.getSystemMenu()
+local systemMenu = playdate.getSystemMenu()
 
-local goToMenuItem, _ = sytemMenu:addMenuItem("Main Menu", function()
+local goToMenuItem, _ = systemMenu:addMenuItem("Main Menu", function()
     if (Statemachine.cleanup ~= nil) then
         Statemachine.cleanup()
     end

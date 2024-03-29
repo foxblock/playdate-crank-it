@@ -130,6 +130,8 @@ local elements <const> = {
 
 
 local selectedGame = 1
+local CRANK_RESET_TRIGGER <const> = 360
+local crankToReset = 0
 
 
 local function drawMenuItem(item)
@@ -141,16 +143,6 @@ local function drawMenuItem(item)
         item.img:drawRotated(item.x, item.y, 0, item.scale:value())
     else
         item.img:drawCentered(item.x, item.y)
-    end
-end
-
-local function drawGameCard(gameIndex)
-    drawMenuItem(elements[gameIndex].logo)
-    drawMenuItem(elements[gameIndex].tagline)
-    drawMenuItem(elements[gameIndex].mascot)
-
-    if gameIndex ~= GAME_MODE.BOMB then
-        gfx.drawTextAligned("HIGHSCORE: "..save.data.highscore[selectedGame], 139, 118, kTextAlignment.center)
     end
 end
 
@@ -173,8 +165,6 @@ local buttonHandlers_title = {
         else
             selectedGame = selectedGame - 1
         end
-        gfx.fillRect(18, 0, 364, 149)
-        drawGameCard(selectedGame)
         gameChangeSound:play(1)
     end,
     
@@ -184,8 +174,6 @@ local buttonHandlers_title = {
         else
             selectedGame = selectedGame + 1
         end
-        gfx.fillRect(18, 0, 364, 149)
-        drawGameCard(selectedGame)
         gameChangeSound:play(1)
     end,
 
@@ -199,12 +187,51 @@ local buttonHandlers_title = {
         menu_cleanup()
         menu.callback(GAME_MODE.SETTINGS)
     end,
+
+    cranked = function(change, acceleratedChange)
+        if save.data.highscore[selectedGame] == 0 then
+            return
+        end
+
+        if crankToReset == 0 and change > 0 then
+            crankToReset = CRANK_RESET_TRIGGER * 0.05 -- to avoid flickering on start
+        else
+            crankToReset = crankToReset + change
+        end
+
+        if crankToReset >= CRANK_RESET_TRIGGER then
+            save.data.highscore[selectedGame] = 0
+            crankToReset = 0
+        elseif crankToReset < 0 then
+            crankToReset = 0
+        end
+    end,
 }
 
 function menu.update()
     gfx.setColor(gfx.kColorWhite)
     gfx.clear()
-    drawGameCard(selectedGame)
+
+    drawMenuItem(elements[selectedGame].logo)
+    drawMenuItem(elements[selectedGame].tagline)
+    drawMenuItem(elements[selectedGame].mascot)
+
+    if selectedGame ~= GAME_MODE.BOMB then
+        if crankToReset == 0 then
+            gfx.drawTextAligned("HIGHSCORE: "..save.data.highscore[selectedGame], 139, 118, kTextAlignment.center)
+        else
+            gfx.setColor(gfx.kColorBlack)
+            gfx.fillRect(139 - 76, 116, 152 * crankToReset / CRANK_RESET_TRIGGER, 22)
+
+            gfx.setImageDrawMode(gfx.kDrawModeNXOR)
+            gfx.drawTextAligned("RESETTING...", 139, 118, kTextAlignment.center)
+            gfx.setImageDrawMode(gfx.kDrawModeCopy)
+
+            -- floor to keep "integer" value
+            crankToReset = math.floor(crankToReset - 1)
+        end
+    end
+
     drawMenuItem(elements.btnArrowLeft)
     drawMenuItem(elements.btnArrowRight)
 

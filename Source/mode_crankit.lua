@@ -120,11 +120,11 @@ local function main_actionSuccess()
     actionDone = true
     score = score + 1
     soundSuccess:play(1)
-    
+
     addParticle(110, 220, math.random(-10, 10) / 10, math.random(-110, -85) / 10, math.random(-10, 10))
     addParticle(110, 220, math.random(-65, -45) / 10, math.random(-80, -60) / 10, math.random(-30, -10))
     addParticle(110, 220, math.random(45, 65) / 10, math.random(-80, -60) / 10, math.random(10, 30))
-    
+
     if score > save.data.highscore[GAME_MODE.CRANKIT] then
         save.data.highscore[GAME_MODE.CRANKIT] = score
         addParticle(290, 220, math.random(-10, 10) / 10, math.random(-110, -85) / 10, math.random(-10, 10))
