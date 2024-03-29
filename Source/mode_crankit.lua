@@ -60,7 +60,7 @@ local function main_startGame(skipGenNewAction)
     actions.setupActionGfxAndSound(actions.current)
     actionDone = false
     actionTransitionState = -1
-    actionTransitionTimer:pause()
+    if not actionTransitionTimer.paused then actionTransitionTimer:pause() end
     actionTimer.duration = actions.data[actions.current].time[speedLevel]
     actionTimer:reset()
     actionTimer:start()
@@ -105,7 +105,7 @@ local function main_actionFail()
         save.write()
     end
     actions.current = ACTION_CODES.LOSE
-    actionTimer:pause()
+    if not actionTimer.paused then actionTimer:pause() end
     gfx.sprite.redrawBackground()
     gfx.sprite.update()
     gfx.drawTextAligned('SCORE: '..score, 200, 220, kTextAlignment.center)
@@ -260,7 +260,6 @@ function crankit.setup()
     Statemachine.cleanup = cleanup_main
     actions.succesFnc = main_actionSuccess
     actions.failFnc = main_actionFail
-    Statemachine.reactToGlobalEvents = true
     particles.setDefaultPhysics()
 
     -- NOTE: This assumes pre_setup_main_for_transition was called before

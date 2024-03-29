@@ -57,6 +57,7 @@ local bgSprite = nil
 
 local update_simon_show
 local update_simon_action
+local startGame_simon
 
 local buttonHandlers_simonDockContinue = {
     crankUndocked = function()
@@ -69,11 +70,19 @@ local buttonHandlers_simonDockContinue = {
     end
 }
 
+local buttonHandlers_simonLose = {
+    AButtonDown = function()
+        playdate.inputHandlers.pop() -- pop buttonHandlers_simonLose
+        playdate.update = update_simon_show
+        startGame_simon()
+    end
+}
+
 local function update_none()
     --
 end
 
-local function startGame_simon()
+startGame_simon = function()
     score_simon = 0
     currIndex = 1
     Statemachine.gameShouldFailAfterResume = false
@@ -97,14 +106,6 @@ local function startGame_simon()
     end
     Statemachine.music:stop()
 end
-
-local buttonHandlers_simonLose = {
-    AButtonDown = function()
-        playdate.inputHandlers.pop() -- pop buttonHandlers_simonLose
-        playdate.update = update_simon_show
-        startGame_simon()
-    end
-}
 
 local function actionSuccess_simon()
     if (simonState ~= SIMON_STATE.ACTION) then return end
@@ -167,8 +168,10 @@ local function actionFail_simon()
     Statemachine.music:stop()
     Statemachine.music:setSample(loseMusic)
     Statemachine.music:play(0)
-    simonTimer:pause()
-    simonStateChangeTimer:pause()
+    -- waiting for this to be fixed: https://devforum.play.date/t/pausing-a-timer-multiple-times-causes-inconsistent-behavior/16854/2
+    if not simonTimer.paused then simonTimer:pause() end
+    if not simonStateChangeTimer.paused then simonStateChangeTimer:pause() end
+    if not simonActionBlinkTimer.paused then simonActionBlinkTimer:pause() end
     playdate.inputHandlers.push(buttonHandlers_simonLose, true)
     playdate.update = update_none
 end
@@ -177,10 +180,11 @@ local function actionTimerEnd()
     actionFail_simon()
 end
 
-local function simon_changeState()
+local function simon_changeStateTimerEnd()
     if (simonState == SIMON_STATE.SCORE_UP) then
         if (playdate.isCrankDocked()) then
             simonState = SIMON_STATE.WAIT_FOR_UNDOCK
+            playdate.inputHandlers.pop() -- pop actions.buttonHandler
             playdate.inputHandlers.push(buttonHandlers_simonDockContinue, true)
             gfx.sprite.redrawBackground()
         else
@@ -199,9 +203,7 @@ local function render_simon()
     particles.update()
     gfx.sprite.update()
 
-    if (simonState ~= SIMON_STATE.ACTION) then
-        return;
-    end
+    if (simonState ~= SIMON_STATE.ACTION) then return end
 
     gfx.setColor(gfx.kColorBlack)
     if (simonTimer.timeLeft <= SIMON_TIMER_SHOW_MS) then
@@ -223,6 +225,8 @@ local function render_simon()
 end
 
 local function simon_showNextAction()
+    if simonState ~= SIMON_STATE.SHOW then return end
+
     if (currIndex < #actionChain) then
         currIndex = currIndex + 1
         actions.setupActionGfxAndSound(actionChain[currIndex], true)
@@ -309,6 +313,7 @@ local function cleanup_simon()
     mic.stopListening()
     simonTimer:remove()
     simonStateChangeTimer:remove()
+    simonActionBlinkTimer:remove()
     simonSampleplayer:stop()
     Statemachine.music:stop()
     -- pop twice to remove temp handler from game over or undock request
@@ -342,11 +347,10 @@ function simon.setup()
     Statemachine.cleanup = cleanup_simon
     actions.succesFnc = actionSuccess_simon
     actions.failFnc = actionFail_simon
-    Statemachine.reactToGlobalEvents = true
     simonTimer = playdate.timer.new(SIMON_TIMER_DURATION_MS, actionTimerEnd)
     simonTimer.discardOnCompletion = false
     simonTimer:pause()
-    simonStateChangeTimer = playdate.timer.new(SIMON_TRANSITION_FRAME_MS, simon_changeState)
+    simonStateChangeTimer = playdate.timer.new(SIMON_TRANSITION_FRAME_MS, simon_changeStateTimerEnd)
     simonStateChangeTimer.discardOnCompletion = false;
     simonStateChangeTimer:pause()
     simonActionBlinkTimer = playdate.timer.new(SIMON_ACTION_BLINK_MS, simon_showNextAction)

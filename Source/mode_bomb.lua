@@ -51,11 +51,11 @@ local function main_startGame(skipGenNewAction)
     actionDone = false
     actionPassCounter = 0
     actionTransitionState = -1
-    actionTransitionTimer:pause()
+    if not actionTransitionTimer.paused then actionTransitionTimer:pause() end
     bombTimer.duration = save.data.settings.bombSeconds * math.random(8, 12) * 100
     bombTimer:reset()
     bombTimer:start()
-    actionTimer:pause()
+    if not actionTimer.paused then actionTimer:pause() end
 
     Statemachine.music:stop()
     Statemachine.music:setSample(bgMusic)
@@ -82,8 +82,8 @@ local function main_actionFail()
     if (actions.current == ACTION_CODES.LOSE) then return end
 
     actions.current = ACTION_CODES.LOSE
-    actionTimer:pause()
-    bombTimer:pause()
+    if not actionTimer.paused then actionTimer:pause() end
+    if not bombTimer.paused then bombTimer:pause() end
     gfx.sprite.redrawBackground()
     gfx.sprite.update()
     soundLose:play(1)
@@ -220,7 +220,6 @@ function bomb.setup()
     Statemachine.cleanup = cleanup_main
     actions.succesFnc = main_actionSuccess
     actions.failFnc = main_actionFail
-    Statemachine.reactToGlobalEvents = true
 
     -- NOTE: This assumes pre_setup_main_for_transition was called before
     main_startGame(true)

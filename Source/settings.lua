@@ -191,7 +191,6 @@ function settings.setup()
     playdate.inputHandlers.push(settings_buttonHandler)
     playdate.update = settings_update
     Statemachine.cleanup = settings_cleanup
-    Statemachine.reactToGlobalEvents = false
 end
 
 -- actual data and structure of settings defined in savegame.lua
