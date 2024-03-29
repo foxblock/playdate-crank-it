@@ -5,6 +5,7 @@ import "CoreLibs/graphics"
 import "CoreLibs/sprites"
 import "CoreLibs/timer"
 import "game_actions"
+import "particles"
 
 local gfx <const> = playdate.graphics
 local snd <const> = playdate.sound.sampleplayer
@@ -120,13 +121,19 @@ local function actionSuccess_simon()
         score_simon = score_simon + 1
         simonTimer:pause()
         table.insert(actionChain, actions.getValidActionCode(false))
-        playdate.update = update_simon_show 
+        playdate.update = update_simon_show
         currIndex = 1
         actions.current = actionChain[1]
         simonState = SIMON_STATE.SCORE_UP
         simonStateChangeTimer:reset()
         simonStateChangeTimer:start()
         gfx.sprite.redrawBackground()
+        particles.add("images/plusone", 68, 120,  0, -5, 0)
+        particles.add("images/plusone", 68, 120,  4, -3, 0)
+        particles.add("images/plusone", 68, 120,  4,  3, 0)
+        particles.add("images/plusone", 68, 120,  0,  5, 0)
+        particles.add("images/plusone", 68, 120, -4,  3, 0)
+        particles.add("images/plusone", 68, 120, -4, -3, 0)
         -- stop microphone now, otherwise it is only reset after all actions have been shown
         mic.stopListening()
     end
@@ -176,6 +183,7 @@ local function simon_changeState()
 end
 
 local function render_simon()
+    particles.update()
     gfx.sprite.update()
 
     if (simonState ~= SIMON_STATE.ACTION) then
@@ -315,7 +323,7 @@ function simon.setup()
     gfx.setColor(gfx.kColorBlack)
     playdate.startAccelerometer()
     playdate.inputHandlers.push(actions.buttonHandler)
-    playdate.update = update_simon_show 
+    playdate.update = update_simon_show
     Statemachine.cleanup = cleanup_simon
     actions.succesFnc = actionSuccess_simon
     actions.failFnc = actionFail_simon
@@ -329,6 +337,7 @@ function simon.setup()
     simonActionBlinkTimer = playdate.timer.new(SIMON_ACTION_BLINK_MS, simon_showNextAction)
     simonActionBlinkTimer.discardOnCompletion = false;
     simonActionBlinkTimer:pause()
+    particles.setPhysics(0, 0, 1.1, 1.1)
 
     startGame_simon()
 end
