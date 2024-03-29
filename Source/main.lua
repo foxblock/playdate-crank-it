@@ -26,7 +26,7 @@
 -- [X] lose on lock
 -- [ ] game mode: last one cranking (versus, each player gets a few actions in sequence)
 -- [X] game mode: simon cranks (solo, you get a sequence and have to do it afterwards)
--- [ ] game mode: crank the bomb (party, you do an action as fast as possible then pass, bomb explodes after random time)
+-- [X] game mode: crank the bomb (party, you do an action as fast as possible then pass, bomb explodes after random time)
 -- [X] background animations for actions
 -- [X] sound for actions
 -- [X] background music
@@ -46,9 +46,9 @@
 -- [X] Fix being able to skip transitions in splash -> error
 -- [ ] Main menu music
 -- [X] Crane sound in settings
--- [ ] Other sound effects: select game, change game in main menu, change settings, restart? 
+-- [ ] Other sound effects: select game, change game in main menu, change settings, restart?, reset scores
 --     Individual select sounds per game (current select might fit simon well)
--- [ ] Reset score (menu item? in settings?)
+-- [X] Reset score (menu item? in settings?)
 
 
 import "CoreLibs/graphics"

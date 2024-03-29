@@ -193,7 +193,7 @@ local buttonHandlers_title = {
             return
         end
 
-        if crankToReset == 0 and change > 0 then
+        if crankToReset <= 0 and change > 0 then
             crankToReset = CRANK_RESET_TRIGGER * 0.05 -- to avoid flickering on start
         else
             crankToReset = crankToReset + change
@@ -201,6 +201,7 @@ local buttonHandlers_title = {
 
         if crankToReset >= CRANK_RESET_TRIGGER then
             save.data.highscore[selectedGame] = 0
+            save.write()
             crankToReset = 0
         elseif crankToReset < 0 then
             crankToReset = 0
@@ -217,7 +218,7 @@ function menu.update()
     drawMenuItem(elements[selectedGame].mascot)
 
     if selectedGame ~= GAME_MODE.BOMB then
-        if crankToReset == 0 then
+        if crankToReset <= 0 then
             gfx.drawTextAligned("HIGHSCORE: "..save.data.highscore[selectedGame], 139, 118, kTextAlignment.center)
         else
             gfx.setColor(gfx.kColorBlack)
@@ -228,7 +229,7 @@ function menu.update()
             gfx.setImageDrawMode(gfx.kDrawModeCopy)
 
             -- floor to keep "integer" value
-            crankToReset = math.floor(crankToReset - 1)
+            crankToReset = math.floor(crankToReset - 2)
         end
     end
 
