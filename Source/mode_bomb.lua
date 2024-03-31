@@ -59,10 +59,8 @@ local fingerFlip = {
 
 
 local actionDone = false
-local actionTransitionState = -1 -- -1 not started, 0 running, 1 done
 local actionTimer
 local bombTimer
-local actionTransitionTimer
 local lastAnimationFrame = 1
 local actionPassCounter = 0
 local fuseState = 1
@@ -91,8 +89,6 @@ local function main_startGame(skipGenNewAction)
     actions.setupActionGfxAndSound(actions.current)
     actionDone = false
     actionPassCounter = 0
-    actionTransitionState = -1
-    if not actionTransitionTimer.paused then actionTransitionTimer:pause() end
     bombTimer.duration = save.data.settings.bombSeconds * math.random(8, 12) * 100
     bombTimer:reset()
     bombTimer:start()
@@ -138,16 +134,11 @@ end
 local function actionTimerEnd()
     if (actions.current == ACTION_CODES.PASS_BOMB) then
         actionDone = true
-        actionTransitionState = 1
         bombTimer:start()
         return
     end
     -- should never end down here
     main_actionFail()
-end
-
-local function actionTransitionEnd()
-    actionTransitionState = 1
 end
 
 local function render_main()
@@ -214,12 +205,7 @@ update_main = function ()
 
     -- other actions are handled in callbacks
 
-    if (actionDone and actionTransitionState == -1) then
-        actionTransitionTimer:reset()
-        actionTransitionTimer:start()
-        actionTimer:pause()
-        actionTransitionState = 0
-    elseif (actionDone and actionTransitionState == 1) then
+    if actionDone then
         local lastAction = actions.current
         if actionPassCounter == ACTIONS_PER_PASS then
             actions.current = ACTION_CODES.PASS_BOMB
@@ -233,7 +219,6 @@ update_main = function ()
         lastAnimationFrame = 1
 
         actionDone = false
-        actionTransitionState = -1
         if actions.current == ACTION_CODES.PASS_BOMB then
             actionTimer.duration = actions.data[ACTION_CODES.PASS_BOMB].time[1]
             actionTimer:reset()
@@ -250,7 +235,6 @@ local function cleanup_main()
     playdate.stopAccelerometer()
     mic.stopListening()
     actionTimer:remove()
-    actionTransitionTimer:remove()
     bombTimer:remove()
     Statemachine.music:stop()
     -- pop twice to remove temp input handler from game over screen
@@ -275,9 +259,6 @@ function bomb.setup()
     actionTimer.discardOnCompletion = false
     bombTimer = playdate.timer.new(100, main_actionFail)
     bombTimer.discardOnCompletion = false
-    actionTransitionTimer = playdate.timer.new(TRANSITION_TIME_MS, actionTransitionEnd)
-    actionTransitionTimer.discardOnCompletion = false
-    actionTransitionTimer:pause()
 
     playdate.update = update_main
     Statemachine.cleanup = cleanup_main
