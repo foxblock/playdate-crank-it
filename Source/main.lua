@@ -19,7 +19,7 @@
 -- woosh.wav: https://freesound.org/people/Vilkas_Sound/sounds/460476/
 -- tick.wav: https://freesound.org/people/MrOwn1/sounds/110314/
 -- reset_score.wav: https://freesound.org/people/steeltowngaming/sounds/537739/
--- game change.wav: https://freesound.org/people/F.M.Audio/sounds/560330/
+-- menu_game_change.wav: https://freesound.org/people/F.M.Audio/sounds/560330/
 
 ------ TODO
 -- [X] action: pass to other player
@@ -45,7 +45,7 @@
 -- [x] short transition/swipe/... between actions in simon mode -> helps split same actions when playing without sound
 -- [ ] Check color table: needs inverted (compared to b/w), need raw b/w version?, correct colors compared to screenshot/video?
 -- [X] Add credits to splash screen
--- [ ] Add transition sound effects
+-- [ ] Add transition sound effects -> still not happy with current swoosh
 -- [X] Fix being able to skip transitions in splash -> error
 -- [ ] Main menu music
 -- [X] Crane sound in settings

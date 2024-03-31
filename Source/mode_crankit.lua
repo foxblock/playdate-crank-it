@@ -87,15 +87,15 @@ local function main_actionSuccess()
     soundSuccess:play(1)
 
     particles.add("images/plusone", 110, 220, math.random(-10, 10) / 10, math.random(-110, -85) / 10, math.random(-10, 10))
-    particles.add("images/plusone", 110, 220, math.random(-65, -45) / 10, math.random(-80, -60) / 10, math.random(-30, -10))
-    particles.add("images/plusone", 110, 220, math.random(45, 65) / 10, math.random(-80, -60) / 10, math.random(10, 30))
+    particles.add("images/plusone", 110, 220, math.random(-65, -45) / 10, math.random(-80, -60) / 10, math.random(-30, -5))
+    particles.add("images/plusone", 110, 220, math.random(45, 65) / 10, math.random(-80, -60) / 10, math.random(5, 30))
 
     if score > save.data.highscore[GAME_MODE.CRANKIT] then
         save.data.highscore[GAME_MODE.CRANKIT] = score
         newHighscore = true
         particles.add("images/star", 290, 220, math.random(-10, 10) / 10, math.random(-110, -85) / 10, math.random(-10, 10))
-        particles.add("images/star", 290, 220, math.random(-65, -45) / 10, math.random(-80, -60) / 10, math.random(-30, -10))
-        particles.add("images/star", 290, 220, math.random(45, 65) / 10, math.random(-80, -60) / 10, math.random(10, 30))
+        particles.add("images/star", 290, 220, math.random(-65, -45) / 10, math.random(-80, -60) / 10, math.random(-30, -5))
+        particles.add("images/star", 290, 220, math.random(45, 65) / 10, math.random(-80, -60) / 10, math.random(5, 30))
     end
 end
 

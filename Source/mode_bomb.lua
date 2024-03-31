@@ -4,12 +4,15 @@ bomb = {}  -- create a table to represent the module
 import "CoreLibs/graphics"
 import "CoreLibs/sprites"
 import "CoreLibs/timer"
+import "CoreLibs/animator"
+import "CoreLibs/animation"
 import "game_actions"
 
 local gfx <const> = playdate.graphics
 local snd <const> = playdate.sound.sampleplayer
 local sample <const> = playdate.sound.sample
 local mic <const> = playdate.sound.micinput
+local easings <const> = playdate.easingFunctions
 local ACTION_CODES <const> = actions.codes
 
 local SCREEN_WIDTH <const> = playdate.display.getWidth()
@@ -23,6 +26,37 @@ local loseMusic <const> = sample.new("music/lose")
 local soundSuccess = snd.new("sounds/success")
 local bgSprite = nil
 
+local bombImg = gfx.image.new("images/bomb/bomb")
+local thumb = gfx.image.new("images/bomb/thumb")
+local fingers = gfx.image.new("images/bomb/fingers")
+local fuse = gfx.imagetable.new("images/bomb/fuse")
+local sparkAni = gfx.animation.loop.new(100, gfx.imagetable.new("images/bomb/spark"), true)
+local pulseAni = nil
+local pulseAniParams = {
+    [1] = { min = 0.9, max = 1.1, dur = 1000 },
+    [2] = { min = 0.85, max = 1.15, dur = 500 },
+    [3] = { min = 0.8, max = 1.2, dur = 250 },
+}
+local offset = {
+    [1] = { x = 34, y = 101 },
+    [2] = { x = 117, y = 102 },
+    [3] = { x = 223, y = 102 },
+    [4] = { x = 268, y = 101 },
+    [5] = { x = 268, y = 101 },
+}
+local sparkOffset = {
+    [1] = { x = 84, y = -4 },
+    [2] = { x = 56, y = 1 },
+    [3] = { x = 29, y = 12 },
+}
+local fingerFlip = {
+    [1] = -1,
+    [2] = -1,
+    [3] = 1,
+    [4] = 1,
+    [5] = 1,
+}
+
 
 local actionDone = false
 local actionTransitionState = -1 -- -1 not started, 0 running, 1 done
@@ -31,12 +65,20 @@ local bombTimer
 local actionTransitionTimer
 local lastAnimationFrame = 1
 local actionPassCounter = 0
+local fuseState = 1
 
 local update_main
 
 
 local function update_none()
     --
+end
+
+local function setFuseState(i)
+    fuseState = i
+    pulseAni = gfx.animator.new(pulseAniParams[i].dur, pulseAniParams[i].min, pulseAniParams[i].max, easings.inOutSine)
+    pulseAni.repeatCount = -1
+    pulseAni.reverses = true
 end
 
 local function main_startGame(skipGenNewAction)
@@ -54,6 +96,7 @@ local function main_startGame(skipGenNewAction)
     bombTimer.duration = save.data.settings.bombSeconds * math.random(8, 12) * 100
     bombTimer:reset()
     bombTimer:start()
+    setFuseState(1)
     if not actionTimer.paused then actionTimer:pause() end
 
     Statemachine.music:stop()
@@ -93,7 +136,7 @@ local function main_actionFail()
 end
 
 local function actionTimerEnd()
-    if (actions.current == ACTION_CODES.PASS_PLAYER) then
+    if (actions.current == ACTION_CODES.PASS_BOMB) then
         actionDone = true
         actionTransitionState = 1
         bombTimer:start()
@@ -115,6 +158,24 @@ local function render_main()
 
     gfx.sprite.update()
 
+    if actions.current == ACTION_CODES.PASS_BOMB then
+        bombImg:drawRotated(offset[lastAnimationFrame].x + 46, 
+            offset[lastAnimationFrame].y + 77, 
+            0, 
+            2 - pulseAni:currentValue(), 
+            pulseAni:currentValue())
+        thumb:drawCentered(offset[lastAnimationFrame].x + 46, 
+            offset[lastAnimationFrame].y + 77, 
+            fingerFlip[lastAnimationFrame] > 0 and gfx.kImageFlippedX or gfx.kImageUnflipped)
+        fingers:drawCentered(offset[lastAnimationFrame].x + 46 + 29 * (pulseAni:currentValue() - 1) * fingerFlip[lastAnimationFrame], 
+            offset[lastAnimationFrame].y + 77, 
+            fingerFlip[lastAnimationFrame] > 0 and gfx.kImageFlippedX or gfx.kImageUnflipped)
+        fuse:drawImage(fuseState, offset[lastAnimationFrame].x + 17, 
+            offset[lastAnimationFrame].y - 33 * (pulseAni:currentValue() - 1))
+        sparkAni:draw(offset[lastAnimationFrame].x + sparkOffset[fuseState].x, 
+            offset[lastAnimationFrame].y + sparkOffset[fuseState].y - 33 * (pulseAni:currentValue() - 1))
+    end
+
     gfx.setImageDrawMode(gfx.kDrawModeNXOR)
 
     if (save.data.settings.debugOn) then
@@ -130,6 +191,12 @@ end
 
 update_main = function ()
     playdate.timer.updateTimers()
+
+    if fuseState < 2 and bombTimer.timeLeft < bombTimer.duration * 0.5 then
+        setFuseState(2)
+    elseif fuseState < 3 and bombTimer.timeLeft < bombTimer.duration * 0.1 then
+        setFuseState(3)
+    end
 
     local micResult = actions.checkMic()
     if (micResult == 1) then
@@ -155,7 +222,7 @@ update_main = function ()
     elseif (actionDone and actionTransitionState == 1) then
         local lastAction = actions.current
         if actionPassCounter == ACTIONS_PER_PASS then
-            actions.current = ACTION_CODES.PASS_PLAYER
+            actions.current = ACTION_CODES.PASS_BOMB
             actionPassCounter = 0
         else
             actions.current = actions.getValidActionCode(false, lastAction)
@@ -167,8 +234,8 @@ update_main = function ()
 
         actionDone = false
         actionTransitionState = -1
-        if actions.current == ACTION_CODES.PASS_PLAYER then
-            actionTimer.duration = actions.data[ACTION_CODES.PASS_PLAYER].time[3]
+        if actions.current == ACTION_CODES.PASS_BOMB then
+            actionTimer.duration = actions.data[ACTION_CODES.PASS_BOMB].time[1]
             actionTimer:reset()
             actionTimer:start()
             bombTimer:pause()
@@ -194,8 +261,6 @@ end
 function bomb.setup()
     bgSprite = gfx.sprite.setBackgroundDrawingCallback(
         function( x, y, width, height )
-            -- x,y,width,height is the updated area in sprite-local coordinates
-            -- The clip rect is already set to this area, so we don't need to set it ourselves
             actions.data[actions.current].img:draw(0,0)
         end
     )

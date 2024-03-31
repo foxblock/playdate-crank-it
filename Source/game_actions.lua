@@ -34,7 +34,7 @@ actions.current = nil
 
 actions.codes = {
     HIGHSCORE = -1,
-    LOSE = 0,
+    LOSE = 0, -- lose/end states above this line (will also no be selected automatically)
     DIRECTION = 1,
     BUTTON = 2,
     MICROPHONE = 3,
@@ -43,8 +43,9 @@ actions.codes = {
     CRANK_UNDOCK = 6,
     CRANK_DOCK = 7,
     CRANKED = 8,
-    EOL = 9, ----
+    EOL = 9, -- everything below this line will not be automatically selected
     SPEED_UP = 10,
+    PASS_BOMB = 11,
 }
 
 -- TODO: Change snd entries from sampleplayer to sample and use one global player for all action sounds
@@ -63,7 +64,7 @@ actions.data = {
         time = TIME_FAST,
         snd = snd.new("sounds/move"),
         ani = gfx.imagetable.new("images/actions/move"),
-        staticFrame = 2
+        staticFrame = 2, -- for simon mode
     },
     [actions.codes.BUTTON] = {
         time = TIME_FAST,
@@ -108,7 +109,13 @@ actions.data = {
         time = { 2000, 2000, 2000, 2000, 2000 },
         snd = snd.new("sounds/speed"),
         img = gfx.image.new("images/actions/speed"),
-    }
+    },
+    [actions.codes.PASS_BOMB] = {
+        time = { 2500, 2500, 2500, 2500, 2500 },
+        snd = snd.new("sounds/pass"),
+        ani = gfx.imagetable.new("images/bomb/pass"),
+        staticFrame = 2
+    },
 }
 
 actions.buttonHandler = {
