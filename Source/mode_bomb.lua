@@ -57,6 +57,10 @@ local fingerFlip = {
     [5] = 1,
 }
 
+local explodeImg = gfx.imagetable.new("images/bomb/explode")
+local explodeAni = gfx.animator.new(300, 1.1, 2.9)
+explodeAni.repeatCount = 4
+local lastExplodeFrame = 1
 
 local actionDone = false
 local actionTimer
@@ -70,6 +74,21 @@ local update_main
 
 local function update_none()
     --
+end
+
+local function update_bomb_fail()
+    if explodeAni:ended() then
+        gfx.sprite.update()
+        playdate.update = update_none
+        return
+    end
+
+    local curFrame = math.floor(explodeAni:currentValue())
+    if curFrame ~= lastExplodeFrame then
+        gfx.sprite.update()
+        explodeImg:drawImage(curFrame, 1, 7)
+        lastExplodeFrame = curFrame
+    end
 end
 
 local function setFuseState(i)
@@ -117,9 +136,9 @@ local function main_actionSuccess()
 end
 
 local function main_actionFail()
-    if (actions.current == ACTION_CODES.LOSE) then return end
+    if (actions.current == ACTION_CODES.LOSE_BOMB) then return end
 
-    actions.current = ACTION_CODES.LOSE
+    actions.current = ACTION_CODES.LOSE_BOMB
     if not actionTimer.paused then actionTimer:pause() end
     if not bombTimer.paused then bombTimer:pause() end
     actions.setupActionGfxAndSound(actions.current)
@@ -128,7 +147,9 @@ local function main_actionFail()
     Statemachine.music:setSample(loseMusic)
     Statemachine.music:play(0)
     playdate.inputHandlers.push(main_buttonsLose)
-    playdate.update = update_none
+    playdate.update = update_bomb_fail
+    explodeAni:reset()
+    lastExplodeFrame = 0
 end
 
 local function actionTimerEnd()
@@ -265,7 +286,7 @@ function bomb.setup()
     actions.succesFnc = main_actionSuccess
     actions.failFnc = main_actionFail
 
-    -- NOTE: This assumes pre_setup_main_for_transition was called before
+    -- NOTE: This assumes pre_setup_for_transition was called before
     main_startGame(true)
 end
 

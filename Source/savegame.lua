@@ -13,7 +13,7 @@ save.data = {
         allowMic = true,
         allowTilt = true,
         allowPass = true,
-        bombSeconds = 60,
+        bombSeconds = 30,
         debugOn = false,
     }
 }
@@ -26,7 +26,10 @@ save.settingsMetadata = {
     { k="allowMic", s="SHOUT IT" },
     { k="allowTilt", s="TILT IT" },
     { k="allowPass", s="PASS IT" },
-    { k="bombSeconds", s="BOMB TIME", optionIndex=0, options={ 30, 60, 90, 120, 180 }, optionsStr={ "30 S", "1 MIN", "90 S", "2 MIN", "3 MIN" } },
+    { k="bombSeconds", s="BOMB TIME",
+        options=   {     15,     23,     30,     42,      60,     90,     120 },
+        optionsStr={ "15 S", "23 S", "30 S", "42 S", "1 MIN", "90 S", "2 MIN" } 
+    },
     { k="debugOn", s="DEBUG" },
     -- { k="test", s="TEST", options={ 10, -10, 20, 0, 500, 1e7 } },
 }
@@ -76,7 +79,7 @@ function save.load()
 
     for _,v in ipairs(save.settingsMetadata) do
         if v.options == nil then goto continue end
-        
+
         v.optionIndex = indexInArray(v.options, save.data.settings[v.k])
         -- Fix invalid values (not defined in options list)
         if v.optionIndex == 0 then

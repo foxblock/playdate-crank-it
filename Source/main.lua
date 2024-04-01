@@ -20,6 +20,7 @@
 -- tick.wav: https://freesound.org/people/MrOwn1/sounds/110314/
 -- reset_score.wav: https://freesound.org/people/steeltowngaming/sounds/537739/
 -- menu_game_change.wav: https://freesound.org/people/F.M.Audio/sounds/560330/
+-- explode.wav: https://freesound.org/people/DeltaCode/sounds/667660/
 
 ------ TODO
 -- [X] action: pass to other player
@@ -54,6 +55,7 @@
 -- [X] Reset score (menu item? in settings?)
 -- [X] new highscore screen and sound
 -- [ ] new highscore music
+-- [X] bomb explode sound for lose
 
 import "CoreLibs/graphics"
 
@@ -132,16 +134,16 @@ end
 
 ------ MENU
 
-local function menu_result(optionIndex)
-    if (optionIndex == GAME_MODE.CRANKIT) then
+local function menu_result(targetScene)
+    if (targetScene == GAME_MODE.CRANKIT) then
         crankit.pre_setup_for_transition()
         transition.setup(crankit.setup, crankit.render_for_transition)
-    elseif (optionIndex == GAME_MODE.SIMON) then
+    elseif (targetScene == GAME_MODE.SIMON) then
         transition.setup(simon.setup, simon.render_for_transition)
-    elseif (optionIndex == GAME_MODE.BOMB) then
+    elseif (targetScene == GAME_MODE.BOMB) then
         bomb.pre_setup_for_transition()
         transition.setup(bomb.setup, bomb.render_for_transition)
-    elseif (optionIndex == GAME_MODE.SETTINGS) then
+    elseif (targetScene == GAME_MODE.SETTINGS) then
         copyTable(settings.data, save.data.settings)
         transition.setup(settings.setup, settings.render)
     end

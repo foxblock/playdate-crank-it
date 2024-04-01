@@ -33,6 +33,7 @@ actions.failFnc = nil
 actions.current = nil
 
 actions.codes = {
+    LOSE_BOMB = -2,
     HIGHSCORE = -1,
     LOSE = 0, -- lose/end states above this line (will also no be selected automatically)
     DIRECTION = 1,
@@ -50,6 +51,11 @@ actions.codes = {
 
 -- TODO: Change snd entries from sampleplayer to sample and use one global player for all action sounds
 actions.data = {
+    [actions.codes.LOSE_BOMB] = {
+        time = TIME_NORMAL,
+        snd = snd.new("sounds/explosion"),
+        img = gfx.image.new("images/actions/explode"),
+    },
     [actions.codes.HIGHSCORE] = {
         time = TIME_NORMAL,
         snd = snd.new("sounds/highscore"),
