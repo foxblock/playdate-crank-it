@@ -59,7 +59,7 @@ actions.data = {
     [actions.codes.HIGHSCORE] = {
         time = TIME_NORMAL,
         snd = snd.new("sounds/highscore"),
-        img = gfx.image.new("images/actions/highscore"),
+        ani = gfx.imagetable.new("images/actions/highscore"),
     },
     [actions.codes.LOSE] = {
         time = TIME_NORMAL,

@@ -15,7 +15,7 @@
 -- Sound Credits:
 -- voice: https://ttsfree.com/ - English (US), Jenny
 -- success.wav: https://freesound.org/people/rhodesmas/sounds/342750/
--- crane_move.wav: https://freesound.org/people/DCSFX/sounds/366123/
+-- crane_move.wav: https://freesound.org/people/DCSFX/sounds/366123/ (NC!)
 -- woosh.wav: https://freesound.org/people/Vilkas_Sound/sounds/460476/
 -- tick.wav: https://freesound.org/people/MrOwn1/sounds/110314/
 -- reset_score.wav: https://freesound.org/people/steeltowngaming/sounds/537739/
@@ -56,6 +56,11 @@
 -- [X] new highscore screen and sound
 -- [ ] new highscore music
 -- [X] bomb explode sound for lose
+-- [ ] random stars from outside on the highscore screen (partiocle system -> deadzone around screen where particles are not removed = size of particle * 1.5)
+-- [ ] highscore screen score dependant? (>30 with animation, >50 with stars -> simon values?)
+-- [ ] tear particles on lose screen
+-- [ ] no "new highscore" stars on high=0? (hide highscore as well)
+-- [ ] try different music in main menu, possible tracks in array, up/down to select one -> play on Playdate
 
 import "CoreLibs/graphics"
 

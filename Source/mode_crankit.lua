@@ -44,8 +44,15 @@ local lastAnimationFrame = 1
 local update_main
 
 
-local function update_none()
-    --
+local function update_fail()
+    if (actions.data[actions.current].ani ~= nil and lastAnimationFrame ~= actions.data[actions.current].img.frame) then
+        lastAnimationFrame = actions.data[actions.current].img.frame
+        gfx.sprite.redrawBackground()
+    end
+    gfx.sprite.update()
+    gfx.setImageDrawMode(gfx.kDrawModeNXOR)
+    gfx.drawTextAligned('SCORE: '..score, 200, 220, kTextAlignment.center)
+    gfx.setImageDrawMode(gfx.kDrawModeCopy)
 end
 
 local function main_startGame(skipGenNewAction)
@@ -116,7 +123,7 @@ local function main_actionFail()
     Statemachine.music:setSample(loseMusic)
     Statemachine.music:play(0)
     playdate.inputHandlers.push(main_buttonsLose)
-    playdate.update = update_none
+    playdate.update = update_fail
 end
 
 local function actionTimerEnd()
