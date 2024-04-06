@@ -38,6 +38,7 @@ local SIMON_STATE <const> = {
 local actionChain = {}
 local score_simon = 0
 local newHighscore = false
+local hideFirstHighscore = false
 local currIndex = 1
 local simonTimer
 
@@ -132,6 +133,7 @@ end
 startGame_simon = function()
     score_simon = 0
     newHighscore = false
+    hideFirstHighscore = save.data.highscore[GAME_MODE.SIMON] == 0
     currIndex = 1
     Statemachine.gameShouldFailAfterResume = false
 
@@ -188,12 +190,14 @@ local function actionSuccess_simon()
         if score_simon > save.data.highscore[GAME_MODE.SIMON] then
             save.data.highscore[GAME_MODE.SIMON] = score_simon
             newHighscore = true
-            particles.add("images/star", 68, 120,  5  ,  0   , 0)
-            particles.add("images/star", 68, 120,  2.5,  4.33, 0)
-            particles.add("images/star", 68, 120, -2.5,  4.33, 0)
-            particles.add("images/star", 68, 120, -5  ,  0   , 0)
-            particles.add("images/star", 68, 120, -2.5, -4.33, 0)
-            particles.add("images/star", 68, 120,  2.5, -4.33, 0)
+            if not hideFirstHighscore then
+                particles.add("images/star", 68, 120,  5  ,  0   , 0)
+                particles.add("images/star", 68, 120,  2.5,  4.33, 0)
+                particles.add("images/star", 68, 120, -2.5,  4.33, 0)
+                particles.add("images/star", 68, 120, -5  ,  0   , 0)
+                particles.add("images/star", 68, 120, -2.5, -4.33, 0)
+                particles.add("images/star", 68, 120,  2.5, -4.33, 0)
+            end
         end
         -- stop microphone now, otherwise it is only reset after all actions have been shown
         mic.stopListening()
@@ -269,7 +273,9 @@ local function render_simon()
 
     gfx.setImageDrawMode(gfx.kDrawModeNXOR)
     gfx.drawTextAligned('SCORE: '..score_simon, 110, 220, kTextAlignment.center)
-    gfx.drawTextAligned("HIGH: "..save.data.highscore[GAME_MODE.SIMON], 290, 220, kTextAlignment.center)
+    if not hideFirstHighscore then
+        gfx.drawTextAligned("HIGH: "..save.data.highscore[GAME_MODE.SIMON], 290, 220, kTextAlignment.center)
+    end
 
     if (save.data.settings.debugOn) then
         gfx.setFont(gfx.getSystemFont())

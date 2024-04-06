@@ -42,6 +42,7 @@ local actionTransitionTimer
 local speedLevel = 1
 local score = 0
 local newHighscore = false
+local hideFirstHighscore = false
 local lastAnimationFrame = 1
 
 local update_main
@@ -96,6 +97,7 @@ end
 local function main_startGame(skipGenNewAction)
     score = 0
     newHighscore = false
+    hideFirstHighscore = save.data.highscore[GAME_MODE.CRANKIT] == 0
     speedLevel = 1
     Statemachine.gameShouldFailAfterResume = false
 
@@ -139,9 +141,11 @@ local function main_actionSuccess()
     if score > save.data.highscore[GAME_MODE.CRANKIT] then
         save.data.highscore[GAME_MODE.CRANKIT] = score
         newHighscore = true
-        particles.add("images/star", 290, 220, math.random(-10, 10) / 10, math.random(-110, -85) / 10, math.random(-10, 10))
-        particles.add("images/star", 290, 220, math.random(-65, -45) / 10, math.random(-80, -60) / 10, math.random(-30, -5))
-        particles.add("images/star", 290, 220, math.random(45, 65) / 10, math.random(-80, -60) / 10, math.random(5, 30))
+        if not hideFirstHighscore then
+            particles.add("images/star", 290, 220, math.random(-10, 10) / 10, math.random(-110, -85) / 10, math.random(-10, 10))
+            particles.add("images/star", 290, 220, math.random(-65, -45) / 10, math.random(-80, -60) / 10, math.random(-30, -5))
+            particles.add("images/star", 290, 220, math.random(45, 65) / 10, math.random(-80, -60) / 10, math.random(5, 30))
+        end
     end
 end
 
@@ -209,7 +213,9 @@ local function render_main()
     gfx.setImageDrawMode(gfx.kDrawModeNXOR)
 
     gfx.drawTextAligned('SCORE: '..score, 110, 220, kTextAlignment.center)
-    gfx.drawTextAligned("HIGH: "..save.data.highscore[GAME_MODE.CRANKIT], 290, 220, kTextAlignment.center)
+    if not hideFirstHighscore then
+        gfx.drawTextAligned("HIGH: "..save.data.highscore[GAME_MODE.CRANKIT], 290, 220, kTextAlignment.center)
+    end
 
     if (save.data.settings.debugOn) then
         gfx.setFont(gfx.getSystemFont())
@@ -338,7 +344,9 @@ function crankit.render_for_transition()
 
     gfx.setImageDrawMode(gfx.kDrawModeNXOR)
     gfx.drawTextAligned('SCORE: 0', 110, 220, kTextAlignment.center)
-    gfx.drawTextAligned("HIGH: "..save.data.highscore[GAME_MODE.CRANKIT], 290, 220, kTextAlignment.center)
+    if save.data.highscore[GAME_MODE.CRANKIT] > 0 then
+        gfx.drawTextAligned("HIGH: "..save.data.highscore[GAME_MODE.CRANKIT], 290, 220, kTextAlignment.center)
+    end
     gfx.setImageDrawMode(gfx.kDrawModeCopy)
 end
 
