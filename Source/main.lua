@@ -61,6 +61,7 @@
 -- [ ] tear particles on lose screen
 -- [ ] no "new highscore" stars on high=0? (hide highscore as well)
 -- [ ] try different music in main menu, possible tracks in array, up/down to select one -> play on Playdate
+-- [ ] music for bomb mode
 
 import "CoreLibs/graphics"
 

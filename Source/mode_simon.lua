@@ -24,6 +24,9 @@ local SIMON_TIMER_SOUND3_MS <const> = 960
 local SIMON_TRANSITION_FRAME_MS <const> = 1000
 local SIMON_ACTION_BLINK_MS <const> = 150
 
+local HIGHSCORE_STARS <const> = 10
+local HIGHSCORE_BIG_ANI <const> = 16
+
 local SIMON_STATE <const> = {
     SCORE_UP = 1,
     WAIT_FOR_UNDOCK = 2,
@@ -70,16 +73,60 @@ local buttonHandlers_simonDockContinue = {
     end
 }
 
+local failStarTimer
+local failStarPos <const> = {
+    { px = -17, py = -17, vx = 4, vy = 4 },
+    { px = -17, py = 17, vx = 6, vy = 2.5 },
+    { px =  17, py = -17, vx = 2, vy = 5 },
+    { px = SCREEN_WIDTH + 17, py = -17, vx = -4, vy = 4 },
+    { px = SCREEN_WIDTH + 17, py =  17, vx = -6, vy = 2.5 },
+    { px = SCREEN_WIDTH - 17, py = -17, vx = -2, vy = 5 },
+    { px = -17, py = SCREEN_HEIGHT + 17, vx = 4, vy = -4 },
+    { px = -17, py = SCREEN_HEIGHT - 17, vx = 6, vy = -2.5 },
+    { px =  17, py = SCREEN_HEIGHT + 17, vx = 2, vy = -5 },
+    { px = SCREEN_WIDTH + 17, py = SCREEN_HEIGHT + 17, vx = -4, vy = -4 },
+    { px = SCREEN_WIDTH + 17, py = SCREEN_HEIGHT - 17, vx = -6, vy = -2.5 },
+    { px = SCREEN_WIDTH - 17, py = SCREEN_HEIGHT + 17, vx = -2, vy = -5 },
+}
+
 local buttonHandlers_simonLose = {
     AButtonDown = function()
+        failStarTimer:pause()
         playdate.inputHandlers.pop() -- pop buttonHandlers_simonLose
         playdate.update = update_simon_show
         startGame_simon()
     end
 }
 
-local function update_none()
-    --
+local function spawnFailStar()
+    for i = 1, #failStarPos do
+        if math.random(5) ~= 1 then goto continue end
+        particles.add(
+            "images/star",
+            failStarPos[i].px,
+            failStarPos[i].py,
+            failStarPos[i].vx,
+            failStarPos[i].vy,
+            math.random(failStarPos[i].vx < 0 and failStarPos[i].vx or 0, failStarPos[i].vx > 0 and failStarPos[i].vx or 0)
+        )
+        ::continue::
+    end
+    failStarTimer:reset()
+    failStarTimer:start()
+end
+
+local lastAnimationFrame = 1
+local function update_fail()
+    if (actions.data[actions.current].ani ~= nil and lastAnimationFrame ~= actions.data[actions.current].img.frame) then
+        lastAnimationFrame = actions.data[actions.current].img.frame
+        gfx.sprite.redrawBackground()
+    end
+    playdate.timer.updateTimers()
+    particles.update()
+    gfx.sprite.update()
+    gfx.setImageDrawMode(gfx.kDrawModeNXOR)
+    gfx.drawTextAligned('SCORE: '..score_simon, 200, 220, kTextAlignment.center)
+    gfx.setImageDrawMode(gfx.kDrawModeCopy)
 end
 
 startGame_simon = function()
@@ -158,7 +205,14 @@ local function actionFail_simon()
 
     if newHighscore then
         save.write()
-        actions.current = ACTION_CODES.HIGHSCORE
+        if score_simon >= HIGHSCORE_BIG_ANI then
+            actions.current = ACTION_CODES.BIG_HIGHSCORE
+        else
+            actions.current = ACTION_CODES.HIGHSCORE
+        end
+        if score_simon >= HIGHSCORE_STARS then
+            failStarTimer:start()
+        end
     else
         actions.current = ACTION_CODES.LOSE
     end
@@ -175,7 +229,7 @@ local function actionFail_simon()
     if not simonStateChangeTimer.paused then simonStateChangeTimer:pause() end
     if not simonActionBlinkTimer.paused then simonActionBlinkTimer:pause() end
     playdate.inputHandlers.push(buttonHandlers_simonLose, true)
-    playdate.update = update_none
+    playdate.update = update_fail
 end
 
 local function actionTimerEnd()
@@ -316,8 +370,10 @@ local function cleanup_simon()
     simonTimer:remove()
     simonStateChangeTimer:remove()
     simonActionBlinkTimer:remove()
+    failStarTimer:remove()
     simonSampleplayer:stop()
     Statemachine.music:stop()
+    particles.clear()
     -- pop twice to remove temp handler from game over or undock request
     playdate.inputHandlers.pop()
     playdate.inputHandlers.pop()
@@ -359,6 +415,10 @@ function simon.setup()
     simonActionBlinkTimer.discardOnCompletion = false;
     simonActionBlinkTimer:pause()
     particles.setPhysics(0, 0, 1.1, 1.1)
+
+    failStarTimer = playdate.timer.new(350, spawnFailStar)
+    failStarTimer.discardOnCompletion = false
+    failStarTimer:pause()
 
     startGame_simon()
 end

@@ -43,12 +43,12 @@ local speedLevel = 1
 local score = 0
 local newHighscore = false
 local lastAnimationFrame = 1
-local failStarTimer
 
 local update_main
 
 
-local failStarPos = {
+local failStarTimer
+local failStarPos <const> = {
     { px = -17, py = 200, vx = 22, vy = -10 },
     { px = -17, py = 150, vx = 18, vy = -10 },
     { px = -17, py = 100, vx = 14, vy = -10 },
