@@ -59,7 +59,7 @@
 -- [X] random stars from outside on the highscore screen
 -- [X] highscore screen score dependant? (>30 with animation, >50 with stars -> simon values?)
 -- [ ] tear particles on lose screen
--- [ ] no "new highscore" stars on high=0? (hide highscore as well)
+-- [X] no "new highscore" stars on high=0? (hide highscore as well)
 -- [ ] try different music in main menu, possible tracks in array, up/down to select one -> play on Playdate
 -- [ ] music for bomb mode
 

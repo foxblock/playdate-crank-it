@@ -81,7 +81,7 @@ local function spawnFailStar()
     failStarTimer:start()
 end
 
-local function update_fail()
+local function update_highscore()
     if (actions.data[actions.current].ani ~= nil and lastAnimationFrame ~= actions.data[actions.current].img.frame) then
         lastAnimationFrame = actions.data[actions.current].img.frame
         gfx.sprite.redrawBackground()
@@ -92,6 +92,10 @@ local function update_fail()
     gfx.setImageDrawMode(gfx.kDrawModeNXOR)
     gfx.drawTextAligned('SCORE: '..score, 200, 220, kTextAlignment.center)
     gfx.setImageDrawMode(gfx.kDrawModeCopy)
+end
+
+local function update_fail()
+    --
 end
 
 local function main_startGame(skipGenNewAction)
@@ -162,18 +166,22 @@ local function main_actionFail()
         if score >= HIGHSCORE_STARS then
             failStarTimer:start()
         end
+        actions.setupActionGfxAndSound(actions.current)
+        playdate.update = update_highscore
     else
         actions.current = ACTION_CODES.LOSE
+        actions.setupActionGfxAndSound(actions.current)
+        playdate.update = update_fail
+        gfx.sprite.update()
+        gfx.drawTextAligned('SCORE: '..score, 110, 220, kTextAlignment.center)
+        gfx.drawTextAligned("HIGH: "..save.data.highscore[GAME_MODE.CRANKIT], 290, 220, kTextAlignment.center)
     end
+
     if not actionTimer.paused then actionTimer:pause() end
-    actions.setupActionGfxAndSound(actions.current)
-    gfx.sprite.update()
-    gfx.drawTextAligned('SCORE: '..score, 200, 220, kTextAlignment.center)
     Statemachine.music:stop()
     Statemachine.music:setSample(loseMusic)
     Statemachine.music:play(0)
     playdate.inputHandlers.push(main_buttonsLose)
-    playdate.update = update_fail
 end
 
 local function actionTimerEnd()

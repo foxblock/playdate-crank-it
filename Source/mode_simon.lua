@@ -117,7 +117,7 @@ local function spawnFailStar()
 end
 
 local lastAnimationFrame = 1
-local function update_fail()
+local function update_highscore()
     if (actions.data[actions.current].ani ~= nil and lastAnimationFrame ~= actions.data[actions.current].img.frame) then
         lastAnimationFrame = actions.data[actions.current].img.frame
         gfx.sprite.redrawBackground()
@@ -128,6 +128,10 @@ local function update_fail()
     gfx.setImageDrawMode(gfx.kDrawModeNXOR)
     gfx.drawTextAligned('SCORE: '..score_simon, 200, 220, kTextAlignment.center)
     gfx.setImageDrawMode(gfx.kDrawModeCopy)
+end
+
+local function update_fail()
+    --
 end
 
 startGame_simon = function()
@@ -217,13 +221,17 @@ local function actionFail_simon()
         if score_simon >= HIGHSCORE_STARS then
             failStarTimer:start()
         end
+        actions.setupActionGfxAndSound(actions.current)
+        playdate.update = update_highscore
     else
         actions.current = ACTION_CODES.LOSE
+        actions.setupActionGfxAndSound(actions.current)
+        playdate.update = update_fail
+        gfx.sprite.update()
+        gfx.drawTextAligned('SCORE: '..score_simon, 110, 220, kTextAlignment.center)
+        gfx.drawTextAligned("HIGH: "..save.data.highscore[GAME_MODE.SIMON], 290, 220, kTextAlignment.center)
     end
-    actions.setupActionGfxAndSound(actions.current)
-    gfx.sprite.update()
-    gfx.drawTextAligned('SCORE: '..score_simon, 110, 220, kTextAlignment.center)
-    gfx.drawTextAligned("HIGH: "..save.data.highscore[GAME_MODE.SIMON], 290, 220, kTextAlignment.center)
+    
     simonSampleplayer:stop()
     Statemachine.music:stop()
     Statemachine.music:setSample(loseMusic)
@@ -233,7 +241,6 @@ local function actionFail_simon()
     if not simonStateChangeTimer.paused then simonStateChangeTimer:pause() end
     if not simonActionBlinkTimer.paused then simonActionBlinkTimer:pause() end
     playdate.inputHandlers.push(buttonHandlers_simonLose, true)
-    playdate.update = update_fail
 end
 
 local function actionTimerEnd()
