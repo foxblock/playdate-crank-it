@@ -20,6 +20,9 @@ local SPEED_UP_INTERVAL <const> = 10
 local MAX_SPEED_LEVEL <const> = 5
 local TRANSITION_TIME_MS <const> = 500
 
+local HIGHSCORE_STARS <const> = 40
+local HIGHSCORE_BIG_ANI <const> = 60
+
 local bgMusic <const> = {
     sample.new("music/bg1"),
     sample.new("music/bg2"),
@@ -40,15 +43,50 @@ local speedLevel = 1
 local score = 0
 local newHighscore = false
 local lastAnimationFrame = 1
+local failStarTimer
 
 local update_main
 
+
+local failStarPos = {
+    { px = -17, py = 200, vx = 22, vy = -10 },
+    { px = -17, py = 150, vx = 18, vy = -10 },
+    { px = -17, py = 100, vx = 14, vy = -10 },
+    { px = -17, py = 50, vx = 10, vy = -10 },
+    { px = SCREEN_WIDTH + 17, py = 200, vx = -22, vy = -10 },
+    { px = SCREEN_WIDTH + 17, py = 150, vx = -18, vy = -10 },
+    { px = SCREEN_WIDTH + 17, py = 100, vx = -14, vy = -10 },
+    { px = SCREEN_WIDTH + 17, py = 50, vx = -10, vy = -10 },
+    { px = 80, py = SCREEN_HEIGHT + 17, vx = 15, vy = -20 },
+    { px = 160, py = SCREEN_HEIGHT + 17, vx = 20, vy = -15 },
+    { px = 240, py = SCREEN_HEIGHT + 17, vx = -15, vy = -20 },
+    { px = 320, py = SCREEN_HEIGHT + 17, vx = -20, vy = -15 },
+}
+
+local function spawnFailStar()
+    for i = 1, #failStarPos do
+        if math.random(5) ~= 1 then goto continue end
+        particles.add(
+            "images/star",
+            failStarPos[i].px,
+            failStarPos[i].py,
+            failStarPos[i].vx,
+            failStarPos[i].vy,
+            math.random(failStarPos[i].vx < 0 and failStarPos[i].vx or 0, failStarPos[i].vx > 0 and failStarPos[i].vx or 0)
+        )
+        ::continue::
+    end
+    failStarTimer:reset()
+    failStarTimer:start()
+end
 
 local function update_fail()
     if (actions.data[actions.current].ani ~= nil and lastAnimationFrame ~= actions.data[actions.current].img.frame) then
         lastAnimationFrame = actions.data[actions.current].img.frame
         gfx.sprite.redrawBackground()
     end
+    playdate.timer.updateTimers()
+    particles.update()
     gfx.sprite.update()
     gfx.setImageDrawMode(gfx.kDrawModeNXOR)
     gfx.drawTextAligned('SCORE: '..score, 200, 220, kTextAlignment.center)
@@ -80,6 +118,7 @@ end
 
 local main_buttonsLose = {
     AButtonDown = function()
+        failStarTimer:pause()
         playdate.inputHandlers.pop()
         playdate.update = update_main
         main_startGame()
@@ -111,7 +150,14 @@ local function main_actionFail()
 
     if newHighscore then
         save.write()
-        actions.current = ACTION_CODES.HIGHSCORE
+        if score >= HIGHSCORE_BIG_ANI then
+            actions.current = ACTION_CODES.BIG_HIGHSCORE
+        else
+            actions.current = ACTION_CODES.HIGHSCORE
+        end
+        if score >= HIGHSCORE_STARS then
+            failStarTimer:start()
+        end
     else
         actions.current = ACTION_CODES.LOSE
     end
@@ -238,7 +284,9 @@ local function cleanup_main()
     mic.stopListening()
     actionTimer:remove()
     actionTransitionTimer:remove()
+    failStarTimer:remove()
     Statemachine.music:stop()
+    particles.clear()
     -- pop twice to remove temp input handler from game over screen
     playdate.inputHandlers.pop()
     playdate.inputHandlers.pop()
@@ -264,6 +312,10 @@ function crankit.setup()
     actionTransitionTimer = playdate.timer.new(TRANSITION_TIME_MS, actionTransitionEnd)
     actionTransitionTimer.discardOnCompletion = false
     actionTransitionTimer:pause()
+
+    failStarTimer = playdate.timer.new(500, spawnFailStar)
+    failStarTimer.discardOnCompletion = false
+    failStarTimer:pause()
 
     playdate.update = update_main
     Statemachine.cleanup = cleanup_main

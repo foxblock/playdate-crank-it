@@ -31,13 +31,13 @@ function particles.update()
     for k, p in pairs(entities) do
         p.img:moveBy(p.vx, p.vy)
 
-        if p.img.x < -p.hw 
+        if p.img.x < -p.hw
             or p.img.x > SCREEN_WIDTH + p.hw
             or p.img.y < -p.hh
             or p.img.y > SCREEN_HEIGHT + p.hh
         then
             p.img:remove()
-            particles[k] = nil
+            entities[k] = nil
         end
 
         p.vx = p.vx + physics.gravityX
@@ -47,6 +47,13 @@ function particles.update()
         if p.rot ~= 0 then
             p.img:setRotation(p.img:getRotation() + p.rot)
         end
+    end
+end
+
+function particles.clear()
+    for k, p in pairs(entities) do
+        p.img:remove()
+        entities[k] = nil
     end
 end
 

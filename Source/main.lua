@@ -56,8 +56,8 @@
 -- [X] new highscore screen and sound
 -- [ ] new highscore music
 -- [X] bomb explode sound for lose
--- [ ] random stars from outside on the highscore screen (partiocle system -> deadzone around screen where particles are not removed = size of particle * 1.5)
--- [ ] highscore screen score dependant? (>30 with animation, >50 with stars -> simon values?)
+-- [X] random stars from outside on the highscore screen
+-- [X] highscore screen score dependant? (>30 with animation, >50 with stars -> simon values?)
 -- [ ] tear particles on lose screen
 -- [ ] no "new highscore" stars on high=0? (hide highscore as well)
 -- [ ] try different music in main menu, possible tracks in array, up/down to select one -> play on Playdate

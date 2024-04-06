@@ -33,7 +33,8 @@ actions.failFnc = nil
 actions.current = nil
 
 actions.codes = {
-    LOSE_BOMB = -2,
+    LOSE_BOMB = -3,
+    BIG_HIGHSCORE = -2,
     HIGHSCORE = -1,
     LOSE = 0, -- lose/end states above this line (will also no be selected automatically)
     DIRECTION = 1,
@@ -56,10 +57,15 @@ actions.data = {
         snd = snd.new("sounds/explosion"),
         img = gfx.image.new("images/actions/explode"),
     },
-    [actions.codes.HIGHSCORE] = {
+    [actions.codes.BIG_HIGHSCORE] = {
         time = TIME_NORMAL,
         snd = snd.new("sounds/highscore"),
         ani = gfx.imagetable.new("images/actions/highscore"),
+    },
+    [actions.codes.HIGHSCORE] = {
+        time = TIME_NORMAL,
+        snd = snd.new("sounds/highscore"),
+        img = gfx.image.new("images/actions/highscore-static"),
     },
     [actions.codes.LOSE] = {
         time = TIME_NORMAL,
