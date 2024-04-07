@@ -21,6 +21,10 @@
 -- reset_score.wav: https://freesound.org/people/steeltowngaming/sounds/537739/
 -- menu_game_change.wav: https://freesound.org/people/F.M.Audio/sounds/560330/
 -- explode.wav: https://freesound.org/people/DeltaCode/sounds/667660/
+-- quirky-dog.mp3: Kevin MacLeod - https://incompetech.com/music/royalty-free/licenses/
+-- intrigue-fun-21661.mp3: https://pixabay.com/music/funk-intrigue-fun-21661/
+-- hitman: Keving MacLeod - https://incompetech.com/music/royalty-free/licenses/
+
 
 ------ TODO
 -- [X] action: pass to other player
@@ -48,10 +52,10 @@
 -- [X] Add credits to splash screen
 -- [ ] Add transition sound effects -> still not happy with current swoosh
 -- [X] Fix being able to skip transitions in splash -> error
--- [ ] Main menu music
+-- [X] Main menu music
 -- [X] Crane sound in settings
 -- [ ] Other sound effects: select game, change game in main menu, change settings, restart?, reset scores
---     Individual select sounds per game (current select might fit simon well), individual lose sounds? (current fits bomb)
+--     Individual select sounds per game (current select might fit simon well, ticktick for bomb), individual lose sounds? (current fits bomb)
 -- [X] Reset score (menu item? in settings?)
 -- [X] new highscore screen and sound
 -- [ ] new highscore music
@@ -60,7 +64,6 @@
 -- [X] highscore screen score dependant? (>30 with animation, >50 with stars -> simon values?)
 -- [ ] tear particles on lose screen
 -- [X] no "new highscore" stars on high=0? (hide highscore as well)
--- [ ] try different music in main menu, possible tracks in array, up/down to select one -> play on Playdate
 -- [ ] music for bomb mode
 
 import "CoreLibs/graphics"

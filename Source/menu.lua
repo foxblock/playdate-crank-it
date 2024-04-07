@@ -87,6 +87,7 @@ local elements <const> = {
             x = 139,
             y = 91,
         },
+        music = playdate.sound.fileplayer.new("music/quirky-dog"),
     },
     [GAME_MODE.SIMON] = {
         mascot = {
@@ -107,6 +108,7 @@ local elements <const> = {
             rot = newAnimator(2000, -5, 5, easings.inOutSine),
             scale = newAnimator(2000, 0.95, 1.05, easings.inOutSine),
         },
+        music = playdate.sound.fileplayer.new("music/intrigue-fun"),
     },
     [GAME_MODE.BOMB] = {
         mascot = {
@@ -126,6 +128,7 @@ local elements <const> = {
             y = 130,
             scale = newBlinkerAnimator(500, 500, 0, 1.1)
         },
+        music = playdate.sound.fileplayer.new("music/hitman"),
     },
 }
 
@@ -157,25 +160,30 @@ end
 
 local function menu_cleanup()
     playdate.inputHandlers.pop()
+    elements[selectedGame].music:pause()
 end
 
 local buttonHandlers_title = {
-    leftButtonDown = function ()
+    leftButtonDown = function()
+        elements[selectedGame].music:pause()
         if (selectedGame == 1) then
             selectedGame = GAME_MODE.EOL - 1
         else
             selectedGame = selectedGame - 1
         end
         gameChangeSound:play(1)
+        elements[selectedGame].music:play(-1)
     end,
-    
-    rightButtonDown = function ()
+
+    rightButtonDown = function()
+        elements[selectedGame].music:pause()
         if (selectedGame == GAME_MODE.EOL - 1) then
             selectedGame = 1
         else
             selectedGame = selectedGame + 1
         end
         gameChangeSound:play(1)
+        elements[selectedGame].music:play(-1)
     end,
 
     AButtonDown = function()
@@ -247,6 +255,7 @@ function menu.setup()
     playdate.inputHandlers.push(buttonHandlers_title)
     playdate.update = menu.update
     Statemachine.cleanup = menu_cleanup
+    elements[selectedGame].music:play(-1)
 end
 
 menu.callback = nil
