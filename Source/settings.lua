@@ -37,11 +37,6 @@ local sndTick = snd.new("sounds/menu_tick")
 local selectedIndex = 1
 
 
-
-local function settings_cleanup()
-    playdate.inputHandlers.pop()
-end
-
 local function start_crane()
     local currVal = craneAnimator:currentValue()
     local craneProgress = (selectedIndex - 1) / (#settings.config - 1)
@@ -109,12 +104,12 @@ local settings_buttonHandler = {
     end,
 
     AButtonDown = function()
-        settings_cleanup()
+        settings.cleanup()
         settings.callback(settings.data)
     end,
 
     BButtonDown = function()
-        settings_cleanup()
+        settings.cleanup()
         settings.callback(nil)
     end,
 }
@@ -190,10 +185,16 @@ end
 function settings.setup()
     playdate.inputHandlers.push(settings_buttonHandler)
     playdate.update = settings_update
-    Statemachine.cleanup = settings_cleanup
+    settings.active = true
+end
+
+function settings.cleanup()
+    playdate.inputHandlers.pop()
+    settings.active = false
 end
 
 -- actual data and structure of settings defined in savegame.lua
 settings.data = {}
 settings.config = nil
 settings.callback = nil
+settings.active = false

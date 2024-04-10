@@ -68,14 +68,7 @@
 
 import "CoreLibs/graphics"
 
-import "game_constants"
-import "game_actions"
-import "mode_crankit"
-import "mode_simon"
-import "mode_bomb"
-import "settings"
 import "transition"
-import "savegame"
 import "menu"
 
 local gfx <const> = playdate.graphics
@@ -88,11 +81,6 @@ Statemachine = {
     music = snd.new("sounds/dummy"),
     font = gfx.font.new("images/font/party")
 }
-
-local function copyTable(dst, src)
-    for k in pairs(dst) do dst[k] = nil end
-    for k, v in pairs(src) do dst[k] = v end
-end
 
 ------ SPLASH IMAGES
 
@@ -140,39 +128,6 @@ splash_next = function()
         transition.setup(splash_setup, splash_render)
     end
 end
-
------- MENU
-
-local function menu_result(targetScene)
-    if (targetScene == GAME_MODE.CRANKIT) then
-        crankit.pre_setup_for_transition()
-        transition.setup(crankit.setup, crankit.render_for_transition)
-    elseif (targetScene == GAME_MODE.SIMON) then
-        transition.setup(simon.setup, simon.render_for_transition)
-    elseif (targetScene == GAME_MODE.BOMB) then
-        bomb.pre_setup_for_transition()
-        transition.setup(bomb.setup, bomb.render_for_transition)
-    elseif (targetScene == GAME_MODE.SETTINGS) then
-        copyTable(settings.data, save.data.settings)
-        transition.setup(settings.setup, settings.render)
-    end
-end
-
-menu.callback = menu_result
-
------- SETTINGS
-
-local function settings_result(data)
-    if (data ~= nil) then
-        copyTable(save.data.settings, settings.data)
-        save.write()
-    end
-
-    transition.setup(menu.setup, menu.update)
-end
-
-settings.callback = settings_result
-settings.config = save.settingsMetadata
 
 ------ CALLBACKS
 

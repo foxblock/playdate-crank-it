@@ -5,8 +5,12 @@ import "CoreLibs/graphics"
 import "CoreLibs/animator"
 import "CoreLibs/easing"
 
-import "savegame"
 import "game_constants"
+import "mode_crankit"
+import "mode_simon"
+import "mode_bomb"
+import "settings"
+import "savegame"
 
 local gfx <const> = playdate.graphics
 local easings <const> = playdate.easingFunctions
@@ -158,9 +162,33 @@ end
 --     end
 -- )
 
+local function copyTable(dst, src)
+    for k in pairs(dst) do dst[k] = nil end
+    for k, v in pairs(src) do dst[k] = v end
+end
+
 local function menu_cleanup()
+    if settings.active then
+        settings.cleanup()
+        elements[selectedGame].music:setVolume(1)
+    end
     playdate.inputHandlers.pop()
     elements[selectedGame].music:pause()
+end
+
+local function menu_toSettings()
+    playdate.inputHandlers.pop()
+    elements[selectedGame].music:setVolume(0.1)
+end
+
+local function settings_result(data)
+    if (data ~= nil) then
+        copyTable(save.data.settings, settings.data)
+        save.write()
+    end
+
+    elements[selectedGame].music:setVolume(1)
+    transition.setup(menu.setup, menu.update)
 end
 
 local buttonHandlers_title = {
@@ -189,12 +217,25 @@ local buttonHandlers_title = {
     AButtonDown = function()
         gameSelectSound:play(1)
         menu_cleanup()
-        menu.callback(selectedGame)
+
+        if (selectedGame == GAME_MODE.CRANKIT) then
+            crankit.pre_setup_for_transition()
+            transition.setup(crankit.setup, crankit.render_for_transition)
+        elseif (selectedGame == GAME_MODE.SIMON) then
+            transition.setup(simon.setup, simon.render_for_transition)
+        elseif (selectedGame == GAME_MODE.BOMB) then
+            bomb.pre_setup_for_transition()
+            transition.setup(bomb.setup, bomb.render_for_transition)
+        end
     end,
 
     BButtonDown = function()
-        menu_cleanup()
-        menu.callback(GAME_MODE.SETTINGS)
+        menu_toSettings()
+
+        settings.callback = settings_result
+        settings.config = save.settingsMetadata
+        copyTable(settings.data, save.data.settings)
+        transition.setup(settings.setup, settings.render)
     end,
 
     cranked = function(change, acceleratedChange)
@@ -257,5 +298,3 @@ function menu.setup()
     Statemachine.cleanup = menu_cleanup
     elements[selectedGame].music:play(-1)
 end
-
-menu.callback = nil
