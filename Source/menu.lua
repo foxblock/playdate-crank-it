@@ -15,6 +15,7 @@ import "savegame"
 local gfx <const> = playdate.graphics
 local easings <const> = playdate.easingFunctions
 local snd <const> = playdate.sound.sampleplayer
+local mp3 <const> = playdate.sound.fileplayer
 
 local gameChangeSound = snd.new("sounds/menu_game_change")
 local gameSelectSound = snd.new("sounds/menu_game_select")
@@ -91,7 +92,7 @@ local elements <const> = {
             x = 139,
             y = 91,
         },
-        music = playdate.sound.fileplayer.new("music/quirky-dog"),
+        music = mp3.new("music/quirky-dog"),
     },
     [GAME_MODE.SIMON] = {
         mascot = {
@@ -112,7 +113,7 @@ local elements <const> = {
             rot = newAnimator(2000, -5, 5, easings.inOutSine),
             scale = newAnimator(2000, 0.95, 1.05, easings.inOutSine),
         },
-        music = playdate.sound.fileplayer.new("music/intrigue-fun"),
+        music = mp3.new("music/intrigue-fun"),
     },
     [GAME_MODE.BOMB] = {
         mascot = {
@@ -132,7 +133,7 @@ local elements <const> = {
             y = 130,
             scale = newBlinkerAnimator(500, 500, 0, 1.1)
         },
-        music = playdate.sound.fileplayer.new("music/hitman"),
+        music = mp3.new("music/hitman"),
     },
 }
 
@@ -200,7 +201,7 @@ local buttonHandlers_title = {
             selectedGame = selectedGame - 1
         end
         gameChangeSound:play(1)
-        elements[selectedGame].music:play(-1)
+        elements[selectedGame].music:play(0)
     end,
 
     rightButtonDown = function()
@@ -211,7 +212,7 @@ local buttonHandlers_title = {
             selectedGame = selectedGame + 1
         end
         gameChangeSound:play(1)
-        elements[selectedGame].music:play(-1)
+        elements[selectedGame].music:play(0)
     end,
 
     AButtonDown = function()
@@ -296,5 +297,5 @@ function menu.setup()
     playdate.inputHandlers.push(buttonHandlers_title)
     playdate.update = menu.update
     Statemachine.cleanup = menu_cleanup
-    elements[selectedGame].music:play(-1)
+    elements[selectedGame].music:play(0)
 end

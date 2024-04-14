@@ -45,12 +45,6 @@ end
 
 function save.write()
     datastore.write(save.data)
-
-    if (save.data.settings.musicOn) then
-        Statemachine.music:setVolume(1.0)
-    else
-        Statemachine.music:setVolume(0)
-    end
 end
 
 function save.load()
@@ -87,11 +81,5 @@ function save.load()
             save.data.settings[v.k] = v.options[1]
         end
         ::continue::
-    end
-
-    if (save.data.settings.musicOn) then
-        Statemachine.music:setVolume(1.0)
-    else
-        Statemachine.music:setVolume(0)
     end
 end

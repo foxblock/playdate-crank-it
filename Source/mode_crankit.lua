@@ -8,8 +8,7 @@ import "game_actions"
 import "particles"
 
 local gfx <const> = playdate.graphics
-local snd <const> = playdate.sound.sampleplayer
-local sample <const> = playdate.sound.sample
+local mp3 <const> = playdate.sound.fileplayer
 local mic <const> = playdate.sound.micinput
 local ACTION_CODES <const> = actions.codes
 
@@ -24,14 +23,14 @@ local HIGHSCORE_STARS <const> = 40
 local HIGHSCORE_BIG_ANI <const> = 60
 
 local bgMusic <const> = {
-    sample.new("music/bg1"),
-    sample.new("music/bg2"),
-    sample.new("music/bg3"),
-    sample.new("music/bg4"),
-    sample.new("music/bg5")
+    mp3.new("music/bg1"),
+    mp3.new("music/bg2"),
+    mp3.new("music/bg3"),
+    mp3.new("music/bg4"),
+    mp3.new("music/bg5")
 }
-local loseMusic <const> = sample.new("music/lose")
-local soundSuccess = snd.new("sounds/success")
+local loseMusic <const> = mp3.new("music/lose")
+local soundSuccess = playdate.sound.sampleplayer.new("sounds/success")
 local bgSprite = nil
 
 
@@ -117,9 +116,7 @@ local function main_startGame(skipGenNewAction)
     actionTimer:reset()
     actionTimer:start()
 
-    Statemachine.music:stop()
-    Statemachine.music:setSample(bgMusic[1])
-    Statemachine.music:play(0)
+    Statemachine.playMP3(bgMusic[1])
 end
 
 local main_buttonsLose = {
@@ -178,9 +175,7 @@ local function main_actionFail()
     end
 
     if not actionTimer.paused then actionTimer:pause() end
-    Statemachine.music:stop()
-    Statemachine.music:setSample(loseMusic)
-    Statemachine.music:play(0)
+    Statemachine.playMP3(loseMusic)
     playdate.inputHandlers.push(main_buttonsLose)
 end
 
@@ -271,9 +266,7 @@ update_main = function ()
             actions.current = ACTION_CODES.SPEED_UP
             speedLevel = speedLevel + 1
 
-            Statemachine.music:stop()
-            Statemachine.music:setSample(bgMusic[speedLevel])
-            Statemachine.music:play(0)
+            Statemachine.playMP3(bgMusic[speedLevel])
         else
             actions.current = actions.getValidActionCode(true, lastAction)
         end

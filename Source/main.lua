@@ -70,17 +70,35 @@ import "CoreLibs/graphics"
 
 import "transition"
 import "menu"
+import "savegame"
 
 local gfx <const> = playdate.graphics
-local snd <const> = playdate.sound.sampleplayer
 
 -- Global state
+local sampleplayer = playdate.sound.sampleplayer.new("sounds/dummy")
 Statemachine = {
     cleanup = nil, -- needed for going back to main menu through system menu
     gameShouldFailAfterResume = false,
-    music = snd.new("sounds/dummy"),
-    font = gfx.font.new("images/font/party")
+    font = gfx.font.new("images/font/party"),
+    music = sampleplayer,
 }
+
+function Statemachine.playWAV(sample)
+    if not save.data.settings.musicOn then return end
+
+    Statemachine.music:stop()
+    Statemachine.sampleplayer:setSample(sample)
+    Statemachine.music = Statemachine.sampleplayer
+    Statemachine.music:play(0)
+end
+
+function Statemachine.playMP3(fileplayer)
+    if not save.data.settings.musicOn then return end
+
+    Statemachine.music:stop()
+    Statemachine.music = fileplayer
+    Statemachine.music:play(0)
+end
 
 ------ SPLASH IMAGES
 

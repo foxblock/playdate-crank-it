@@ -10,19 +10,15 @@ import "game_actions"
 
 local gfx <const> = playdate.graphics
 local snd <const> = playdate.sound.sampleplayer
-local sample <const> = playdate.sound.sample
+local mp3 <const> = playdate.sound.fileplayer
 local mic <const> = playdate.sound.micinput
 local easings <const> = playdate.easingFunctions
 local ACTION_CODES <const> = actions.codes
 
-local SCREEN_WIDTH <const> = playdate.display.getWidth()
-local SCREEN_HEIGHT <const> = playdate.display.getHeight()
-
-local TRANSITION_TIME_MS <const> = 500
 local ACTIONS_PER_PASS <const> = 3
 
-local bgMusic <const> = sample.new("music/bg5")
-local loseMusic <const> = sample.new("music/lose")
+local bgMusic <const> = mp3.new("music/bg3")
+local loseMusic <const> = mp3.new("music/lose")
 local soundSuccess = snd.new("sounds/success")
 local bgSprite = nil
 
@@ -114,9 +110,7 @@ local function main_startGame(skipGenNewAction)
     setFuseState(1)
     if not actionTimer.paused then actionTimer:pause() end
 
-    Statemachine.music:stop()
-    Statemachine.music:setSample(bgMusic)
-    Statemachine.music:play(0)
+    Statemachine.playMP3(bgMusic)
 end
 
 local main_buttonsLose = {
@@ -143,9 +137,7 @@ local function main_actionFail()
     if not bombTimer.paused then bombTimer:pause() end
     actions.setupActionGfxAndSound(actions.current)
     gfx.sprite.update()
-    Statemachine.music:stop()
-    Statemachine.music:setSample(loseMusic)
-    Statemachine.music:play(0)
+    Statemachine.playMP3(loseMusic)
     playdate.inputHandlers.push(main_buttonsLose)
     playdate.update = update_bomb_fail
     explodeAni:reset()

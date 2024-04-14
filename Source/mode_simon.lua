@@ -9,6 +9,7 @@ import "particles"
 
 local gfx <const> = playdate.graphics
 local snd <const> = playdate.sound.sampleplayer
+local mp3 <const> = playdate.sound.fileplayer
 local sample <const> = playdate.sound.sample
 local mic <const> = playdate.sound.micinput
 local ACTION_CODES <const> = actions.codes
@@ -50,7 +51,7 @@ local simonState
 local simonStateChangeTimer
 local simonActionBlinkTimer
 
-local loseMusic <const> = sample.new("music/lose")
+local loseMusic <const> = mp3.new("music/lose")
 local soundSuccess = snd.new("sounds/success")
 local simonTickSlow = sample.new("sounds/tick1")
 local simonTickMid = sample.new("sounds/tick2")
@@ -233,9 +234,7 @@ local function actionFail_simon()
     end
     
     simonSampleplayer:stop()
-    Statemachine.music:stop()
-    Statemachine.music:setSample(loseMusic)
-    Statemachine.music:play(0)
+    Statemachine.playMP3(loseMusic)
     -- waiting for this to be fixed: https://devforum.play.date/t/pausing-a-timer-multiple-times-causes-inconsistent-behavior/16854/2
     if not simonTimer.paused then simonTimer:pause() end
     if not simonStateChangeTimer.paused then simonStateChangeTimer:pause() end
