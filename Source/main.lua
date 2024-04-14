@@ -160,5 +160,4 @@ playdate.setCrankSoundsDisabled(true)
 
 gfx.setColor(gfx.kColorWhite)
 gfx.setFont(Statemachine.font)
-gfx.clear()
 transition.setup_second(splash_setup, splash_render)

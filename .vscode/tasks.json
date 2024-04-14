@@ -38,7 +38,7 @@
                 ".",
                 "-o",
                 "crank-it.pdx",
-                "-zip",
+                // "-zip",
             ],
             "options": {
                 "cwd": "${workspaceFolder}"
