@@ -65,6 +65,7 @@
 -- [ ] tear particles on lose screen
 -- [X] no "new highscore" stars on high=0? (hide highscore as well)
 -- [ ] music for bomb mode
+-- [ ] load common music and sound effects only once (in Statemachine maybe)
 
 import "CoreLibs/graphics"
 
@@ -87,8 +88,8 @@ function Statemachine.playWAV(sample)
     if not save.data.settings.musicOn then return end
 
     Statemachine.music:stop()
-    Statemachine.sampleplayer:setSample(sample)
     Statemachine.music = Statemachine.sampleplayer
+    Statemachine.music:setSample(sample)
     Statemachine.music:play(0)
 end
 
@@ -97,6 +98,10 @@ function Statemachine.playMP3(fileplayer)
 
     Statemachine.music:stop()
     Statemachine.music = fileplayer
+    -- NOTE (JS, 15.04.23): Stopping and playing mp3 files without looping
+    -- is very unreliable atm. Sometimes the file will not play on the second
+    -- round, sometimes it will act as if it was paused instead of stopped.
+    -- These bugs do not occur on looping files, so we just loop everything...
     Statemachine.music:play(0)
 end
 

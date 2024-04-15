@@ -245,7 +245,7 @@ local buttonHandlers_title = {
         end
 
         if crankToReset <= 0 and change > 0 then
-            crankToReset = CRANK_RESET_TRIGGER * 0.05 -- to avoid flickering on start
+            crankToReset = CRANK_RESET_TRIGGER * 0.1 -- to avoid flickering on start
         else
             crankToReset = crankToReset + change
         end
@@ -281,7 +281,7 @@ function menu.update()
             gfx.setImageDrawMode(gfx.kDrawModeCopy)
 
             -- floor to keep "integer" value
-            crankToReset = math.floor(crankToReset - 2)
+            crankToReset = math.floor(crankToReset - 4)
         end
     end
 

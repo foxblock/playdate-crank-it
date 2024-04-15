@@ -18,7 +18,7 @@ local ACTION_CODES <const> = actions.codes
 local ACTIONS_PER_PASS <const> = 3
 
 local bgMusic <const> = mp3.new("music/bg3")
-local loseMusic <const> = mp3.new("music/lose")
+local loseMusic <const> = mp3.new("music/lose_bomb")
 local soundSuccess = snd.new("sounds/success")
 local bgSprite = nil
 

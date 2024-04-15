@@ -30,6 +30,7 @@ local bgMusic <const> = {
     mp3.new("music/bg5")
 }
 local loseMusic <const> = mp3.new("music/lose")
+local bigHighMusic <const> = mp3.new("music/stringed-disco")
 local soundSuccess = playdate.sound.sampleplayer.new("sounds/success")
 local bgSprite = nil
 
@@ -157,8 +158,10 @@ local function main_actionFail()
         save.write()
         if score >= HIGHSCORE_BIG_ANI then
             actions.current = ACTION_CODES.BIG_HIGHSCORE
+            Statemachine.playMP3(bigHighMusic)
         else
             actions.current = ACTION_CODES.HIGHSCORE
+            Statemachine.music:stop()
         end
         if score >= HIGHSCORE_STARS then
             failStarTimer:start()
@@ -172,10 +175,10 @@ local function main_actionFail()
         gfx.sprite.update()
         gfx.drawTextAligned('SCORE: '..score, 110, 220, kTextAlignment.center)
         gfx.drawTextAligned("HIGH: "..save.data.highscore[GAME_MODE.CRANKIT], 290, 220, kTextAlignment.center)
+        Statemachine.playMP3(loseMusic)
     end
 
     if not actionTimer.paused then actionTimer:pause() end
-    Statemachine.playMP3(loseMusic)
     playdate.inputHandlers.push(main_buttonsLose)
 end
 

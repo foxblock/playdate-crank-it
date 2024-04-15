@@ -52,6 +52,7 @@ local simonStateChangeTimer
 local simonActionBlinkTimer
 
 local loseMusic <const> = mp3.new("music/lose")
+local bigHighMusic <const> = mp3.new("music/stringed-disco")
 local soundSuccess = snd.new("sounds/success")
 local simonTickSlow = sample.new("sounds/tick1")
 local simonTickMid = sample.new("sounds/tick2")
@@ -216,8 +217,10 @@ local function actionFail_simon()
         save.write()
         if score_simon >= HIGHSCORE_BIG_ANI then
             actions.current = ACTION_CODES.BIG_HIGHSCORE
+            Statemachine.playMP3(bigHighMusic)
         else
             actions.current = ACTION_CODES.HIGHSCORE
+            Statemachine.music:stop()
         end
         if score_simon >= HIGHSCORE_STARS then
             failStarTimer:start()
@@ -231,10 +234,10 @@ local function actionFail_simon()
         gfx.sprite.update()
         gfx.drawTextAligned('SCORE: '..score_simon, 110, 220, kTextAlignment.center)
         gfx.drawTextAligned("HIGH: "..save.data.highscore[GAME_MODE.SIMON], 290, 220, kTextAlignment.center)
+        Statemachine.playMP3(loseMusic)
     end
-    
+
     simonSampleplayer:stop()
-    Statemachine.playMP3(loseMusic)
     -- waiting for this to be fixed: https://devforum.play.date/t/pausing-a-timer-multiple-times-causes-inconsistent-behavior/16854/2
     if not simonTimer.paused then simonTimer:pause() end
     if not simonStateChangeTimer.paused then simonStateChangeTimer:pause() end
