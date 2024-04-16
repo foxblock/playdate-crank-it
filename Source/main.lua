@@ -54,7 +54,7 @@
 -- [X] Fix being able to skip transitions in splash -> error
 -- [X] Main menu music
 -- [X] Crane sound in settings
--- [ ] Other sound effects: select game, change game in main menu, change settings, restart?, reset scores
+-- [X] Other sound effects: select game, change game in main menu, change settings, restart?, reset scores
 --     Individual select sounds per game (current select might fit simon well, ticktick for bomb), individual lose sounds? (current fits bomb)
 -- [X] Reset score (menu item? in settings?)
 -- [X] new highscore screen and sound
@@ -68,7 +68,8 @@
 -- [ ] music for bomb mode (bg3 maybe okay...)
 -- [ ] load common music and sound effects only once (in Statemachine maybe)
 -- [ ] balance sound volume
--- [ ] visual effect in simon mode on correct input
+-- [X] visual effect in simon mode on correct input
+-- [ ] show chain after losing simon game
 
 import "CoreLibs/graphics"
 

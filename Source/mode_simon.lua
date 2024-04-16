@@ -246,6 +246,7 @@ local function actionFail_simon()
     if not simonStateChangeTimer.paused then simonStateChangeTimer:pause() end
     if not simonActionBlinkTimer.paused then simonActionBlinkTimer:pause() end
     playdate.inputHandlers.push(buttonHandlers_simonLose, true)
+    mic.stopListening()
 end
 
 local function actionTimerEnd()
@@ -421,7 +422,9 @@ function simon.setup()
     )
 
     gfx.setColor(gfx.kColorBlack)
-    playdate.startAccelerometer()
+    if save.data.settings.allowTilt then
+        playdate.startAccelerometer()
+    end
     playdate.inputHandlers.push(actions.buttonHandler)
     playdate.update = update_simon_show
     Statemachine.cleanup = cleanup_simon

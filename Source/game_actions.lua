@@ -9,7 +9,7 @@ local gfx <const> = playdate.graphics
 local mic <const> = playdate.sound.micinput
 local snd <const> = playdate.sound.sampleplayer
 
-local TIME_FAST <const> = { 4000, 3000, 2000, 1300, 700 }
+local TIME_FAST <const> = { 4000, 3000, 2000, 1300, 850 }
 local TIME_NORMAL <const> = { 4000, 3000, 2200, 1600, 1200 }
 local TIME_SLOW <const> = { 4000, 3200, 2500, 2000, 1750 }
 

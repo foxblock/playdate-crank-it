@@ -182,6 +182,7 @@ local function main_actionFail()
 
     if not actionTimer.paused then actionTimer:pause() end
     playdate.inputHandlers.push(main_buttonsLose)
+    mic.stopListening()
 end
 
 local function actionTimerEnd()
@@ -316,7 +317,9 @@ function crankit.setup()
     -- Accelerometer only returns values on next update cycle after startAccelerometer is called
     -- This is inconvenient for us, since we need to set startVec once tilt action comes up
     -- So we just enable the accelerometer during the whole game
-    playdate.startAccelerometer()
+    if save.data.settings.allowTilt then
+        playdate.startAccelerometer()
+    end
     playdate.inputHandlers.push(actions.buttonHandler)
 
     actionTimer = playdate.timer.new(100, actionTimerEnd) -- dummy duration, proper value set in main_startGame

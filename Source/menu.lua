@@ -179,7 +179,7 @@ end
 
 local function menu_toSettings()
     playdate.inputHandlers.pop()
-    elements[selectedGame].music:setVolume(0.2)
+    elements[selectedGame].music:setVolume(0.16)
 end
 
 local function settings_result(data)
