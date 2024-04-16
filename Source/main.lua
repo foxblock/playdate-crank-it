@@ -106,6 +106,9 @@ function Statemachine.playMP3(fileplayer)
     -- is very unreliable atm. Sometimes the file will not play on the second
     -- round, sometimes it will act as if it was paused instead of stopped.
     -- These bugs do not occur on looping files, so we just loop everything...
+    -- UPDATE: Okay they also appear on looping files, so we just call 
+    -- setOffset(0) to make sure to play from the beginning
+    Statemachine.music:setOffset(0)
     Statemachine.music:play(0)
 end
 
