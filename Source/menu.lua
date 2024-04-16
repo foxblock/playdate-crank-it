@@ -196,7 +196,7 @@ local buttonHandlers_title = {
     leftButtonDown = function()
         elements[selectedGame].music:pause()
         if (selectedGame == 1) then
-            selectedGame = GAME_MODE.EOL - 1
+            selectedGame = GAME_MODE._EOL - 1
         else
             selectedGame = selectedGame - 1
         end
@@ -206,7 +206,7 @@ local buttonHandlers_title = {
 
     rightButtonDown = function()
         elements[selectedGame].music:pause()
-        if (selectedGame == GAME_MODE.EOL - 1) then
+        if (selectedGame == GAME_MODE._EOL - 1) then
             selectedGame = 1
         else
             selectedGame = selectedGame + 1

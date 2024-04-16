@@ -58,14 +58,17 @@
 --     Individual select sounds per game (current select might fit simon well, ticktick for bomb), individual lose sounds? (current fits bomb)
 -- [X] Reset score (menu item? in settings?)
 -- [X] new highscore screen and sound
--- [ ] new highscore music
+-- [X] new highscore music
 -- [X] bomb explode sound for lose
 -- [X] random stars from outside on the highscore screen
 -- [X] highscore screen score dependant? (>30 with animation, >50 with stars -> simon values?)
 -- [ ] tear particles on lose screen
 -- [X] no "new highscore" stars on high=0? (hide highscore as well)
--- [ ] music for bomb mode
+-- [X] Play no sound when normal highscore, play jingle when stars, rave when big
+-- [ ] music for bomb mode (bg3 maybe okay...)
 -- [ ] load common music and sound effects only once (in Statemachine maybe)
+-- [ ] balance sound volume
+-- [ ] visual effect in simon mode on correct input
 
 import "CoreLibs/graphics"
 

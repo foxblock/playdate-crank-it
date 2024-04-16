@@ -218,12 +218,14 @@ local function actionFail_simon()
         if score_simon >= HIGHSCORE_BIG_ANI then
             actions.current = ACTION_CODES.BIG_HIGHSCORE
             Statemachine.playMP3(bigHighMusic)
+            failStarTimer:start()
+        elseif score_simon >= HIGHSCORE_STARS then
+            actions.current = ACTION_CODES.STAR_HIGHSCORE
+            Statemachine.music:stop()
+            failStarTimer:start()
         else
             actions.current = ACTION_CODES.HIGHSCORE
             Statemachine.music:stop()
-        end
-        if score_simon >= HIGHSCORE_STARS then
-            failStarTimer:start()
         end
         actions.setupActionGfxAndSound(actions.current)
         playdate.update = update_highscore

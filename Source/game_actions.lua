@@ -33,10 +33,12 @@ actions.failFnc = nil
 actions.current = nil
 
 actions.codes = {
-    LOSE_BOMB = -3,
-    BIG_HIGHSCORE = -2,
-    HIGHSCORE = -1,
-    LOSE = 0, -- lose/end states above this line (will also no be selected automatically)
+    BIG_HIGHSCORE = -4,
+    STAR_HIGHSCORE = -3,
+    HIGHSCORE = -2,
+    LOSE_BOMB = -1,
+    LOSE = 0, 
+    -- lose/end states above this line (will also no be selected automatically)
     DIRECTION = 1,
     BUTTON = 2,
     MICROPHONE = 3,
@@ -45,27 +47,33 @@ actions.codes = {
     CRANK_UNDOCK = 6,
     CRANK_DOCK = 7,
     CRANKED = 8,
-    EOL = 9, -- everything below this line will not be automatically selected
+    _EOL = 9,
+    -- everything below this line will not be automatically selected
     SPEED_UP = 10,
     PASS_BOMB = 11,
 }
 
 -- TODO: Change snd entries from sampleplayer to sample and use one global player for all action sounds
 actions.data = {
-    [actions.codes.LOSE_BOMB] = {
-        time = TIME_NORMAL,
-        snd = snd.new("sounds/explosion"),
-        img = gfx.image.new("images/actions/explode"),
-    },
     [actions.codes.BIG_HIGHSCORE] = {
         time = TIME_NORMAL,
-        snd = snd.new("sounds/highscore"),
+        snd = snd.new("sounds/big-highscore"),
         ani = gfx.imagetable.new("images/actions/highscore"),
+    },
+    [actions.codes.STAR_HIGHSCORE] = {
+        time = TIME_NORMAL,
+        snd = snd.new("sounds/star-highscore"),
+        img = gfx.image.new("images/actions/highscore-static"),
     },
     [actions.codes.HIGHSCORE] = {
         time = TIME_NORMAL,
         snd = snd.new("sounds/highscore"),
         img = gfx.image.new("images/actions/highscore-static"),
+    },
+    [actions.codes.LOSE_BOMB] = {
+        time = TIME_NORMAL,
+        snd = snd.new("sounds/explosion"),
+        img = gfx.image.new("images/actions/explode"),
     },
     [actions.codes.LOSE] = {
         time = TIME_NORMAL,
@@ -221,7 +229,7 @@ function actions.getValidActionCode(allowPassAction, excludeOption, crankDocked)
         if (crankDocked) then
             result = math.random(1, actions.codes.CRANK_UNDOCK)
         else
-            result = math.random(1, actions.codes.EOL - 1)
+            result = math.random(1, actions.codes._EOL - 1)
         end
     -- exclude UNDOCK action when crank is undocked
     -- exclude MICROPHONE action on simulator without microphone input
