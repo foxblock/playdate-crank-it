@@ -65,7 +65,7 @@
 -- [ ] tear particles on lose screen
 -- [X] no "new highscore" stars on high=0? (hide highscore as well)
 -- [X] Play no sound when normal highscore, play jingle when stars, rave when big
--- [ ] music for bomb mode (bg3 maybe okay...)
+-- [X] music for bomb mode
 -- [ ] load common music and sound effects only once (in Statemachine maybe)
 -- [ ] balance sound volume
 -- [X] visual effect in simon mode on correct input
@@ -92,7 +92,7 @@ function Statemachine.playWAV(sample)
     if not save.data.settings.musicOn then return end
 
     Statemachine.music:stop()
-    Statemachine.music = Statemachine.sampleplayer
+    Statemachine.music = sampleplayer
     Statemachine.music:setSample(sample)
     Statemachine.music:play(0)
 end

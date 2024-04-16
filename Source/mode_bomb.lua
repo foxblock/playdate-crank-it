@@ -10,6 +10,7 @@ import "game_actions"
 
 local gfx <const> = playdate.graphics
 local snd <const> = playdate.sound.sampleplayer
+local sample <const> = playdate.sound.sample
 local mp3 <const> = playdate.sound.fileplayer
 local mic <const> = playdate.sound.micinput
 local easings <const> = playdate.easingFunctions
@@ -17,7 +18,11 @@ local ACTION_CODES <const> = actions.codes
 
 local ACTIONS_PER_PASS <const> = 3
 
-local bgMusic <const> = mp3.new("music/bg3")
+local bgMusic <const> = {
+    sample.new("sounds/tick1"),
+    sample.new("sounds/tick2"),
+    sample.new("sounds/tick3"),
+}
 local loseMusic <const> = mp3.new("music/lose_bomb")
 local soundSuccess = snd.new("sounds/success")
 local bgSprite = nil
@@ -64,6 +69,7 @@ local bombTimer
 local lastAnimationFrame = 1
 local actionPassCounter = 0
 local fuseState = 1
+local shownFuseState = 1
 
 local update_main
 
@@ -87,6 +93,15 @@ local function update_bomb_fail()
     end
 end
 
+local function clamp(val, min, max)
+    if val < min then
+        return min
+    elseif val > max then
+        return max
+    end
+    return val
+end
+
 local function setFuseState(i)
     fuseState = i
     pulseAni = gfx.animator.new(pulseAniParams[i].dur, pulseAniParams[i].min, pulseAniParams[i].max, easings.inOutSine)
@@ -108,9 +123,10 @@ local function main_startGame(skipGenNewAction)
     bombTimer:reset()
     bombTimer:start()
     setFuseState(1)
+    shownFuseState = 1
     if not actionTimer.paused then actionTimer:pause() end
 
-    Statemachine.playMP3(bgMusic)
+    Statemachine.playWAV(bgMusic[shownFuseState])
 end
 
 local main_buttonsLose = {
@@ -199,7 +215,7 @@ update_main = function ()
 
     if fuseState < 2 and bombTimer.timeLeft < bombTimer.duration * 0.5 then
         setFuseState(2)
-    elseif fuseState < 3 and bombTimer.timeLeft < bombTimer.duration * 0.1 then
+    elseif fuseState < 3 and bombTimer.timeLeft < clamp(bombTimer.duration * 0.1, 2000, 8000)  then
         setFuseState(3)
     end
 
@@ -224,6 +240,10 @@ update_main = function ()
         if actionPassCounter == ACTIONS_PER_PASS then
             actions.current = ACTION_CODES.PASS_BOMB
             actionPassCounter = 0
+            if fuseState ~= shownFuseState then
+                shownFuseState = fuseState
+                Statemachine.playWAV(bgMusic[shownFuseState])
+            end
         else
             actions.current = actions.getValidActionCode(false, lastAction)
         end
