@@ -43,10 +43,11 @@ local hideFirstHighscore = false
 local currIndex = 1
 local simonTimer
 
-local simonYourTurnImg = gfx.image.new("images/simon_action")
-local simonDockImg = gfx.image.new("images/simon_dock")
-local simonScoreImg = gfx.image.new("images/simon_score")
-local simonSimonsTurnImg = gfx.image.new("images/simon_show")
+local simonYourTurnImg = gfx.image.new("images/simon/action")
+local simonDockImg = gfx.image.new("images/simon/dock")
+local simonScoreImg = gfx.image.new("images/simon/score")
+local simonSimonsTurnImg = gfx.image.new("images/simon/show")
+local simonCorrectImg = gfx.image.new("images/simon/correct")
 local simonState
 local simonStateChangeTimer
 local simonActionBlinkTimer
@@ -275,6 +276,10 @@ local function render_simon()
     gfx.sprite.update()
 
     if (simonState ~= SIMON_STATE.ACTION) then return end
+
+    if soundSuccess:isPlaying() then
+        simonCorrectImg:drawCentered(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
+    end
 
     gfx.setColor(gfx.kColorBlack)
     if (simonTimer.timeLeft <= SIMON_TIMER_SHOW_MS) then
