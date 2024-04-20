@@ -90,6 +90,9 @@ local settings_buttonHandler = {
             data[k] = cfg.options[cfg.optionIndex]
         else
             data[k] = data[k] + 1
+            if cfg.max ~= nil and data[k] > cfg.max then
+                data[k] = cfg.max
+            end
         end
         sndTick:play(1)
         settings.render()
@@ -108,6 +111,9 @@ local settings_buttonHandler = {
             data[k] = cfg.options[cfg.optionIndex]
         else
             data[k] = data[k] - 1
+            if cfg.min ~= nil and data[k] < cfg.min then
+                data[k] = cfg.min
+            end
         end
         sndTick:play(1)
         settings.render()
@@ -207,6 +213,9 @@ function settings.show()
     settings.active = true
 end
 
+-- saveData is shallow table (save.data.settings in our case)
+-- guiMetadata is an array used to stringify settings, defined in savegame.lua
+-- cb is callback taking the changed data as argument when user accepts changes or nil on cancel
 function settings.setup(saveData, guiMetadata, cb)
     copyTable(data, saveData)
     config = guiMetadata

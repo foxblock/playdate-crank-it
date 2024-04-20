@@ -13,7 +13,9 @@ save.data = {
         allowMic = true,
         allowTilt = true,
         allowPass = true,
+        simonStartLvl = 1,
         bombSeconds = 30,
+        bombActionsPerPass = 3,
         debugOn = false,
     }
 }
@@ -21,15 +23,20 @@ save.data = {
 -- k = keys of save.data.settings in the order they should appear in settings menu
 -- need to do this, since pairs() returns elements in random order
 -- (this is kinda overengineered, probably should have just hard coded the options...)
+-- s is the string displayed in settings.lua
+-- list of options can use "options" for values and (optional) "optionsStr" for how to display these
+-- integers can use min and max to bound values
 save.settingsMetadata = {
     { k="musicOn", s="MUSIC" },
     { k="allowMic", s="SHOUT IT" },
     { k="allowTilt", s="TILT IT" },
     { k="allowPass", s="PASS IT" },
+    { k="simonStartLvl", s="SIMON LVL", min=1, max=5 },
     { k="bombSeconds", s="BOMB TIME",
         options=   {     15,     23,     30,     42,      60,     90,     120 },
         optionsStr={ "15 S", "23 S", "30 S", "42 S", "1 MIN", "90 S", "2 MIN" } 
     },
+    { k="bombActionsPerPass", s="BOMB ACTIONS", min=1, max=10 },
     { k="debugOn", s="DEBUG" },
     -- { k="test", s="TEST", options={ 10, -10, 20, 0, 500, 1e7 } },
 }

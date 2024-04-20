@@ -6,6 +6,7 @@ import "CoreLibs/sprites"
 import "CoreLibs/timer"
 import "game_actions"
 import "particles"
+import "savegame"
 
 local gfx <const> = playdate.graphics
 local snd <const> = playdate.sound.sampleplayer
@@ -17,7 +18,6 @@ local ACTION_CODES <const> = actions.codes
 local SCREEN_WIDTH <const> = playdate.display.getWidth()
 local SCREEN_HEIGHT <const> = playdate.display.getHeight()
 
-local SIMON_START_COUNT <const> = 1
 local SIMON_TIMER_DURATION_MS <const> = 6500
 local SIMON_TIMER_SHOW_MS <const> = 4300
 local SIMON_TIMER_SOUND2_MS <const> = 2400
@@ -146,7 +146,7 @@ startGame_simon = function()
 
     actionChain = {}
     -- do not allow dock action in this set, so we don't have to track dock state
-    for i=1, SIMON_START_COUNT do
+    for i=1, save.data.settings.simonStartLvl do
         table.insert(actionChain, actions.getValidActionCode(false, ACTION_CODES.CRANK_DOCK, false))
     end
     actions.current = nil
@@ -178,7 +178,7 @@ local function actionSuccess_simon()
         actions.current = actionChain[currIndex]
         actions.setupActionGameplay(actionChain[currIndex-1], actions.current)
     else
-        score_simon = score_simon + 1
+        score_simon = #actionChain
         simonTimer:pause()
         table.insert(actionChain, actions.getValidActionCode(false))
         playdate.update = update_simon_show

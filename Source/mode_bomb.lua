@@ -7,6 +7,7 @@ import "CoreLibs/timer"
 import "CoreLibs/animator"
 import "CoreLibs/animation"
 import "game_actions"
+import "savegame"
 
 local gfx <const> = playdate.graphics
 local snd <const> = playdate.sound.sampleplayer
@@ -15,8 +16,6 @@ local mp3 <const> = playdate.sound.fileplayer
 local mic <const> = playdate.sound.micinput
 local easings <const> = playdate.easingFunctions
 local ACTION_CODES <const> = actions.codes
-
-local ACTIONS_PER_PASS <const> = 3
 
 local bgMusic <const> = {
     sample.new("sounds/tick1"),
@@ -237,7 +236,7 @@ update_main = function ()
 
     if actionDone then
         local lastAction = actions.current
-        if actionPassCounter == ACTIONS_PER_PASS then
+        if actionPassCounter == save.data.settings.bombActionsPerPass then
             actions.current = ACTION_CODES.PASS_BOMB
             actionPassCounter = 0
             if fuseState ~= shownFuseState then
