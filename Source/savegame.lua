@@ -31,7 +31,7 @@ save.settingsMetadata = {
     { k="allowMic", s="SHOUT IT" },
     { k="allowTilt", s="TILT IT" },
     { k="allowPass", s="PASS IT" },
-    { k="simonStartLvl", s="SIMON LVL", min=1, max=5 },
+    { k="simonStartLvl", s="SIMON START", min=1, max=5 },
     { k="bombSeconds", s="BOMB TIME",
         options=   {     15,     23,     30,     42,      60,     90,     120 },
         optionsStr={ "15 S", "23 S", "30 S", "42 S", "1 MIN", "90 S", "2 MIN" } 

@@ -72,7 +72,8 @@
 -- [ ] show chain after losing simon game
 -- [X] Setting to start simon with more than 1 action
 -- [ ] Credits screens for music and sounds
--- [ ] Replace NC sounds
+-- [X] Replace NC sounds
+-- [ ] better lvl4 and 5 music
 
 import "CoreLibs/graphics"
 

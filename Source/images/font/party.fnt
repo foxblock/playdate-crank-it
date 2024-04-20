@@ -80,6 +80,7 @@ _	17
 97	-1
 AX	-1
 AY	-2
+CT  -1
 ET	-1
 GT	-2
 HR	-1
@@ -94,8 +95,11 @@ IO  -1
 IS  -2
 L.	1
 LT	-4
+LV  -2
+OF  1
 OG	1
 OP  1
+OU  1
 OX	-1
 PT  -2
 ST	-1
