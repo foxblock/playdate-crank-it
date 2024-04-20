@@ -34,12 +34,22 @@ local craneAnimator = gfx.animator.new(750, CRANK_START_Y, CRANK_START_Y)
 local craneSound = snd.new("sounds/crane_move")
 local sndTick = snd.new("sounds/menu_tick")
 
+-- actual data and structure of settings defined in savegame.lua
+local data = {}
+local config = nil
+local callback = nil
+
 local selectedIndex = 1
 
 
+local function copyTable(dst, src)
+    for k in pairs(dst) do dst[k] = nil end
+    for k, v in pairs(src) do dst[k] = v end
+end
+
 local function start_crane()
     local currVal = craneAnimator:currentValue()
-    local craneProgress = (selectedIndex - 1) / (#settings.config - 1)
+    local craneProgress = (selectedIndex - 1) / (#config - 1)
     craneAnimator = gfx.animator.new(750, 
         currVal, 
         CRANK_START_Y + (CRANK_END_Y - CRANK_START_Y) * craneProgress,
@@ -58,7 +68,7 @@ local settings_buttonHandler = {
     end,
 
     downButtonDown = function()
-        if selectedIndex < #settings.config then
+        if selectedIndex < #config then
             selectedIndex = selectedIndex + 1
             start_crane()
             settings.render()
@@ -68,36 +78,36 @@ local settings_buttonHandler = {
     end,
 
     rightButtonDown = function()
-        local cfg = settings.config[selectedIndex]
+        local cfg = config[selectedIndex]
         local k = cfg.k
-        local v = settings.data[k]
+        local v = data[k]
         if type(v) == "boolean" then
-            settings.data[k] = not v
+            data[k] = not v
         elseif cfg.options ~= nil then
             if cfg.optionIndex >= #cfg.options then return end
             
             cfg.optionIndex = cfg.optionIndex + 1
-            settings.data[k] = cfg.options[cfg.optionIndex]
+            data[k] = cfg.options[cfg.optionIndex]
         else
-            settings.data[k] = settings.data[k] + 1
+            data[k] = data[k] + 1
         end
         sndTick:play(1)
         settings.render()
     end,
     
     leftButtonDown = function()
-        local cfg = settings.config[selectedIndex]
+        local cfg = config[selectedIndex]
         local k = cfg.k
-        local v = settings.data[k]
+        local v = data[k]
         if type(v) == "boolean" then
-            settings.data[k] = not v
+            data[k] = not v
         elseif cfg.options ~= nil then
             if cfg.optionIndex <= 1 then return end
             
             cfg.optionIndex = cfg.optionIndex - 1
-            settings.data[k] = cfg.options[cfg.optionIndex]
+            data[k] = cfg.options[cfg.optionIndex]
         else
-            settings.data[k] = settings.data[k] - 1
+            data[k] = data[k] - 1
         end
         sndTick:play(1)
         settings.render()
@@ -105,12 +115,18 @@ local settings_buttonHandler = {
 
     AButtonDown = function()
         settings.cleanup()
-        settings.callback(settings.data)
+        -- This creates unnecessary waste (we could just copyTable(target, data) in
+        -- the callback function). But I feel like this is the safer interface, since 
+        -- returning data and using that reference externally could lead to problems 
+        -- when settings is called again (just in case we want to reuse this module - though we probably won't)
+        local returnData = {}
+        copyTable(returnData, data)
+        callback(returnData)
     end,
 
     BButtonDown = function()
         settings.cleanup()
-        settings.callback(nil)
+        callback(nil)
     end,
 }
 
@@ -156,8 +172,8 @@ function settings.render()
 
     local yPos = 40
     local spacing <const> = 24
-    for i,cfg in ipairs(settings.config) do
-        local v = settings.data[cfg.k]
+    for i,cfg in ipairs(config) do
+        local v = data[cfg.k]
 
         gfx.drawTextAligned(cfg.s, 15, yPos, kTextAlignment.left)
 
@@ -182,10 +198,19 @@ function settings.render()
     end
 end
 
-function settings.setup()
+function settings.show()
+    assert(config ~= nil, "Call settings.setup first")
+    assert(callback ~= nil, "Call settings.setup first")
+
     playdate.inputHandlers.push(settings_buttonHandler)
     playdate.update = settings_update
     settings.active = true
+end
+
+function settings.setup(saveData, guiMetadata, cb)
+    copyTable(data, saveData)
+    config = guiMetadata
+    callback = cb
 end
 
 function settings.cleanup()
@@ -193,8 +218,4 @@ function settings.cleanup()
     settings.active = false
 end
 
--- actual data and structure of settings defined in savegame.lua
-settings.data = {}
-settings.config = nil
-settings.callback = nil
 settings.active = false

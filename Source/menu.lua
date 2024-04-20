@@ -163,11 +163,6 @@ end
 --     end
 -- )
 
-local function copyTable(dst, src)
-    for k in pairs(dst) do dst[k] = nil end
-    for k, v in pairs(src) do dst[k] = v end
-end
-
 local function menu_cleanup()
     if settings.active then
         settings.cleanup()
@@ -184,7 +179,7 @@ end
 
 local function settings_result(data)
     if (data ~= nil) then
-        copyTable(save.data.settings, settings.data)
+        save.data.settings = data
         save.write()
     end
 
@@ -233,10 +228,8 @@ local buttonHandlers_title = {
     BButtonDown = function()
         menu_toSettings()
 
-        settings.callback = settings_result
-        settings.config = save.settingsMetadata
-        copyTable(settings.data, save.data.settings)
-        transition.setup(settings.setup, settings.render)
+        settings.setup(save.data.settings, save.settingsMetadata, settings_result)
+        transition.setup(settings.show, settings.render)
     end,
 
     cranked = function(change, acceleratedChange)

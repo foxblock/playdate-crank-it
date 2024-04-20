@@ -70,6 +70,9 @@
 -- [ ] balance sound volume
 -- [X] visual effect in simon mode on correct input
 -- [ ] show chain after losing simon game
+-- [ ] Setting to start simon with more than 1 action
+-- [ ] Credits screens for music and sounds
+-- [ ] Replace NC sounds
 
 import "CoreLibs/graphics"
 
