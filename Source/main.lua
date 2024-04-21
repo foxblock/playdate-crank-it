@@ -12,19 +12,17 @@
 --    /
 --   v  y = 1
 
--- Sound Credits:
+-- Sound credits:
 -- voice: https://ttsfree.com/ - English (US), Jenny
--- success.wav: https://freesound.org/people/rhodesmas/sounds/342750/
--- crane_move.wav: https://freesound.org/people/DCSFX/sounds/366123/ (NC!)
--- woosh.wav: https://freesound.org/people/Vilkas_Sound/sounds/460476/
--- tick.wav: https://freesound.org/people/MrOwn1/sounds/110314/
--- reset_score.wav: https://freesound.org/people/steeltowngaming/sounds/537739/
--- menu_game_change.wav: https://freesound.org/people/F.M.Audio/sounds/560330/
--- explode.wav: https://freesound.org/people/DeltaCode/sounds/667660/
--- quirky-dog.mp3: Kevin MacLeod - https://incompetech.com/music/royalty-free/licenses/
--- intrigue-fun-21661.mp3: https://pixabay.com/music/funk-intrigue-fun-21661/
--- hitman: Keving MacLeod - https://incompetech.com/music/royalty-free/licenses/
-
+-- success.wav: https://freesound.org/people/rhodesmas/sounds/342750/ - CC-BY 3.0
+-- woosh.wav: https://freesound.org/people/Vilkas_Sound/sounds/460476/ - CC-BY 4.0
+-- menu_game_change.wav: https://freesound.org/people/F.M.Audio/sounds/560330/ - CC-BY 4.0
+-- reset_score.wav: https://freesound.org/people/steeltowngaming/sounds/537739/ - CC
+-- explode.wav: https://freesound.org/people/DeltaCode/sounds/667660/ - CC
+-- Music credits:
+-- quirky-dog.mp3: Kevin MacLeod - https://incompetech.com/music/royalty-free/licenses/ - CC-BY 3.0
+-- hitman: Keving MacLeod - https://incompetech.com/music/royalty-free/licenses/ - CC-BY 3.0
+-- intrigue-fun-21661.mp3: https://pixabay.com/music/funk-intrigue-fun-21661/ - Pixabay
 
 ------ TODO
 -- [X] action: pass to other player
@@ -71,7 +69,7 @@
 -- [X] visual effect in simon mode on correct input
 -- [ ] show chain after losing simon game
 -- [X] Setting to start simon with more than 1 action
--- [ ] Credits screens for music and sounds
+-- [X] Credits screens for music and sounds
 -- [X] Replace NC sounds
 -- [ ] better lvl4 and 5 music
 
@@ -121,6 +119,8 @@ end
 local splashImages = {
     gfx.image.new("images/remove_cover"),
     gfx.image.new("images/credits"),
+    gfx.image.new("images/music_credits"),
+    gfx.image.new("images/sound_credits"),
 }
 
 local currentSplash = 1

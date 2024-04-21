@@ -32,7 +32,8 @@ local CRANK_END_Y <const> = 82
 
 local craneAnimator = gfx.animator.new(750, CRANK_START_Y, CRANK_START_Y)
 local craneSound = snd.new("sounds/crane_move")
-local sndTick = snd.new("sounds/menu_tick")
+local sndTickLeft = snd.new("sounds/menu_tick_left")
+local sndTickRight = snd.new("sounds/menu_tick_right")
 
 -- actual data and structure of settings defined in savegame.lua
 local data = {}
@@ -94,7 +95,7 @@ local settings_buttonHandler = {
                 data[k] = cfg.max
             end
         end
-        sndTick:play(1)
+        sndTickRight:play(1)
         settings.render()
     end,
     
@@ -115,7 +116,7 @@ local settings_buttonHandler = {
                 data[k] = cfg.min
             end
         end
-        sndTick:play(1)
+        sndTickLeft:play(1)
         settings.render()
     end,
 
