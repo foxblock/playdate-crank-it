@@ -57,27 +57,28 @@ end
 function save.load()
     local loadData = datastore.read()
 
-    if loadData == nil then return end
-
-    -- convert from old save file
-    if loadData.SAVE_VERSION == nil then
-        save.data.settings.musicOn = loadData.musicOn
-        save.data.settings.debugOn = loadData.debugOn
-        save.data.highscore[GAME_MODE.CRANKIT] = loadData.highscore
-        save.write()
-    elseif loadData.SAVE_VERSION == 1 then
-        save.data.settings.musicOn = loadData.musicOn
-        save.data.settings.debugOn = loadData.debugOn
-        save.data.highscore = loadData.highscore
-        save.write()
-    elseif loadData.SAVE_VERSION == 2 then
-        for k,v in pairs(loadData.settings) do
-            save.data.settings[k] = v
+    if loadData ~= nil then
+        if loadData.SAVE_VERSION == nil then
+            save.data.settings.musicOn = loadData.musicOn
+            save.data.settings.debugOn = loadData.debugOn
+            save.data.highscore[GAME_MODE.CRANKIT] = loadData.highscore
+            save.write()
+        elseif loadData.SAVE_VERSION == 1 then
+            save.data.settings.musicOn = loadData.musicOn
+            save.data.settings.debugOn = loadData.debugOn
+            save.data.highscore = loadData.highscore
+            save.write()
+        elseif loadData.SAVE_VERSION == 2 then
+            for k,v in pairs(loadData.settings) do
+                save.data.settings[k] = v
+            end
+            save.data.highscore = loadData.highscore
+            save.write()
+        elseif loadData.SAVE_VERSION == save.data.SAVE_VERSION then
+            save.data = loadData
+        else
+            assert(false, "Unknown save version: "..loadData.SAVE_VERSION)
         end
-        save.data.highscore = loadData.highscore
-        save.write()
-    else
-        save.data = loadData
     end
 
     for _,v in ipairs(save.settingsMetadata) do
