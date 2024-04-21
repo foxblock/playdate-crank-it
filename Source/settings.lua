@@ -34,6 +34,8 @@ local craneAnimator = gfx.animator.new(750, CRANK_START_Y, CRANK_START_Y)
 local craneSound = snd.new("sounds/crane_move")
 local sndTickLeft = snd.new("sounds/menu_tick_left")
 local sndTickRight = snd.new("sounds/menu_tick_right")
+local sndAccept = snd.new("sounds/success")
+local sndBack = snd.new("sounds/score_reset")
 
 -- actual data and structure of settings defined in savegame.lua
 local data = {}
@@ -128,11 +130,13 @@ local settings_buttonHandler = {
         -- when settings is called again (just in case we want to reuse this module - though we probably won't)
         local returnData = {}
         copyTable(returnData, data)
+        sndAccept:play(1)
         callback(returnData)
     end,
 
     BButtonDown = function()
         settings.cleanup()
+        sndBack:play(1)
         callback(nil)
     end,
 }

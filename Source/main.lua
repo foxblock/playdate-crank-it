@@ -65,7 +65,7 @@
 -- [X] Play no sound when normal highscore, play jingle when stars, rave when big
 -- [X] music for bomb mode
 -- [ ] load common music and sound effects only once (in Statemachine maybe)
--- [ ] balance sound volume
+-- [X] balance sound volume
 -- [X] visual effect in simon mode on correct input
 -- [ ] show chain after losing simon game
 -- [X] Setting to start simon with more than 1 action
@@ -99,7 +99,7 @@ function Statemachine.playWAV(sample)
     Statemachine.music:play(0)
 end
 
-function Statemachine.playMP3(fileplayer)
+function Statemachine.playMP3(fileplayer, repeatCount)
     if not save.data.settings.musicOn then return end
 
     Statemachine.music:stop()
@@ -111,7 +111,11 @@ function Statemachine.playMP3(fileplayer)
     -- UPDATE: Okay they also appear on looping files, so we just call 
     -- setOffset(0) to make sure to play from the beginning
     Statemachine.music:setOffset(0)
-    Statemachine.music:play(0)
+    if repeatCount == nil then
+        Statemachine.music:play(0)
+    else
+        Statemachine.music:play(repeatCount)
+    end
 end
 
 ------ SPLASH IMAGES
@@ -125,6 +129,7 @@ local splashImages = {
 
 local currentSplash = 1
 local splash_next
+local introMusic = playdate.sound.fileplayer.new("music/quirky-dog-intro")
 
 local buttonHandlers_intro = {
     AButtonDown = function()
@@ -195,3 +200,5 @@ playdate.setCrankSoundsDisabled(true)
 gfx.setColor(gfx.kColorWhite)
 gfx.setFont(Statemachine.font)
 transition.setup_second(splash_setup, splash_render)
+introMusic:setFinishCallback(menu.musicCallbackFromMain)
+Statemachine.playMP3(introMusic, 1)

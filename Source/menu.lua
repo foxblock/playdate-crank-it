@@ -166,7 +166,7 @@ end
 local function menu_cleanup()
     if settings.active then
         settings.cleanup()
-        elements[selectedGame].music:setVolume(1)
+        elements[selectedGame].music:setVolume(1, 1, 0.5)
     end
     playdate.inputHandlers.pop()
     elements[selectedGame].music:pause()
@@ -174,7 +174,7 @@ end
 
 local function menu_toSettings()
     playdate.inputHandlers.pop()
-    elements[selectedGame].music:setVolume(0.16)
+    elements[selectedGame].music:setVolume(0.16, 0.16, 0.5)
 end
 
 local function settings_result(data)
@@ -183,7 +183,7 @@ local function settings_result(data)
         save.write()
     end
 
-    elements[selectedGame].music:setVolume(1)
+    elements[selectedGame].music:setVolume(1, 1, 0.5)
     transition.setup(menu.setup, menu.update)
 end
 
@@ -196,7 +196,9 @@ local buttonHandlers_title = {
             selectedGame = selectedGame - 1
         end
         gameChangeSound:play(1)
-        elements[selectedGame].music:play(0)
+        if not Statemachine.music:isPlaying() then
+            elements[selectedGame].music:play(0)
+        end
     end,
 
     rightButtonDown = function()
@@ -207,7 +209,9 @@ local buttonHandlers_title = {
             selectedGame = selectedGame + 1
         end
         gameChangeSound:play(1)
-        elements[selectedGame].music:play(0)
+        if not Statemachine.music:isPlaying() then
+            elements[selectedGame].music:play(0)
+        end
     end,
 
     AButtonDown = function()
@@ -290,5 +294,11 @@ function menu.setup()
     playdate.inputHandlers.push(buttonHandlers_title)
     playdate.update = menu.update
     Statemachine.cleanup = menu_cleanup
+    if not Statemachine.music:isPlaying() then
+        elements[selectedGame].music:play(0)
+    end
+end
+
+function menu.musicCallbackFromMain()
     elements[selectedGame].music:play(0)
 end
