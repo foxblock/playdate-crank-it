@@ -68,10 +68,12 @@
 -- [X] balance sound volume
 -- [X] visual effect in simon mode on correct input
 -- [ ] show chain after losing simon game
+-- [ ] show lose reason in crankit and bomb
 -- [X] Setting to start simon with more than 1 action
 -- [X] Credits screens for music and sounds
 -- [X] Replace NC sounds
 -- [ ] better lvl4 and 5 music
+-- [ ] move credits to playdate menu item
 
 import "CoreLibs/graphics"
 

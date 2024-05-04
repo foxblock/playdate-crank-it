@@ -37,7 +37,7 @@ actions.codes = {
     STAR_HIGHSCORE = -3,
     HIGHSCORE = -2,
     LOSE_BOMB = -1,
-    LOSE = 0, 
+    LOSE = 0,
     -- lose/end states above this line (will also no be selected automatically)
     DIRECTION = 1,
     BUTTON = 2,

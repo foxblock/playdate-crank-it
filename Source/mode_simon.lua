@@ -33,7 +33,8 @@ local SIMON_STATE <const> = {
     WAIT_FOR_UNDOCK = 2,
     INSTRUCTIONS = 3,
     SHOW = 4,
-    ACTION = 5
+    ACTION = 5,
+    LOSE = 6,
 }
 
 local actionChain = {}
@@ -247,6 +248,7 @@ local function actionFail_simon()
     if not simonActionBlinkTimer.paused then simonActionBlinkTimer:pause() end
     playdate.inputHandlers.push(buttonHandlers_simonLose, true)
     mic.stopListening()
+    simonState = SIMON_STATE.LOSE
 end
 
 local function actionTimerEnd()
