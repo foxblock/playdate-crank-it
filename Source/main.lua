@@ -73,13 +73,14 @@
 -- [X] Credits screens for music and sounds
 -- [X] Replace NC sounds
 -- [ ] better lvl4 and 5 music
--- [ ] move credits to playdate menu item
+-- [X] move credits to playdate menu item
 -- [ ] simon: microphone should reset on multiple shout it in a row
 -- [X] crank-it: increase chance for pass-it continuously
 
 import "CoreLibs/graphics"
 
 import "transition"
+import "credits"
 import "menu"
 import "savegame"
 
@@ -127,8 +128,6 @@ end
 local splashImages <const> = {
     gfx.image.new("images/remove_cover"),
     gfx.image.new("images/credits"),
-    gfx.image.new("images/music_credits"),
-    gfx.image.new("images/sound_credits"),
 }
 
 local currentSplash = 1
@@ -188,9 +187,16 @@ save.load()
 -- setup playdate menu
 local systemMenu = playdate.getSystemMenu()
 
+local creditsItem, _ = systemMenu:addMenuItem("Credits", function()
+    if Statemachine.cleanup ~= nil then
+        Statemachine.cleanup()
+    end
+    transition.setup(credits.setup, credits.render)
+end)
+
 local goToMenuItem, _ = systemMenu:addMenuItem("Main Menu", function()
     if menu.active then return end
-    
+
     if (Statemachine.cleanup ~= nil) then
         Statemachine.cleanup()
     end
