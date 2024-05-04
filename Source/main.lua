@@ -74,6 +74,7 @@
 -- [X] Replace NC sounds
 -- [ ] better lvl4 and 5 music
 -- [ ] move credits to playdate menu item
+-- [ ] simon: microphone should reset on multiple shout it in a row
 -- [X] crank-it: increase chance for pass-it continuously
 
 import "CoreLibs/graphics"
@@ -132,7 +133,6 @@ local splashImages = {
 
 local currentSplash = 1
 local splash_next
-local introMusic = playdate.sound.fileplayer.new("music/quirky-dog-intro")
 
 local buttonHandlers_intro = {
     AButtonDown = function()
@@ -203,5 +203,4 @@ playdate.setCrankSoundsDisabled(true)
 gfx.setColor(gfx.kColorWhite)
 gfx.setFont(Statemachine.font)
 transition.setup_second(splash_setup, splash_render)
-introMusic:setFinishCallback(menu.musicCallbackFromMain)
-Statemachine.playMP3(introMusic, 1)
+menu.startIntroMusic()

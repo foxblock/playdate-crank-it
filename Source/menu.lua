@@ -17,6 +17,8 @@ local easings <const> = playdate.easingFunctions
 local snd <const> = playdate.sound.sampleplayer
 local mp3 <const> = playdate.sound.fileplayer
 
+local introMusic = playdate.sound.fileplayer.new("music/quirky-dog-intro")
+
 local gameChangeSound = snd.new("sounds/menu_game_change")
 local gameSelectSound = snd.new("sounds/menu_game_select")
 local scoreResetSound = snd.new("sounds/score_reset")
@@ -168,6 +170,9 @@ local function menu_cleanup()
         settings.cleanup()
         elements[selectedGame].music:setVolume(1, 1, 0.5)
     end
+    if Statemachine.music:isPlaying() then
+        Statemachine.music:pause()
+    end
     playdate.inputHandlers.pop()
     elements[selectedGame].music:pause()
 end
@@ -294,11 +299,13 @@ function menu.setup()
     playdate.inputHandlers.push(buttonHandlers_title)
     playdate.update = menu.update
     Statemachine.cleanup = menu_cleanup
-    if not Statemachine.music:isPlaying() then
-        elements[selectedGame].music:play(0)
-    end
 end
 
-function menu.musicCallbackFromMain()
+local function introMusicEnd()
     elements[selectedGame].music:play(0)
+end
+
+function menu.startIntroMusic()
+    introMusic:setFinishCallback(introMusicEnd)
+    Statemachine.playMP3(introMusic, 1)
 end
