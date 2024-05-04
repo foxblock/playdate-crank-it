@@ -299,6 +299,9 @@ function menu.setup()
     playdate.inputHandlers.push(buttonHandlers_title)
     playdate.update = menu.update
     Statemachine.cleanup = menu_cleanup
+    if not Statemachine.music:isPlaying() then
+        elements[selectedGame].music:play(0)
+    end
 end
 
 local function introMusicEnd()
