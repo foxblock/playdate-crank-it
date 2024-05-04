@@ -11,6 +11,7 @@ import "mode_simon"
 import "mode_bomb"
 import "settings"
 import "savegame"
+import "transition"
 
 local gfx <const> = playdate.graphics
 local easings <const> = playdate.easingFunctions
@@ -175,6 +176,7 @@ local function menu_cleanup()
     end
     playdate.inputHandlers.pop()
     elements[selectedGame].music:pause()
+    menu.active = false
 end
 
 local function menu_toSettings()
@@ -302,7 +304,10 @@ function menu.setup()
     if not Statemachine.music:isPlaying() then
         elements[selectedGame].music:play(0)
     end
+    menu.active = true
 end
+
+menu.active = false
 
 local function introMusicEnd()
     elements[selectedGame].music:play(0)

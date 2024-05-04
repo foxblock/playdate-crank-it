@@ -86,7 +86,7 @@ import "savegame"
 local gfx <const> = playdate.graphics
 
 -- Global state
-local sampleplayer = playdate.sound.sampleplayer.new("sounds/dummy")
+local sampleplayer <const> = playdate.sound.sampleplayer.new("sounds/dummy")
 Statemachine = {
     cleanup = nil, -- needed for going back to main menu through system menu
     gameShouldFailAfterResume = false,
@@ -124,7 +124,7 @@ end
 
 ------ SPLASH IMAGES
 
-local splashImages = {
+local splashImages <const> = {
     gfx.image.new("images/remove_cover"),
     gfx.image.new("images/credits"),
     gfx.image.new("images/music_credits"),
@@ -134,7 +134,7 @@ local splashImages = {
 local currentSplash = 1
 local splash_next
 
-local buttonHandlers_intro = {
+local buttonHandlers_intro <const> = {
     AButtonDown = function()
         splash_next()
     end,
@@ -166,12 +166,11 @@ splash_next = function()
         splash_cleanup()
         transition.setup(menu.setup, menu.update)
     else
-        splash_cleanup()
-        transition.setup(splash_setup, splash_render)
+        transition.setup(nil, splash_render)
     end
 end
 
------- CALLBACKS
+------ GLOBAL CALLBACKS
 
 function playdate.deviceWillLock()
     Statemachine.gameShouldFailAfterResume = true
@@ -190,10 +189,12 @@ save.load()
 local systemMenu = playdate.getSystemMenu()
 
 local goToMenuItem, _ = systemMenu:addMenuItem("Main Menu", function()
+    if menu.active then return end
+    
     if (Statemachine.cleanup ~= nil) then
         Statemachine.cleanup()
     end
-    menu.setup()
+    transition.setup(menu.setup, menu.update)
 end)
 
 -- Start
