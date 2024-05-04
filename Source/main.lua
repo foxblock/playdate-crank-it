@@ -74,6 +74,7 @@
 -- [X] Replace NC sounds
 -- [ ] better lvl4 and 5 music
 -- [ ] move credits to playdate menu item
+-- [X] crank-it: increase chance for pass-it continuously
 
 import "CoreLibs/graphics"
 

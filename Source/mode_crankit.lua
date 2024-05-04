@@ -44,6 +44,7 @@ local score = 0
 local newHighscore = false
 local hideFirstHighscore = false
 local lastAnimationFrame = 1
+local actionCountSincePass = 0
 
 local update_main
 
@@ -106,8 +107,9 @@ local function main_startGame(skipGenNewAction)
     Statemachine.gameShouldFailAfterResume = false
 
     if not skipGenNewAction then
-        actions.current = actions.getValidActionCode(false)
+        actions.current = actions.getValidActionCode()
     end
+    actionCountSincePass = 0
     actions.setupActionGameplay(0, actions.current)
     actions.setupActionGfxAndSound(actions.current)
     actionDone = false
@@ -130,11 +132,12 @@ local main_buttonsLose = {
 }
 
 local function main_actionSuccess()
-    if (actionDone) then return end
+    if actionDone then return end
 
     actionDone = true
     score = score + 1
     soundSuccess:play(1)
+    actionCountSincePass = actionCountSincePass + 1
 
     particles.add("images/plusone", 110, 220, math.random(-10, 10) / 10, math.random(-110, -85) / 10, math.random(-10, 10))
     particles.add("images/plusone", 110, 220, math.random(-65, -45) / 10, math.random(-80, -60) / 10, math.random(-30, -5))
@@ -229,7 +232,11 @@ local function render_main()
     if (save.data.settings.debugOn) then
         gfx.setFont(gfx.getSystemFont())
         local yPos = actions.renderDebugInfo()
-        gfx.drawText(string.format("timer: %d", actionTimer.timeLeft), 2, yPos);
+        gfx.drawText(string.format("timer: %d", actionTimer.timeLeft), 2, yPos)
+        if save.data.settings.allowPass then
+            local passChance = actionCountSincePass * 100 / (ACTION_CODES._EOL + actionCountSincePass)
+            gfx.drawText(string.format("pass chance: %.0f%%", passChance), 2, yPos + 15)
+        end
         gfx.setFont(Statemachine.font)
     end
 
@@ -274,7 +281,13 @@ update_main = function ()
 
             Statemachine.playMP3(bgMusic[speedLevel])
         else
-            actions.current = actions.getValidActionCode(true, lastAction)
+            local passValue = math.random(ACTION_CODES._EOL + actionCountSincePass - 1)
+            if save.data.settings.allowPass and lastAction ~= ACTION_CODES.PASS_PLAYER and passValue >= ACTION_CODES._EOL then
+                actions.current = ACTION_CODES.PASS_PLAYER
+                actionCountSincePass = 0
+            else
+                actions.current = actions.getValidActionCode(lastAction)
+            end
         end
 
         actions.setupActionGameplay(lastAction, actions.current)
@@ -360,5 +373,5 @@ function crankit.render_for_transition()
 end
 
 function crankit.pre_setup_for_transition()
-    actions.current = actions.getValidActionCode(false)
+    actions.current = actions.getValidActionCode()
 end

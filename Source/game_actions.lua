@@ -43,12 +43,12 @@ actions.codes = {
     BUTTON = 2,
     MICROPHONE = 3,
     TILT = 4,
-    PASS_PLAYER = 5,
-    CRANK_UNDOCK = 6,
-    CRANK_DOCK = 7,
-    CRANKED = 8,
-    _EOL = 9,
+    CRANK_UNDOCK = 5,
+    CRANK_DOCK = 6,
+    CRANKED = 7,
+    _EOL = 8,
     -- everything below this line will not be automatically selected
+    PASS_PLAYER = 9,
     SPEED_UP = 10,
     PASS_BOMB = 11,
 }
@@ -220,7 +220,7 @@ actions.buttonHandler = {
 
 -- crankDocked override for simon gamemode (since actual crank might be different
 -- from needed crank state at specific point in chain)
-function actions.getValidActionCode(allowPassAction, excludeOption, crankDocked)
+function actions.getValidActionCode(excludeOption, crankDocked)
     local result = 0
     if (crankDocked == nil) then
         crankDocked = playdate.isCrankDocked()
@@ -237,10 +237,8 @@ function actions.getValidActionCode(allowPassAction, excludeOption, crankDocked)
     until ((crankDocked or result ~= actions.codes.CRANK_UNDOCK)
         and (not playdate.isSimulator or result ~= actions.codes.MICROPHONE)
         and (excludeOption == nil or result ~= excludeOption)
-        and (allowPassAction or result ~= actions.codes.PASS_PLAYER)
         and (save.data.settings.allowMic or result ~= actions.codes.MICROPHONE)
         and (save.data.settings.allowTilt or result ~= actions.codes.TILT)
-        and (save.data.settings.allowPass or result ~= actions.codes.PASS_PLAYER)
     )
 
     return result

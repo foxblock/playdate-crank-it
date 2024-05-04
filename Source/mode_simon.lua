@@ -148,7 +148,7 @@ startGame_simon = function()
     actionChain = {}
     -- do not allow dock action in this set, so we don't have to track dock state
     for i=1, save.data.settings.simonStartLvl do
-        table.insert(actionChain, actions.getValidActionCode(false, ACTION_CODES.CRANK_DOCK, false))
+        table.insert(actionChain, actions.getValidActionCode(ACTION_CODES.CRANK_DOCK, false))
     end
     actions.current = nil
     if (playdate.isCrankDocked()) then
@@ -181,7 +181,7 @@ local function actionSuccess_simon()
     else
         score_simon = #actionChain
         simonTimer:pause()
-        table.insert(actionChain, actions.getValidActionCode(false))
+        table.insert(actionChain, actions.getValidActionCode())
         playdate.update = update_simon_show
         currIndex = 1
         actions.current = nil

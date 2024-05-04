@@ -112,7 +112,7 @@ local function main_startGame(skipGenNewAction)
     Statemachine.gameShouldFailAfterResume = false
 
     if not skipGenNewAction then
-        actions.current = actions.getValidActionCode(false)
+        actions.current = actions.getValidActionCode()
     end
     actions.setupActionGameplay(0, actions.current)
     actions.setupActionGfxAndSound(actions.current)
@@ -244,7 +244,7 @@ update_main = function ()
                 Statemachine.playWAV(bgMusic[shownFuseState])
             end
         else
-            actions.current = actions.getValidActionCode(false, lastAction)
+            actions.current = actions.getValidActionCode(lastAction)
         end
 
         actions.setupActionGameplay(lastAction, actions.current)
@@ -312,5 +312,5 @@ function bomb.render_for_transition()
 end
 
 function bomb.pre_setup_for_transition()
-    actions.current = actions.getValidActionCode(false)
+    actions.current = actions.getValidActionCode()
 end
