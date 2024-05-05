@@ -72,11 +72,11 @@
 -- [X] Setting to start simon with more than 1 action
 -- [X] Credits screens for music and sounds
 -- [X] Replace NC sounds
--- [ ] better lvl4 and 5 music
+-- [X] better lvl4 and 5 music
 -- [X] move credits to playdate menu item
 -- [X] simon: microphone should reset on multiple shout it in a row
 -- [X] crank-it: increase chance for pass-it continuously
--- [ ] add deadzone for displaying the reset note in menu
+-- [X] add deadzone for displaying the reset note in menu
 -- [ ] add icons showing modifiers on lose screen
 
 import "CoreLibs/graphics"

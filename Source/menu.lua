@@ -142,8 +142,9 @@ local elements <const> = {
 
 
 local selectedGame = 1
-local CRANK_RESET_TRIGGER <const> = 360
+local CRANK_RESET_TRIGGER <const> = 540
 local crankToReset = 0
+local showReset = false
 
 
 local function drawMenuItem(item)
@@ -248,19 +249,18 @@ local buttonHandlers_title = {
             return
         end
 
-        if crankToReset <= 0 and change > 0 then
-            crankToReset = CRANK_RESET_TRIGGER * 0.1 -- to avoid flickering on start
-        else
-            crankToReset = crankToReset + change
-        end
+        crankToReset = crankToReset + change
 
         if crankToReset >= CRANK_RESET_TRIGGER then
             save.data.highscore[selectedGame] = 0
             save.write()
             scoreResetSound:play(1)
             crankToReset = 0
+        elseif crankToReset >= CRANK_RESET_TRIGGER * 0.05 then
+            showReset = true
         elseif crankToReset < 0 then
             crankToReset = 0
+            showReset = false
         end
     end,
 }
@@ -274,18 +274,21 @@ function menu.update()
     drawMenuItem(elements[selectedGame].mascot)
 
     if selectedGame ~= GAME_MODE.BOMB then
-        if crankToReset <= 0 then
-            gfx.drawTextAligned("HIGHSCORE: "..save.data.highscore[selectedGame], 139, 118, kTextAlignment.center)
-        else
+        if showReset then
             gfx.setColor(gfx.kColorBlack)
             gfx.fillRect(139 - 76, 116, 152 * crankToReset / CRANK_RESET_TRIGGER, 22)
-
+            
             gfx.setImageDrawMode(gfx.kDrawModeNXOR)
             gfx.drawTextAligned("RESETTING...", 139, 118, kTextAlignment.center)
             gfx.setImageDrawMode(gfx.kDrawModeCopy)
-
+            
             -- floor to keep "integer" value
-            crankToReset = math.floor(crankToReset - 4)
+            crankToReset = math.floor(crankToReset - 2)
+            if crankToReset <= 0 then
+                showReset = false
+            end
+        else
+            gfx.drawTextAligned("HIGHSCORE: "..save.data.highscore[selectedGame], 139, 118, kTextAlignment.center)
         end
     end
 

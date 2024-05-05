@@ -20,7 +20,7 @@ local MAX_SPEED_LEVEL <const> = 5
 local TRANSITION_TIME_MS <const> = 500
 
 local HIGHSCORE_STARS <const> = 40
-local HIGHSCORE_BIG_ANI <const> = 60
+local HIGHSCORE_BIG_ANI <const> = 55
 
 local bgMusic <const> = {
     mp3.new("music/bg1"),
