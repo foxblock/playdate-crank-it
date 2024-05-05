@@ -233,9 +233,11 @@ local function render_main()
         gfx.setFont(gfx.getSystemFont())
         local yPos = actions.renderDebugInfo()
         gfx.drawText(string.format("timer: %d", actionTimer.timeLeft), 2, yPos)
+        yPos = yPos + 15
         if save.data.settings.allowPass then
             local passChance = actionCountSincePass * 100 / (ACTION_CODES._EOL + actionCountSincePass)
-            gfx.drawText(string.format("pass chance: %.0f%%", passChance), 2, yPos + 15)
+            gfx.drawText(string.format("pass chance: %.0f%%", passChance), 2, yPos)
+            yPos = yPos + 15
         end
         gfx.setFont(Statemachine.font)
     end

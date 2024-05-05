@@ -20,12 +20,15 @@ local CRANK_DEADZONE_NORMAL <const> = 45
 local CRANK_DEADZONE_AFTER_CRANKED <const> = 360
 local CRANK_TARGET <const> = 2*360
 local MIC_LEVEL_TARGET <const> = 0.25 -- 0..1
+local MIC_LEVEL_RESET <const> = 0.05
+local MIC_RESET_FRAMES <const> = 5
 local TILT_TARGET <const> = math.cos(75 * DEG_TO_RAD)
 
 
 local crankValue = 0
 local crankDeadzone = CRANK_DEADZONE_NORMAL
 local startVec = nil
+local micResetCounter = 0
 
 
 actions.succesFnc = nil
@@ -289,10 +292,22 @@ function actions.checkTilt()
 end
 
 -- return 1 on action success, 0 on no status change, -1 on action fail (currently no fail condition)
+-- call on every frame (for reset logic)
 function actions.checkMic()
-    if (actions.current == actions.codes.MICROPHONE and mic.getLevel() >= MIC_LEVEL_TARGET) then
+    local level = mic.getLevel()
+
+    if micResetCounter > 0 then
+        if level < MIC_LEVEL_RESET then
+            micResetCounter = micResetCounter - 1
+        end
+        return 0
+    end
+
+    if actions.current == actions.codes.MICROPHONE and level >= MIC_LEVEL_TARGET then
+        micResetCounter = MIC_RESET_FRAMES
         return 1
     end
+
     return 0
 end
 
