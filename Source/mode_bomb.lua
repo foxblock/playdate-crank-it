@@ -69,6 +69,7 @@ local lastAnimationFrame = 1
 local actionPassCounter = 0
 local fuseState = 1
 local shownFuseState = 1
+local failReasonText = ""
 
 local update_main
 
@@ -133,7 +134,12 @@ local main_buttonsLose = {
         playdate.inputHandlers.pop()
         playdate.update = update_main
         main_startGame()
-    end
+    end,
+    BButtonDown = function()
+        gfx.setColor(gfx.kColorWhite)
+        gfx.fillRect(171, 30, 209, 102)
+        gfx.drawTextAligned(failReasonText, 275, 50, kTextAlignment.center)
+    end,
 }
 
 local function main_actionSuccess()
@@ -144,7 +150,7 @@ local function main_actionSuccess()
     soundSuccess:play(1)
 end
 
-local function main_actionFail()
+local function main_actionFail(failReason)
     if (actions.current == ACTION_CODES.LOSE_BOMB) then return end
 
     actions.current = ACTION_CODES.LOSE_BOMB
@@ -158,6 +164,11 @@ local function main_actionFail()
     explodeAni:reset()
     lastExplodeFrame = 0
     mic.stopListening()
+    if failReason ~= nil then
+        failReasonText = failReason
+    else
+        failReasonText = "BUTTERFLIES,\nQUANTUM EFFECTS,\nOR SOMETHING"
+    end
 end
 
 local function actionTimerEnd()
@@ -167,7 +178,7 @@ local function actionTimerEnd()
         return
     end
     -- should never end down here
-    main_actionFail()
+    main_actionFail("WHAT HAPPENED?\nI WAS NOT\nPAYING ATTENTION")
 end
 
 local function render_main()
@@ -222,14 +233,14 @@ update_main = function ()
     if (micResult == 1) then
         main_actionSuccess()
     elseif (micResult == -1) then
-        main_actionFail()
+        main_actionFail("YOU WERE\nNOT QUIET\nENOUGH")
     end
 
     local tiltResult = actions.checkTilt()
     if (tiltResult == 1) then
         main_actionSuccess()
     elseif (tiltResult == -1) then
-        main_actionFail()
+        main_actionFail("YOU SHOOK\nTHE PLAYDATE\nTOO MUCH")
     end
 
     -- other actions are handled in callbacks
@@ -292,7 +303,7 @@ function bomb.setup()
 
     actionTimer = playdate.timer.new(100, actionTimerEnd) -- dummy duration, proper value set in main_startGame
     actionTimer.discardOnCompletion = false
-    bombTimer = playdate.timer.new(100, main_actionFail)
+    bombTimer = playdate.timer.new(100, main_actionFail, "THE BOMB'S\nTIMER\nRAN OUT")
     bombTimer.discardOnCompletion = false
 
     playdate.update = update_main

@@ -45,6 +45,8 @@ local newHighscore = false
 local hideFirstHighscore = false
 local lastAnimationFrame = 1
 local actionCountSincePass = 0
+local failReasonText = ""
+local drawFailReason = false
 
 local update_main
 
@@ -90,9 +92,12 @@ local function update_highscore()
     playdate.timer.updateTimers()
     particles.update()
     gfx.sprite.update()
-    gfx.setImageDrawMode(gfx.kDrawModeNXOR)
+    if drawFailReason then
+        gfx.setColor(gfx.kColorWhite)
+        gfx.fillRect(105, 18, 282, 135)
+        gfx.drawTextAligned(failReasonText, 240, 40, kTextAlignment.center)
+    end
     gfx.drawTextAligned('SCORE: '..score, 200, 220, kTextAlignment.center)
-    gfx.setImageDrawMode(gfx.kDrawModeCopy)
 end
 
 local function update_fail()
@@ -128,7 +133,16 @@ local main_buttonsLose = {
         playdate.inputHandlers.pop()
         playdate.update = update_main
         main_startGame()
-    end
+    end,
+    BButtonDown = function()
+        if actions.current == ACTION_CODES.LOSE then
+            gfx.setColor(gfx.kColorWhite)
+            gfx.fillRect(135, 26, 220, 90)
+            gfx.drawTextAligned(failReasonText, 240, 30, kTextAlignment.center)
+        else
+            drawFailReason = true
+        end
+    end,
 }
 
 local function main_actionSuccess()
@@ -154,7 +168,7 @@ local function main_actionSuccess()
     end
 end
 
-local function main_actionFail()
+local function main_actionFail(failReason)
     if actions.current < 1 then return end
 
     if newHighscore then
@@ -183,6 +197,13 @@ local function main_actionFail()
         Statemachine.playMP3(loseMusic)
     end
 
+    if failReason ~= nil then
+        failReasonText = failReason
+    else
+        failReasonText = "BUTTERFLIES,\nQUANTUM EFFECTS,\nOR SOMETHING"
+    end
+    drawFailReason = false
+
     if not actionTimer.paused then actionTimer:pause() end
     playdate.inputHandlers.push(main_buttonsLose)
     mic.stopListening()
@@ -197,7 +218,7 @@ local function actionTimerEnd()
         return
     end
 
-    main_actionFail()
+    main_actionFail("YOU WERE\nNOT FAST\nENOUGH")
 end
 
 local function actionTransitionEnd()
@@ -247,7 +268,7 @@ end
 
 update_main = function ()
     if (Statemachine.gameShouldFailAfterResume) then
-        main_actionFail()
+        main_actionFail("DON'T CHEAT\nBY OPENING\nTHE MENU")
         Statemachine.gameShouldFailAfterResume = false
         return
     end
@@ -258,14 +279,14 @@ update_main = function ()
     if (micResult == 1) then
         main_actionSuccess()
     elseif (micResult == -1) then
-        main_actionFail()
+        main_actionFail("YOU WERE\nNOT QUIET\nENOUGH")
     end
 
     local tiltResult = actions.checkTilt()
     if (tiltResult == 1) then
         main_actionSuccess()
     elseif (tiltResult == -1) then
-        main_actionFail()
+        main_actionFail("YOU SHOOK\nTHE PLAYDATE\nTOO MUCH")
     end
 
     -- other actions are handled in callbacks

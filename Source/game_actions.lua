@@ -88,65 +88,81 @@ actions.data = {
         snd = snd.new("sounds/move"),
         ani = gfx.imagetable.new("images/actions/move"),
         staticFrame = 2, -- for simon mode
+        text = "MOV",
     },
     [actions.codes.BUTTON] = {
         time = TIME_FAST,
         snd = snd.new("sounds/press"),
         ani = gfx.imagetable.new("images/actions/press"),
         staticFrame = 3,
+        text = "PRESS",
     },
     [actions.codes.MICROPHONE] = {
         time = TIME_FAST,
         snd = snd.new("sounds/shout"),
         img = gfx.image.new("images/actions/shout"),
+        text = "SHOUT",
     },
     [actions.codes.TILT] = {
         time = TIME_NORMAL,
         snd = snd.new("sounds/tilt"),
         ani = gfx.imagetable.new("images/actions/tilt"),
-        staticFrame = 2
+        staticFrame = 2,
+        text = "TILT",
     },
     [actions.codes.PASS_PLAYER] = {
         time = { 3000, 3000, 2500, 2500, 2000 },
         snd = snd.new("sounds/pass"),
         ani = gfx.imagetable.new("images/actions/pass"),
-        staticFrame = 2
+        staticFrame = 2,
+        text = "PASS",
     },
     [actions.codes.CRANK_UNDOCK] = {
         time = TIME_NORMAL,
         snd = snd.new("sounds/undock"),
         img = gfx.image.new("images/actions/undock"),
+        text = "UNDOCK",
     },
     [actions.codes.CRANK_DOCK] = {
         time = TIME_SLOW,
         snd = snd.new("sounds/dock"),
         img = gfx.image.new("images/actions/dock"),
+        text = "DOCK",
     },
     [actions.codes.CRANKED] = {
         time = TIME_SLOW,
         snd = snd.new("sounds/crank"),
         ani = gfx.imagetable.new("images/actions/crank"),
-        staticFrame = 1
+        staticFrame = 1,
+        text = "CRANK",
     },
     [actions.codes.SPEED_UP] = {
         time = { 2000, 2000, 2000, 2000, 2000 },
         snd = snd.new("sounds/speed"),
         img = gfx.image.new("images/actions/speed"),
+        text = "HOLD",
     },
     [actions.codes.PASS_BOMB] = {
         time = { 2500, 2500, 2500, 2500, 2500 },
         snd = snd.new("sounds/pass"),
         ani = gfx.imagetable.new("images/bomb/pass"),
-        staticFrame = 2
+        staticFrame = 2,
+        text = "PASS",
     },
 }
+
+local function failText(should, did)
+    if should == nil or did == nil then return "" end -- for simon, todo: debug properly
+
+    return "YOU "..actions.data[did].text.."ED IT,\nINSTAED OF\n"..actions.data[should].text.."ING IT"
+end
 
 actions.buttonHandler = {
     upButtonDown = function()
         if (actions.current == actions.codes.DIRECTION) then
             actions.succesFnc()
         else
-            actions.failFnc()
+            actions.failFnc(failText(actions.current, actions.codes.DIRECTION))
         end
     end,
 
@@ -154,7 +170,7 @@ actions.buttonHandler = {
         if (actions.current == actions.codes.DIRECTION) then
             actions.succesFnc()
         else
-            actions.failFnc()
+            actions.failFnc(failText(actions.current, actions.codes.DIRECTION))
         end
     end,
 
@@ -162,7 +178,7 @@ actions.buttonHandler = {
         if (actions.current == actions.codes.DIRECTION) then
             actions.succesFnc()
         else
-            actions.failFnc()
+            actions.failFnc(failText(actions.current, actions.codes.DIRECTION))
         end
     end,
 
@@ -170,7 +186,7 @@ actions.buttonHandler = {
         if (actions.current == actions.codes.DIRECTION) then
             actions.succesFnc()
         else
-            actions.failFnc()
+            actions.failFnc(failText(actions.current, actions.codes.DIRECTION))
         end
     end,
 
@@ -178,7 +194,7 @@ actions.buttonHandler = {
         if (actions.current == actions.codes.BUTTON) then
             actions.succesFnc()
         else
-            actions.failFnc()
+            actions.failFnc(failText(actions.current, actions.codes.BUTTON))
         end
     end,
 
@@ -186,7 +202,7 @@ actions.buttonHandler = {
         if (actions.current == actions.codes.BUTTON) then
             actions.succesFnc()
         else
-            actions.failFnc()
+            actions.failFnc(failText(actions.current, actions.codes.BUTTON))
         end
     end,
 
@@ -194,7 +210,7 @@ actions.buttonHandler = {
         if (actions.current == actions.codes.CRANK_DOCK) then
             actions.succesFnc()
         else
-            actions.failFnc()
+            actions.failFnc(failText(actions.current, actions.codes.CRANK_DOCK))
         end
     end,
 
@@ -202,7 +218,7 @@ actions.buttonHandler = {
         if (actions.current == actions.codes.CRANK_UNDOCK) then
             actions.succesFnc()
         else
-            actions.failFnc()
+            actions.failFnc(failText(actions.current, actions.codes.CRANK_UNDOCK))
         end
     end,
 
@@ -216,7 +232,7 @@ actions.buttonHandler = {
             actions.succesFnc()
         elseif (actions.current ~= actions.codes.CRANKED and crankValue >= crankDeadzone) then
             crankValue = 0
-            actions.failFnc()
+            actions.failFnc(failText(actions.current, actions.codes.CRANKED))
         end
     end
 }

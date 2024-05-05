@@ -68,7 +68,8 @@
 -- [X] balance sound volume
 -- [X] visual effect in simon mode on correct input
 -- [ ] show chain after losing simon game
--- [ ] show lose reason in crankit and bomb
+-- [X] show lose reason in crankit and bomb
+-- [ ] add background for fail reason on big highscore screen
 -- [X] Setting to start simon with more than 1 action
 -- [X] Credits screens for music and sounds
 -- [X] Replace NC sounds
@@ -90,10 +91,13 @@ local gfx <const> = playdate.graphics
 
 -- Global state
 local sampleplayer <const> = playdate.sound.sampleplayer.new("sounds/dummy")
+local font = gfx.font.new("images/font/party")
+font:setLeading(4)
+
 Statemachine = {
     cleanup = nil, -- needed for going back to main menu through system menu
     gameShouldFailAfterResume = false,
-    font = gfx.font.new("images/font/party"),
+    font = font,
     music = sampleplayer,
 }
 
