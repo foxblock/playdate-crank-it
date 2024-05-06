@@ -101,7 +101,7 @@ local function update_highscore()
 end
 
 local function update_fail()
-    --
+    playdate.timer.updateTimers()
 end
 
 local function main_startGame(skipGenNewAction)
@@ -171,6 +171,8 @@ end
 local function main_actionFail(failReason)
     if actions.current < 1 then return end
 
+    particles.clear()
+    
     if newHighscore then
         save.write()
         if score >= HIGHSCORE_BIG_ANI then
