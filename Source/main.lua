@@ -79,6 +79,7 @@
 -- [X] crank-it: increase chance for pass-it continuously
 -- [X] add deadzone for displaying the reset note in menu
 -- [ ] add icons showing modifiers on lose screen
+-- [X] swap "Press B to show Reason" and "Press a to restart", redraw thanks for playing text
 
 import "CoreLibs/graphics"
 
