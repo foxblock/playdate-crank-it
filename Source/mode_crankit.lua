@@ -33,6 +33,7 @@ local loseMusic <const> = mp3.new("music/lose")
 local bigHighMusic <const> = mp3.new("music/stringed-disco")
 local soundSuccess = playdate.sound.sampleplayer.new("sounds/success")
 local bgSprite = nil
+local reasonBox = gfx.image.new("images/actions/highscore-reason-box")
 
 
 local actionDone = false
@@ -80,8 +81,8 @@ local function spawnFailStar()
         )
         ::continue::
     end
-    failStarTimer:reset()
     failStarTimer:start()
+    failStarTimer:reset()
 end
 
 local function update_highscore()
@@ -93,15 +94,10 @@ local function update_highscore()
     particles.update()
     gfx.sprite.update()
     if drawFailReason then
-        gfx.setColor(gfx.kColorWhite)
-        gfx.fillRect(105, 18, 282, 135)
+        reasonBox:draw(105,18)
         gfx.drawTextAligned(failReasonText, 240, 40, kTextAlignment.center)
     end
     gfx.drawTextAligned('SCORE: '..score, 200, 220, kTextAlignment.center)
-end
-
-local function update_fail()
-    playdate.timer.updateTimers()
 end
 
 local function main_startGame(skipGenNewAction)
@@ -121,8 +117,8 @@ local function main_startGame(skipGenNewAction)
     actionTransitionState = -1
     if not actionTransitionTimer.paused then actionTransitionTimer:pause() end
     actionTimer.duration = actions.data[actions.current].time[speedLevel]
-    actionTimer:reset()
     actionTimer:start()
+    actionTimer:reset()
 
     Statemachine.playMP3(bgMusic[1])
 end
@@ -135,13 +131,7 @@ local main_buttonsLose = {
         main_startGame()
     end,
     BButtonDown = function()
-        if actions.current == ACTION_CODES.LOSE then
-            gfx.setColor(gfx.kColorWhite)
-            gfx.fillRect(135, 26, 220, 90)
-            gfx.drawTextAligned(failReasonText, 240, 30, kTextAlignment.center)
-        else
-            drawFailReason = true
-        end
+        drawFailReason = not drawFailReason
     end,
 }
 
@@ -171,8 +161,6 @@ end
 local function main_actionFail(failReason)
     if actions.current < 1 then return end
 
-    particles.clear()
-    
     if newHighscore then
         save.write()
         if score >= HIGHSCORE_BIG_ANI then
@@ -192,10 +180,7 @@ local function main_actionFail(failReason)
     else
         actions.current = ACTION_CODES.LOSE
         actions.setupActionGfxAndSound(actions.current)
-        playdate.update = update_fail
-        gfx.sprite.update()
-        gfx.drawTextAligned('SCORE: '..score, 110, 220, kTextAlignment.center)
-        gfx.drawTextAligned("HIGH: "..save.data.highscore[GAME_MODE.CRANKIT], 290, 220, kTextAlignment.center)
+        playdate.update = update_highscore
         Statemachine.playMP3(loseMusic)
     end
 
@@ -228,6 +213,8 @@ local function actionTransitionEnd()
 end
 
 local function render_main()
+    -- need to do this, to update the whole screen on animation frame change
+    -- otherwise only the painted over parts (text, score, etc.) are re-rendered
     if (actions.data[actions.current].ani ~= nil and lastAnimationFrame ~= actions.data[actions.current].img.frame) then
         lastAnimationFrame = actions.data[actions.current].img.frame
         gfx.sprite.redrawBackground()
@@ -294,8 +281,8 @@ update_main = function ()
     -- other actions are handled in callbacks
 
     if (actionDone and actionTransitionState == -1) then
-        actionTransitionTimer:reset()
         actionTransitionTimer:start()
+        actionTransitionTimer:reset()
         actionTimer:pause()
         actionTransitionState = 0
     elseif (actionDone and actionTransitionState == 1) then
@@ -322,8 +309,8 @@ update_main = function ()
         actionDone = false
         actionTransitionState = -1
         actionTimer.duration = actions.data[actions.current].time[speedLevel]
-        actionTimer:reset()
         actionTimer:start()
+        actionTimer:reset()
     end
 
     render_main()

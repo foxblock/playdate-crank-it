@@ -120,8 +120,8 @@ local function main_startGame(skipGenNewAction)
     actionDone = false
     actionPassCounter = 0
     bombTimer.duration = save.data.settings.bombSeconds * math.random(8, 12) * 100
-    bombTimer:reset()
     bombTimer:start()
+    bombTimer:reset()
     setFuseState(1)
     shownFuseState = 1
     if not actionTimer.paused then actionTimer:pause() end
@@ -265,8 +265,8 @@ update_main = function ()
         actionDone = false
         if actions.current == ACTION_CODES.PASS_BOMB then
             actionTimer.duration = actions.data[ACTION_CODES.PASS_BOMB].time[1]
-            actionTimer:reset()
             actionTimer:start()
+            actionTimer:reset()
             bombTimer:pause()
         end
     end

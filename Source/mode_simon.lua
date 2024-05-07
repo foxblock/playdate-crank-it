@@ -72,8 +72,8 @@ local buttonHandlers_simonDockContinue = {
         playdate.inputHandlers.pop() -- pop buttonHandlers_simonDockContinue
         playdate.inputHandlers.push(actions.buttonHandler)
         simonState = SIMON_STATE.INSTRUCTIONS
-        simonStateChangeTimer:reset()
         simonStateChangeTimer:start()
+        simonStateChangeTimer:reset()
         gfx.sprite.redrawBackground()
     end
 }
@@ -116,8 +116,8 @@ local function spawnFailStar()
         )
         ::continue::
     end
-    failStarTimer:reset()
     failStarTimer:start()
+    failStarTimer:reset()
 end
 
 local lastAnimationFrame = 1
@@ -159,8 +159,8 @@ startGame_simon = function()
     else
         simonState = SIMON_STATE.INSTRUCTIONS
         gfx.sprite.redrawBackground()
-        simonStateChangeTimer:reset()
         simonStateChangeTimer:start()
+        simonStateChangeTimer:reset()
     end
     Statemachine.music:stop()
 end
@@ -171,8 +171,8 @@ local function actionSuccess_simon()
     soundSuccess:play(1)
     simonSampleplayer:stop()
     simonTickState = 1
-    simonTimer:reset()
     simonTimer:start()
+    simonTimer:reset()
 
     if (currIndex < #actionChain) then
         currIndex = currIndex + 1
@@ -186,8 +186,8 @@ local function actionSuccess_simon()
         currIndex = 1
         actions.current = nil
         simonState = SIMON_STATE.SCORE_UP
-        simonStateChangeTimer:reset()
         simonStateChangeTimer:start()
+        simonStateChangeTimer:reset()
         gfx.sprite.redrawBackground()
         particles.add("images/plusone", 68, 120,  0   , -5  , 0)
         particles.add("images/plusone", 68, 120,  4.33, -2.5, 0)
@@ -265,8 +265,8 @@ local function simon_changeStateTimerEnd()
         else
             simonState = SIMON_STATE.INSTRUCTIONS
             gfx.sprite.redrawBackground()
-            simonStateChangeTimer:reset()
             simonStateChangeTimer:start()
+            simonStateChangeTimer:reset()
         end
     elseif (simonState == SIMON_STATE.INSTRUCTIONS) then
         simonState = SIMON_STATE.SHOW
@@ -318,8 +318,8 @@ local function simon_showNextAction()
         actions.current = actionChain[1]
         actions.setupActionGameplay(0, actions.current)
         gfx.sprite.redrawBackground()
-        simonTimer:reset()
         simonTimer:start()
+        simonTimer:reset()
         simonTickState = 1
     end
 end
@@ -339,8 +339,8 @@ update_simon_show = function ()
 
     if (not simonActionBlinkTimer.paused and simonActionBlinkTimer.timeLeft > 0) then return end
 
-    simonActionBlinkTimer:reset()
     simonActionBlinkTimer:start()
+    simonActionBlinkTimer:reset()
     gfx.clear()
     do return end
 
