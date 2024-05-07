@@ -69,7 +69,7 @@
 -- [X] visual effect in simon mode on correct input
 -- [ ] show chain after losing simon game
 -- [X] show lose reason in crankit and bomb
--- [ ] add background for fail reason on big highscore screen
+-- [X] add background for fail reason on big highscore screen
 -- [X] Setting to start simon with more than 1 action
 -- [X] Credits screens for music and sounds
 -- [X] Replace NC sounds

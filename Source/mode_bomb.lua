@@ -65,6 +65,8 @@ local lastExplodeFrame = 1
 local actionDone = false
 local actionTimer
 local bombTimer
+local bombHalfTime
+local bombFinalTime
 local lastAnimationFrame = 1
 local actionPassCounter = 0
 local fuseState = 1
@@ -119,7 +121,16 @@ local function main_startGame(skipGenNewAction)
     actions.setupActionGfxAndSound(actions.current)
     actionDone = false
     actionPassCounter = 0
-    bombTimer.duration = save.data.settings.bombSeconds * math.random(8, 12) * 100
+    if save.data.settings.bombSeconds < 0 then
+        bombTimer.duration = math.random(30000, 60000)
+    elseif save.data.settings.bombSeconds == 0 then
+        bombTimer.duration = math.random(15000, 30000)
+    else
+        -- time plus/minus 20%
+        bombTimer.duration = save.data.settings.bombSeconds * math.random(8, 12) * 100
+    end
+    bombHalfTime = clamp(bombTimer.duration * 0.5, 6000, 15000)
+    bombFinalTime = clamp(bombTimer.duration * 0.1, 3000, 7500)
     bombTimer:start()
     bombTimer:reset()
     setFuseState(1)
@@ -223,9 +234,9 @@ end
 update_main = function ()
     playdate.timer.updateTimers()
 
-    if fuseState < 2 and bombTimer.timeLeft < bombTimer.duration * 0.5 then
+    if fuseState < 2 and bombTimer.timeLeft < bombHalfTime then
         setFuseState(2)
-    elseif fuseState < 3 and bombTimer.timeLeft < clamp(bombTimer.duration * 0.1, 2000, 8000)  then
+    elseif fuseState < 3 and bombTimer.timeLeft < bombFinalTime then
         setFuseState(3)
     end
 
