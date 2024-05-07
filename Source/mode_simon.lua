@@ -62,6 +62,9 @@ local simonTickFast = sample.new("sounds/tick3")
 local simonSampleplayer = snd.new(simonTickSlow)
 local simonTickState = 1
 local bgSprite = nil
+local drawFailReason = false
+local failReasonText = ""
+local reasonBox = gfx.image.new("images/actions/highscore-reason-box")
 
 local update_simon_show
 local update_simon_action
@@ -100,7 +103,10 @@ local buttonHandlers_simonLose = {
         playdate.inputHandlers.pop() -- pop buttonHandlers_simonLose
         playdate.update = update_simon_show
         startGame_simon()
-    end
+    end,
+    BButtonDown = function()
+        drawFailReason = not drawFailReason
+    end,
 }
 
 local function spawnFailStar()
@@ -129,13 +135,16 @@ local function update_highscore()
     playdate.timer.updateTimers()
     particles.update()
     gfx.sprite.update()
-    gfx.setImageDrawMode(gfx.kDrawModeNXOR)
-    gfx.drawTextAligned('SCORE: '..score_simon, 200, 220, kTextAlignment.center)
-    gfx.setImageDrawMode(gfx.kDrawModeCopy)
-end
-
-local function update_fail()
-    --
+    if drawFailReason then
+        reasonBox:draw(105,18)
+        gfx.drawTextAligned(failReasonText, 240, 40, kTextAlignment.center)
+    end
+    if actions.current == ACTION_CODES.LOSE then
+        gfx.drawTextAligned('SCORE: '..score_simon, 110, 220, kTextAlignment.center)
+        gfx.drawTextAligned("HIGH: "..save.data.highscore[GAME_MODE.SIMON], 290, 220, kTextAlignment.center)
+    else
+        gfx.drawTextAligned('SCORE: '..score_simon, 200, 220, kTextAlignment.center)
+    end
 end
 
 startGame_simon = function()
@@ -212,7 +221,7 @@ local function actionSuccess_simon()
     end
 end
 
-local function actionFail_simon()
+local function actionFail_simon(failReason)
     if actions.current and actions.current < 1 then return end
 
     if newHighscore then
@@ -230,16 +239,21 @@ local function actionFail_simon()
             Statemachine.music:stop()
         end
         actions.setupActionGfxAndSound(actions.current)
-        playdate.update = update_highscore
     else
         actions.current = ACTION_CODES.LOSE
         actions.setupActionGfxAndSound(actions.current)
-        playdate.update = update_fail
-        gfx.sprite.update()
-        gfx.drawTextAligned('SCORE: '..score_simon, 110, 220, kTextAlignment.center)
-        gfx.drawTextAligned("HIGH: "..save.data.highscore[GAME_MODE.SIMON], 290, 220, kTextAlignment.center)
         Statemachine.playMP3(loseMusic)
     end
+    playdate.update = update_highscore
+
+    if failReason == nil then
+        failReasonText = "BUTTERFLIES,\nQUANTUM EFFECTS,\nOR SOMETHING"
+    elseif failReason == "" then -- when in instructions or show mode (actions.current == nil)
+        failReasonText = "YOU NEED\nTO LET\nSIMON FINISH"
+    else
+        failReasonText = failReason
+    end
+    drawFailReason = false
 
     simonSampleplayer:stop()
     -- waiting for this to be fixed: https://devforum.play.date/t/pausing-a-timer-multiple-times-causes-inconsistent-behavior/16854/2
@@ -252,7 +266,7 @@ local function actionFail_simon()
 end
 
 local function actionTimerEnd()
-    actionFail_simon()
+    actionFail_simon("YOU PONDERED\nFOR\nTOO LONG")
 end
 
 local function simon_changeStateTimerEnd()
@@ -326,7 +340,7 @@ end
 
 update_simon_show = function ()
     if (Statemachine.gameShouldFailAfterResume) then
-        actionFail_simon()
+        actionFail_simon("DON'T CHEAT\nBY OPENING\nTHE MENU")
         Statemachine.gameShouldFailAfterResume = false
         return
     end
@@ -350,7 +364,7 @@ end
 
 update_simon_action = function ()
     if (Statemachine.gameShouldFailAfterResume) then
-        actionFail_simon()
+        actionFail_simon("DON'T CHEAT\nBY OPENING\nTHE MENU")
         Statemachine.gameShouldFailAfterResume = false
         return
     end
@@ -361,14 +375,14 @@ update_simon_action = function ()
     if (micResult == 1) then
         actionSuccess_simon()
     elseif (micResult == -1) then
-        actionFail_simon()
+        actionFail_simon("YOU WERE\nNOT QUIET\nENOUGH")
     end
 
     local tiltResult = actions.checkTilt()
     if (tiltResult == 1) then
         actionSuccess_simon()
     elseif (tiltResult == -1) then
-        actionFail_simon()
+        actionFail_simon("YOU SHOOK\nTHE PLAYDATE\nTOO MUCH")
     end
 
     if (simonTimer.timeLeft <= SIMON_TIMER_SOUND3_MS and simonTickState == 3) then

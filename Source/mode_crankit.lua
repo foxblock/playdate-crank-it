@@ -97,7 +97,12 @@ local function update_highscore()
         reasonBox:draw(105,18)
         gfx.drawTextAligned(failReasonText, 240, 40, kTextAlignment.center)
     end
-    gfx.drawTextAligned('SCORE: '..score, 200, 220, kTextAlignment.center)
+    if actions.current == ACTION_CODES.LOSE then
+        gfx.drawTextAligned('SCORE: '..score, 110, 220, kTextAlignment.center)
+        gfx.drawTextAligned("HIGH: "..save.data.highscore[GAME_MODE.CRANKIT], 290, 220, kTextAlignment.center)
+    else
+        gfx.drawTextAligned('SCORE: '..score, 200, 220, kTextAlignment.center)
+    end
 end
 
 local function main_startGame(skipGenNewAction)
@@ -176,13 +181,12 @@ local function main_actionFail(failReason)
             Statemachine.music:stop()
         end
         actions.setupActionGfxAndSound(actions.current)
-        playdate.update = update_highscore
     else
         actions.current = ACTION_CODES.LOSE
         actions.setupActionGfxAndSound(actions.current)
-        playdate.update = update_highscore
         Statemachine.playMP3(loseMusic)
     end
+    playdate.update = update_highscore
 
     if failReason ~= nil then
         failReasonText = failReason
