@@ -152,7 +152,7 @@ actions.data = {
 }
 
 local function failText(should, did)
-    if should == nil or did == nil then return "" end
+    if should == nil or did == nil or actions.data[did].text == nil or actions.data[should].text == nil then return "" end
 
     return "YOU "..actions.data[did].text.."ED IT,\nINSTAED OF\n"..actions.data[should].text.."ING IT"
 end
