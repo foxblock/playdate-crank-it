@@ -159,14 +159,6 @@ local function drawMenuItem(item)
     end
 end
 
--- bgSprite = gfx.sprite.setBackgroundDrawingCallback(
---     function( x, y, width, height )
---         -- x,y,width,height is the updated area in sprite-local coordinates
---         -- The clip rect is already set to this area, so we don't need to set it ourselves
---         actions[currAction].img:draw(0,0)
---     end
--- )
-
 local function menu_cleanup()
     if settings.active then
         settings.cleanup()
@@ -265,6 +257,8 @@ local buttonHandlers_title = {
     end,
 }
 
+-- TODO: Tried to optimize this (~15-20fps on playdate).
+-- Bottleneck seems to be the rotating images, so need to find a way to cache those (or create them in PS)
 function menu.update()
     gfx.setColor(gfx.kColorWhite)
     gfx.clear()
