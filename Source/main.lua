@@ -166,13 +166,17 @@ local function splash_setup()
     playdate.update = update_none
 end
 
+local function splash_setup2()
+    playdate.update = update_none
+end
+
 splash_next = function()
     currentSplash = currentSplash + 1
     if currentSplash > #splashImages then
         splash_cleanup()
         transition.setup(menu.setup, menu.update)
     else
-        transition.setup(nil, splash_render)
+        transition.setup(splash_setup2, splash_render)
     end
 end
 

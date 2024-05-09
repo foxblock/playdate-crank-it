@@ -3,6 +3,6 @@ author=foxblock
 description=A multiplayer party game.
 bundleID=com.foxblock.crankit
 version=1.0
-buildNumber=1
+buildNumber=11
 imagePath=system/
 launchSoundPath=sounds/crank

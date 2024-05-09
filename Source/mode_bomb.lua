@@ -83,6 +83,7 @@ end
 local function update_bomb_fail()
     if explodeAni:ended() then
         gfx.sprite.update()
+        save.renderModifierIcons()
         playdate.update = update_none
         return
     end
@@ -90,6 +91,7 @@ local function update_bomb_fail()
     local curFrame = math.floor(explodeAni:currentValue())
     if curFrame ~= lastExplodeFrame then
         gfx.sprite.update()
+        save.renderModifierIcons()
         explodeImg:drawImage(curFrame, 1, 7)
         lastExplodeFrame = curFrame
     end
@@ -148,7 +150,7 @@ local main_buttonsLose = {
     end,
     BButtonDown = function()
         gfx.setColor(gfx.kColorWhite)
-        gfx.fillRect(171, 30, 209, 102)
+        gfx.fillRect(171, 38, 209, 90)
         gfx.drawTextAligned(failReasonText, 275, 50, kTextAlignment.center)
     end,
 }

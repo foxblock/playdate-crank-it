@@ -1,7 +1,12 @@
 if save then return end  -- avoid loading twice the same module
 save = {}  -- create a table to represent the module
 
+import "CoreLibs/graphics"
+
 local datastore <const> = playdate.datastore
+local gfx <const> = playdate.graphics
+
+local icons = gfx.imagetable.new("images/settings/modifier_icons")
 
 save.data = {
     SAVE_VERSION = 3,
@@ -91,5 +96,21 @@ function save.load()
             save.data.settings[v.k] = v.options[1]
         end
         ::continue::
+    end
+end
+
+function save.renderModifierIcons()
+    local xPos = 364
+    if not save.data.settings.allowPass then
+        icons:drawImage(3, xPos, 4)
+        xPos = xPos - 32
+    end
+    if not save.data.settings.allowTilt then
+        icons:drawImage(2, xPos, 4)
+        xPos = xPos - 32
+    end
+    if not save.data.settings.allowMic then
+        icons:drawImage(1, xPos, 4)
+        xPos = xPos - 32
     end
 end

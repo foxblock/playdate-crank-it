@@ -93,6 +93,7 @@ local function update_highscore()
     playdate.timer.updateTimers()
     particles.update()
     gfx.sprite.update()
+    save.renderModifierIcons()
     if drawFailReason then
         reasonBox:draw(105,18)
         gfx.drawTextAligned(failReasonText, 240, 40, kTextAlignment.center)

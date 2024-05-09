@@ -76,7 +76,7 @@ actions.data = {
     [actions.codes.LOSE_BOMB] = {
         time = TIME_NORMAL,
         snd = snd.new("sounds/explosion"),
-        img = gfx.image.new("images/actions/explode"),
+        img = gfx.image.new("images/bomb/explode"),
     },
     [actions.codes.LOSE] = {
         time = TIME_NORMAL,
