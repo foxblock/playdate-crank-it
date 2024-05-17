@@ -330,7 +330,6 @@ function menu.setup()
     if not Statemachine.music:isPlaying() then
         elements[selectedGame].music:play(0)
     end
-    elements[selectedGame].bg:draw(0,0)
     crankToReset = 0
     menu.active = true
 end

@@ -63,17 +63,17 @@ function save.load()
     local loadData = datastore.read()
 
     if loadData ~= nil then
-        if loadData.SAVE_VERSION == nil then
+        if loadData.SAVE_VERSION == nil then -- v0.5
             save.data.settings.musicOn = loadData.musicOn
             save.data.settings.debugOn = loadData.debugOn
             save.data.highscore[GAME_MODE.CRANKIT] = loadData.highscore
             save.write()
-        elseif loadData.SAVE_VERSION == 1 then
+        elseif loadData.SAVE_VERSION == 1 then -- v0.6
             save.data.settings.musicOn = loadData.musicOn
             save.data.settings.debugOn = loadData.debugOn
             save.data.highscore = loadData.highscore
             save.write()
-        elseif loadData.SAVE_VERSION == 2 then
+        elseif loadData.SAVE_VERSION == 2 then -- only internal beta release
             for k,v in pairs(loadData.settings) do
                 save.data.settings[k] = v
             end
@@ -82,7 +82,8 @@ function save.load()
         elseif loadData.SAVE_VERSION == save.data.SAVE_VERSION then
             save.data = loadData
         else
-            assert(false, "Unknown save version: "..loadData.SAVE_VERSION)
+            print("Unknown save version: "..loadData.SAVE_VERSION.." -> deleting...")
+            save.write()
         end
     end
 
