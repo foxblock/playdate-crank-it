@@ -129,9 +129,9 @@ local elements <const> = {
         },
         tagline = {
             img = gfx.image.new("images/menu/bomb_tagline"),
-            x = 136,
+            x = 133,
             y = 130,
-            scale = newBlinkerAnimator(500, 500, 0, 1.1)
+            scale = newBlinkerAnimator(500, 500, 0, 1.09)
         },
         bg = gfx.image.new("images/menu/bomb_bg"),
         music = mp3.new("music/hitman"),
@@ -140,18 +140,41 @@ local elements <const> = {
 
 
 local selectedGame = 1
-local CRANK_RESET_TRIGGER <const> = 540
+local CRANK_RESET_TRIGGER <const> = 720
 local crankToReset = 0
 local showReset = false
+local menu_update
 
+local function initBlinker(item)
+    item.lastScale = item.scale.startValue
+    local width, height = item.img:getSize()
+    local fullScale = item.scale.endValue
+    item.rect = playdate.geometry.rect.new(item.x - width * fullScale / 2 - 1, item.y - height * fullScale / 2 - 1,
+            width * fullScale + 1, height * fullScale + 1)
+end
 
-local function drawMenuItem(item)
+initBlinker(elements.btnArrowLeft)
+initBlinker(elements.btnArrowRight)
+initBlinker(elements[GAME_MODE.BOMB].tagline)
+
+local function drawBlinker(item, fullRedraw)
+    if fullRedraw == nil and item.lastScale ~= nil and item.lastScale == item.scale:value() then return end
+
+    if item.lastScale > item.scale:value() then
+        gfx.setColor(gfx.kColorWhite)
+        gfx.fillRect(item.rect)
+    end
+    item.lastScale = item.scale:value()
+    item.img:drawRotated(item.x, item.y, 0, item.lastScale)
+end
+
+local function drawMenuItem(item, fullRedraw)
     if item.rot ~= nil and item.scale ~= nil then
         item.img:drawRotated(item.x, item.y, item.rot:currentValue(), item.scale:currentValue())
     elseif item.rot ~= nil then
         item.img:drawRotated(item.x, item.y, item.rot:currentValue())
     elseif item.scale ~= nil then
-        item.img:drawRotated(item.x, item.y, 0, item.scale:value())
+        drawBlinker(item, fullRedraw)
     elseif item.cached ~= nil then
         item.img:draw(item.x, item.y)
     else
@@ -184,7 +207,7 @@ local function settings_result(data)
     end
 
     elements[selectedGame].music:setVolume(1, 1, 0.5)
-    transition.setup(menu.setup, menu.update)
+    transition.setup(menu.setup, menu.fullRedraw)
 end
 
 local buttonHandlers_title = {
@@ -196,6 +219,8 @@ local buttonHandlers_title = {
             selectedGame = selectedGame - 1
         end
         gameChangeSound:play(1)
+        menu.fullRedraw()
+        crankToReset = 0
         if not Statemachine.music:isPlaying() then
             elements[selectedGame].music:play(0)
         end
@@ -209,6 +234,8 @@ local buttonHandlers_title = {
             selectedGame = selectedGame + 1
         end
         gameChangeSound:play(1)
+        menu.fullRedraw()
+        crankToReset = 0
         if not Statemachine.music:isPlaying() then
             elements[selectedGame].music:play(0)
         end
@@ -257,46 +284,57 @@ local buttonHandlers_title = {
     end,
 }
 
--- TODO: Tried to optimize this (~15-20fps on playdate).
--- Bottleneck seems to be the rotating images, so need to find a way to cache those (or create them in PS)
-function menu.update()
+function menu.fullRedraw()
     elements[selectedGame].bg:draw(0,0)
+    drawMenuItem(elements.btnArrowLeft, true)
+    drawMenuItem(elements.btnArrowRight, true)
+    if selectedGame == GAME_MODE.BOMB then
+        drawMenuItem(elements[GAME_MODE.BOMB].tagline, true)
+    else
+        gfx.drawTextAligned("HIGHSCORE: "..save.data.highscore[selectedGame], 139, 118, kTextAlignment.center)
+    end
+    menu_update()
+end
 
+menu_update = function()
     drawMenuItem(elements[selectedGame].mascot)
     drawMenuItem(elements[selectedGame].tagline)
 
-    if selectedGame ~= GAME_MODE.BOMB then
-        if showReset then
-            gfx.setColor(gfx.kColorBlack)
-            gfx.fillRect(139 - 76, 116, 152 * crankToReset / CRANK_RESET_TRIGGER, 22)
-            
-            gfx.setImageDrawMode(gfx.kDrawModeNXOR)
-            gfx.drawTextAligned("RESETTING...", 139, 118, kTextAlignment.center)
-            gfx.setImageDrawMode(gfx.kDrawModeCopy)
-            
-            -- floor to keep "integer" value
-            crankToReset = math.floor(crankToReset - 2)
-            if crankToReset <= 0 then
-                showReset = false
-            end
-        else
+    if selectedGame ~= GAME_MODE.BOMB and showReset then
+        gfx.setColor(gfx.kColorWhite)
+        gfx.fillRect(52, 116, 174, 22)
+        gfx.setColor(gfx.kColorBlack)
+        gfx.fillRect(52, 116, 174 * crankToReset / CRANK_RESET_TRIGGER, 22)
+
+        gfx.setImageDrawMode(gfx.kDrawModeNXOR)
+        gfx.drawTextAligned("RESETTING...", 139, 118, kTextAlignment.center)
+        gfx.setImageDrawMode(gfx.kDrawModeCopy)
+
+        -- floor to keep "integer" value
+        crankToReset = math.floor(crankToReset - 2)
+        if crankToReset <= 0 then
+            showReset = false
+            gfx.setColor(gfx.kColorWhite)
+            gfx.fillRect(52, 116, 174, 22)
             gfx.drawTextAligned("HIGHSCORE: "..save.data.highscore[selectedGame], 139, 118, kTextAlignment.center)
         end
     end
 
     drawMenuItem(elements.btnArrowLeft)
-    drawMenuItem(elements.btnArrowRight)
+    drawMenuItem(elements.btnArrowRight, true)
 
     drawMenuItem(elements.btnStart)
 end
 
 function menu.setup()
     playdate.inputHandlers.push(buttonHandlers_title)
-    playdate.update = menu.update
+    playdate.update = menu_update
     Statemachine.cleanup = menu_cleanup
     if not Statemachine.music:isPlaying() then
         elements[selectedGame].music:play(0)
     end
+    elements[selectedGame].bg:draw(0,0)
+    crankToReset = 0
     menu.active = true
 end
 

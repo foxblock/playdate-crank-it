@@ -171,7 +171,7 @@ splash_next_fn = function()
     currentSplash = currentSplash + 1
     if currentSplash > #splashImages then
         splash_cleanup()
-        transition.setup(menu.setup, menu.update)
+        transition.setup(menu.setup, menu.fullRedraw)
     else
         transition.setup(splash_setup2, splash_render)
         splash_next = update_none -- only regsiter one button press until transition finished
@@ -215,7 +215,7 @@ local goToMenuItem, _ = systemMenu:addMenuItem("Main Menu", function()
     if (Statemachine.cleanup ~= nil) then
         Statemachine.cleanup()
     end
-    transition.setup(menu.setup, menu.update)
+    transition.setup(menu.setup, menu.fullRedraw)
 end)
 
 -- Start

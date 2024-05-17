@@ -35,7 +35,7 @@ splash_next = function()
     currentSplash = currentSplash + 1
     if currentSplash > #splashImages then
         credits.cleanup()
-        transition.setup(menu.setup, menu.update)
+        transition.setup(menu.setup, menu.fullRedraw)
     else
         transition.setup(nil, credits.render)
     end
