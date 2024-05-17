@@ -161,23 +161,27 @@ local function splash_cleanup()
     playdate.inputHandlers.pop()
 end
 
-local function splash_setup()
-    playdate.inputHandlers.push(buttonHandlers_intro)
-    playdate.update = update_none
-end
-
+local splash_next_fn
 local function splash_setup2()
     playdate.update = update_none
+    splash_next = splash_next_fn
 end
 
-splash_next = function()
+splash_next_fn = function()
     currentSplash = currentSplash + 1
     if currentSplash > #splashImages then
         splash_cleanup()
         transition.setup(menu.setup, menu.update)
     else
         transition.setup(splash_setup2, splash_render)
+        splash_next = update_none -- only regsiter one button press until transition finished
     end
+end
+
+local function splash_setup()
+    playdate.inputHandlers.push(buttonHandlers_intro)
+    playdate.update = update_none
+    splash_next = splash_next_fn
 end
 
 ------ GLOBAL CALLBACKS
