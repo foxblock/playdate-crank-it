@@ -277,9 +277,6 @@ local buttonHandlers_title = {
             crankToReset = 0
         elseif crankToReset >= CRANK_RESET_TRIGGER * 0.05 then
             showReset = true
-        elseif crankToReset < 0 then
-            crankToReset = 0
-            showReset = false
         end
     end,
 }
@@ -301,15 +298,6 @@ menu_update = function()
     drawMenuItem(elements[selectedGame].tagline)
 
     if selectedGame ~= GAME_MODE.BOMB and showReset then
-        gfx.setColor(gfx.kColorWhite)
-        gfx.fillRect(52, 116, 174, 22)
-        gfx.setColor(gfx.kColorBlack)
-        gfx.fillRect(52, 116, 174 * crankToReset / CRANK_RESET_TRIGGER, 22)
-
-        gfx.setImageDrawMode(gfx.kDrawModeNXOR)
-        gfx.drawTextAligned("RESETTING...", 139, 118, kTextAlignment.center)
-        gfx.setImageDrawMode(gfx.kDrawModeCopy)
-
         -- floor to keep "integer" value
         crankToReset = math.floor(crankToReset - 2)
         if crankToReset <= 0 then
@@ -317,6 +305,15 @@ menu_update = function()
             gfx.setColor(gfx.kColorWhite)
             gfx.fillRect(52, 116, 174, 22)
             gfx.drawTextAligned("HIGHSCORE: "..save.data.highscore[selectedGame], 139, 118, kTextAlignment.center)
+        else
+            gfx.setColor(gfx.kColorWhite)
+            gfx.fillRect(52, 116, 174, 22)
+            gfx.setColor(gfx.kColorBlack)
+            gfx.fillRect(52, 116, 174 * crankToReset / CRANK_RESET_TRIGGER, 22)
+
+            gfx.setImageDrawMode(gfx.kDrawModeNXOR)
+            gfx.drawTextAligned("RESETTING...", 139, 118, kTextAlignment.center)
+            gfx.setImageDrawMode(gfx.kDrawModeCopy)
         end
     end
 
