@@ -50,20 +50,14 @@ end
 
 local elements <const> = {
     btnStart = {
-        img = gfx.image.new("images/menu/btn_start"),
-        x = 200,
-        y = 180,
-        rot = newAnimator(2500, -3, 3, easings.inOutSine),
-    },
-    btnSelect = {
-        img = gfx.image.new("images/menu/btn_select"),
-        x = 84,
-        y = 220,
-    },
-    btnSettings = {
-        img = gfx.image.new("images/menu/btn_settings"),
-        x = 304,
-        y = 220,
+        -- img = gfx.image.new("images/menu/btn_start"),
+        -- x = 200,
+        -- y = 180,
+        -- rot = newAnimator(2500, -3, 3, easings.inOutSine),
+        img = gfx.animation.loop.new(33, gfx.imagetable.new("images/menu/press_start")),
+        x = 20,
+        y = 148,
+        cached = true,
     },
     btnArrowLeft = {
         img = gfx.image.new("images/menu/btn_arrow_left"),
@@ -79,56 +73,59 @@ local elements <const> = {
     },
     [GAME_MODE.CRANKIT] = {
         mascot = {
-            img = gfx.image.new("images/menu/crank_mascot"),
-            x = 322,
-            y = 75,
-            rot = newAnimator(500, -10, 10, easings.inOutCubic),
-            scale = newAnimator(1500, 0.95, 1.05, easings.inOutBack),
-        },
-        logo = {
-            img = gfx.image.new("images/menu/crank_logo"),
-            x = 139,
-            y = 53,
+            -- img = gfx.image.new("images/menu/crank_mascot"),
+            -- x = 322,
+            -- y = 75,
+            -- rot = newAnimator(500, -10, 10, easings.inOutCubic),
+            -- scale = newAnimator(1500, 0.95, 1.05, easings.inOutBack),
+            img = gfx.animation.loop.new(33, gfx.imagetable.new("images/menu/crank_mascot")),
+            x = 250,
+            y = 3,
+            cached = true,
         },
         tagline = {
-            img = gfx.image.new("images/menu/crank_tagline"),
-            x = 139,
-            y = 91,
+            img = gfx.image.new("images/menu/crank_tagline_pixel"),
+            x = 1,
+            y = 1,
         },
+        bg = gfx.image.new("images/menu/crank_bg"),
         music = mp3.new("music/quirky-dog"),
     },
     [GAME_MODE.SIMON] = {
         mascot = {
-            img = gfx.image.new("images/menu/simon_mascot"),
-            x = 321,
-            y = 74,
-            rot = newAnimator(3000, -15, 5, easings.inOutSine),
-        },
-        logo = {
-            img = gfx.image.new("images/menu/simon_logo"),
-            x = 143,
-            y = 65,
+            -- img = gfx.image.new("images/menu/simon_mascot"),
+            -- x = 321,
+            -- y = 74,
+            -- rot = newAnimator(3000, -15, 5, easings.inOutSine),
+            img = gfx.animation.loop.new(33, gfx.imagetable.new("images/menu/simon_mascot")),
+            x = 266,
+            y = 10,
+            cached = true,
         },
         tagline = {
-            img = gfx.image.new("images/menu/simon_tagline"),
-            x = 208,
-            y = 37,
-            rot = newAnimator(2000, -5, 5, easings.inOutSine),
-            scale = newAnimator(2000, 0.95, 1.05, easings.inOutSine),
+            -- img = gfx.image.new("images/menu/simon_tagline"),
+            -- x = 208,
+            -- y = 37,
+            -- rot = newAnimator(2000, -5, 5, easings.inOutSine),
+            -- scale = newAnimator(2000, 0.95, 1.05, easings.inOutSine),
+            img = gfx.animation.loop.new(33, gfx.imagetable.new("images/menu/simon_tagline")),
+            x = 149,
+            y = 8,
+            cached = true,
         },
+        bg = gfx.image.new("images/menu/simon_bg"),
         music = mp3.new("music/intrigue-fun"),
     },
     [GAME_MODE.BOMB] = {
         mascot = {
-            img = gfx.image.new("images/menu/bomb_mascot"),
-            x = 325,
-            y = 72,
-            rot = newAnimator(1000, -8, 8, easings.inOutElastic),
-        },
-        logo = {
-            img = gfx.image.new("images/menu/bomb_logo"),
-            x = 135,
-            y = 63,
+            -- img = gfx.image.new("images/menu/bomb_mascot"),
+            -- x = 325,
+            -- y = 72,
+            -- rot = newAnimator(1000, -8, 8, easings.inOutElastic),
+            img = gfx.animation.loop.new(33, gfx.imagetable.new("images/menu/bomb_mascot")),
+            x = 254,
+            y = 6,
+            cached = true,
         },
         tagline = {
             img = gfx.image.new("images/menu/bomb_tagline"),
@@ -136,6 +133,7 @@ local elements <const> = {
             y = 130,
             scale = newBlinkerAnimator(500, 500, 0, 1.1)
         },
+        bg = gfx.image.new("images/menu/bomb_bg"),
         music = mp3.new("music/hitman"),
     },
 }
@@ -154,6 +152,8 @@ local function drawMenuItem(item)
         item.img:drawRotated(item.x, item.y, item.rot:currentValue())
     elseif item.scale ~= nil then
         item.img:drawRotated(item.x, item.y, 0, item.scale:value())
+    elseif item.cached ~= nil then
+        item.img:draw(item.x, item.y)
     else
         item.img:drawCentered(item.x, item.y)
     end
@@ -260,12 +260,10 @@ local buttonHandlers_title = {
 -- TODO: Tried to optimize this (~15-20fps on playdate).
 -- Bottleneck seems to be the rotating images, so need to find a way to cache those (or create them in PS)
 function menu.update()
-    gfx.setColor(gfx.kColorWhite)
-    gfx.clear()
+    elements[selectedGame].bg:draw(0,0)
 
-    drawMenuItem(elements[selectedGame].logo)
-    drawMenuItem(elements[selectedGame].tagline)
     drawMenuItem(elements[selectedGame].mascot)
+    drawMenuItem(elements[selectedGame].tagline)
 
     if selectedGame ~= GAME_MODE.BOMB then
         if showReset then
@@ -290,8 +288,6 @@ function menu.update()
     drawMenuItem(elements.btnArrowRight)
 
     drawMenuItem(elements.btnStart)
-    drawMenuItem(elements.btnSelect)
-    drawMenuItem(elements.btnSettings)
 end
 
 function menu.setup()
