@@ -299,6 +299,7 @@ local function cleanup_main()
     playdate.inputHandlers.pop()
 end
 
+local preSetupCalled = false
 function bomb.setup()
     bgSprite = gfx.sprite.setBackgroundDrawingCallback(
         function( x, y, width, height )
@@ -324,8 +325,9 @@ function bomb.setup()
     actions.succesFnc = main_actionSuccess
     actions.failFnc = main_actionFail
 
-    -- NOTE: This assumes pre_setup_for_transition was called before
+    assert(preSetupCalled, "pre_setup_for_transition needs to be called prior, to init actions.current");
     main_startGame(true)
+    preSetupCalled = false
 end
 
 function bomb.render_for_transition()
@@ -337,4 +339,5 @@ end
 
 function bomb.pre_setup_for_transition()
     actions.current = actions.getValidActionCode()
+    preSetupCalled = true
 end

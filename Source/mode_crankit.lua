@@ -335,6 +335,7 @@ local function cleanup_main()
     playdate.inputHandlers.pop()
 end
 
+local preSetupCalled = false
 function crankit.setup()
     bgSprite = gfx.sprite.setBackgroundDrawingCallback(
         function( x, y, width, height )
@@ -368,8 +369,9 @@ function crankit.setup()
     actions.failFnc = main_actionFail
     particles.setDefaultPhysics()
 
-    -- NOTE: This assumes pre_setup_main_for_transition was called before
+    assert(preSetupCalled, "pre_setup_for_transition needs to be called prior, to init actions.current");
     main_startGame(true)
+    preSetupCalled = false
 end
 
 function crankit.render_for_transition()
@@ -391,4 +393,5 @@ end
 
 function crankit.pre_setup_for_transition()
     actions.current = actions.getValidActionCode()
+    preSetupCalled = true
 end
