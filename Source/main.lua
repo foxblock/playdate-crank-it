@@ -12,18 +12,6 @@
 --    /
 --   v  y = 1
 
--- Sound credits:
--- voice: https://ttsfree.com/ - English (US), Jenny
--- success.wav: https://freesound.org/people/rhodesmas/sounds/342750/ - CC-BY 3.0
--- woosh.wav: https://freesound.org/people/Vilkas_Sound/sounds/460476/ - CC-BY 4.0
--- menu_game_change.wav: https://freesound.org/people/F.M.Audio/sounds/560330/ - CC-BY 4.0
--- reset_score.wav: https://freesound.org/people/steeltowngaming/sounds/537739/ - CC
--- explode.wav: https://freesound.org/people/DeltaCode/sounds/667660/ - CC
--- Music credits:
--- quirky-dog.mp3: Kevin MacLeod - https://incompetech.com/music/royalty-free/licenses/ - CC-BY 3.0
--- hitman: Keving MacLeod - https://incompetech.com/music/royalty-free/licenses/ - CC-BY 3.0
--- intrigue-fun-21661.mp3: https://pixabay.com/music/funk-intrigue-fun-21661/ - Pixabay
-
 ------ TODO
 -- [X] action: pass to other player
 -- [X] action: speed up
@@ -78,7 +66,7 @@
 -- [X] simon: microphone should reset on multiple shout it in a row
 -- [X] crank-it: increase chance for pass-it continuously
 -- [X] add deadzone for displaying the reset note in menu
--- [ ] add icons showing modifiers on lose screen
+-- [X] add icons showing modifiers on lose screen
 -- [X] swap "Press B to show Reason" and "Press a to restart", redraw thanks for playing text
 
 import "CoreLibs/graphics"

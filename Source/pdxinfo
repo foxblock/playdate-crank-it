@@ -1,8 +1,8 @@
 name=Crank-It!
-author=foxblock
+author=Janek
 description=A multiplayer party game.
 bundleID=com.foxblock.crankit
 version=1.0
-buildNumber=11
+buildNumber=12
 imagePath=system/
 launchSoundPath=sounds/crank

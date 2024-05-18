@@ -1,0 +1,59 @@
+Crank-It
+Copyright 2023-2024 Janek Schäfer - except files noted below
+
+Files from other authors:
+---
+- Source/music/quirky-dog.mp3
+- Source/music/quirky-dog-intro.mp3
+- Source/music/hitman.mp3
+"Hitman", "Quirky Dog", "Stringed Disco"
+Kevin MacLeod (incompetech.com)
+Licensed under Creative Commons: By Attribution 3.0
+http://creativecommons.org/licenses/by/3.0/
+
+- Source/music/intrigue-fun.mp3
+Musictown
+Licensed under the Pixabay Content License
+https://pixabay.com/music/funk-intrigue-fun-21661/
+
+- Source/sounds/success.wav
+- Source/sounds/menu_game_select.wav (modified)
+rhodesmas
+Licensed under Creative Commons: By Attribution 3.0
+https://freesound.org/people/rhodesmas/sounds/342750/
+
+- Source/sounds/woosh.wav
+Vilkas_Sound
+Licensed under Creative Commons: By Attribution 4.0
+https://freesound.org/people/Vilkas_Sound/sounds/460476/
+
+- Source/sounds/menu_game_change.wav
+F.M.Audio
+Licensed under Creative Commons: By Attribution 4.0
+https://freesound.org/people/F.M.Audio/sounds/560330/
+
+- Source/sounds/reset_score.wav
+steeltowngaming
+Licensed under Creative Commons 0
+https://freesound.org/people/steeltowngaming/sounds/537739/
+
+- Source/sounds/explode.wav
+DeltaCode
+Licensed under Creative Commons 0
+https://freesound.org/people/DeltaCode/sounds/667660/
+
+The following applies to all other files, except the ones noted above:
+---
+The *.lua files in Source/ (the SOURCE CODE) is licensed under the MIT license, see LICENSE-MIT.txt
+The build files (.nova/*, .vscode/*, build_lua.ps1, makefiles and similar content) is also licensed under the MIT license.
+
+Everything else (the ASSETS) is licensed under Creative Commons: By Attribution 3.0 (CC-BY 3.0)
+(credit me with my real name or "foxblock" - whatever fits better)
+
+The material in releases/ is all rights reserved and included for reference only.
+
+TL;DR
+---
+You may use the source-code and assets for your personal (or even commercial!) projects!
+Just make sure to credit me and the other original authors!
+Please don't release the work as-is in your own name, that would be weird.
