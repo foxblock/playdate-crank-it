@@ -102,6 +102,10 @@ end
 
 function save.renderModifierIcons()
     local xPos = 364
+    if save.data.settings.debugOn then
+        icons:drawImage(4, xPos, 4)
+        xPos = xPos - 32
+    end
     if not save.data.settings.allowPass then
         icons:drawImage(3, xPos, 4)
         xPos = xPos - 32
